@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: checkpointd-api
+  datasource:
+    url: ${DATABASE_URL:}
+    username: ${POSTGRES_USER:}
+    password: ${POSTGRES_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+server:
+  port: ${API_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+checkpointd:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:}
+      expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+  integrations:
+    igdb:
+      client-id: ${IGDB_CLIENT_ID:}
+      client-secret: ${IGDB_CLIENT_SECRET:}
+      base-url: ${IGDB_BASE_URL:}
+      twitch-token-url: ${TWITCH_TOKEN_URL:}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
