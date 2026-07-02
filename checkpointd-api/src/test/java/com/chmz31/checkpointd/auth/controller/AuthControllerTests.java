@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.chmz31.checkpointd.auth.dto.LoginRequest;
 import com.chmz31.checkpointd.auth.dto.RegisterRequest;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
@@ -44,6 +45,9 @@ class AuthControllerTests {
 
 	@MockitoBean
 	private GameRepository gameRepository;
+
+	@MockitoBean
+	private LibraryEntryRepository libraryEntryRepository;
 
 	@Test
 	void registerReturnsJwtAccessToken() throws Exception {
