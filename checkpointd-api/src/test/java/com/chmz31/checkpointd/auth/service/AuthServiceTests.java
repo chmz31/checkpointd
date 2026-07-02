@@ -7,11 +7,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.chmz31.checkpointd.auth.dto.LoginRequest;
 import com.chmz31.checkpointd.auth.dto.RegisterRequest;
 import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
+import com.chmz31.checkpointd.common.exception.InvalidCredentialsException;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -88,5 +91,50 @@ class AuthServiceTests {
 		verify(userRepository).existsByUsername("playerone");
 		verify(passwordEncoder, never()).encode(request.password());
 		verify(userRepository, never()).save(any(User.class));
+	}
+
+	@Test
+	void loginReturnsUserForValidCredentials() {
+		LoginRequest request = new LoginRequest(" Player@Example.COM ", "plain-password");
+		User user = new User("player@example.com", "playerone", "hashed-password", Role.USER);
+
+		when(userRepository.findByEmail("player@example.com")).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(true);
+
+		User loggedInUser = authService.login(request);
+
+		assertThat(loggedInUser).isSameAs(user);
+		verify(userRepository).findByEmail("player@example.com");
+		verify(passwordEncoder).matches(request.password(), user.getPasswordHash());
+	}
+
+	@Test
+	void loginRejectsUnknownEmail() {
+		LoginRequest request = new LoginRequest(" Player@Example.COM ", "plain-password");
+
+		when(userRepository.findByEmail("player@example.com")).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> authService.login(request))
+				.isInstanceOf(InvalidCredentialsException.class)
+				.hasMessage("Invalid email or password");
+
+		verify(userRepository).findByEmail("player@example.com");
+		verify(passwordEncoder, never()).matches(any(), any());
+	}
+
+	@Test
+	void loginRejectsWrongPassword() {
+		LoginRequest request = new LoginRequest(" Player@Example.COM ", "plain-password");
+		User user = new User("player@example.com", "playerone", "hashed-password", Role.USER);
+
+		when(userRepository.findByEmail("player@example.com")).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(false);
+
+		assertThatThrownBy(() -> authService.login(request))
+				.isInstanceOf(InvalidCredentialsException.class)
+				.hasMessage("Invalid email or password");
+
+		verify(userRepository).findByEmail("player@example.com");
+		verify(passwordEncoder).matches(request.password(), user.getPasswordHash());
 	}
 }
