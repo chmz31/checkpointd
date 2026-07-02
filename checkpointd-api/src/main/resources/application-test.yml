@@ -12,3 +12,5 @@ checkpointd:
     jwt:
       secret: test-placeholder-only
       expiration-minutes: 60
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
