@@ -1,0 +1,43 @@
+name: Web CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - checkpointd-web/**
+      - .github/workflows/web-ci.yml
+      - .gitattributes
+  push:
+    branches:
+      - main
+    paths:
+      - checkpointd-web/**
+      - .github/workflows/web-ci.yml
+      - .gitattributes
+
+jobs:
+  build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: checkpointd-web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: checkpointd-web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
