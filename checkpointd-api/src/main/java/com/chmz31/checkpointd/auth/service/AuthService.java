@@ -1,0 +1,41 @@
+package com.chmz31.checkpointd.auth.service;
+
+import com.chmz31.checkpointd.auth.dto.RegisterRequest;
+import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
+import com.chmz31.checkpointd.user.entity.User;
+import com.chmz31.checkpointd.user.model.Role;
+import com.chmz31.checkpointd.user.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class AuthService {
+
+	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
+
+	public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+		this.userRepository = userRepository;
+		this.passwordEncoder = passwordEncoder;
+	}
+
+	@Transactional
+	public User register(RegisterRequest request) {
+		String email = request.email().trim().toLowerCase();
+		String username = request.username().trim();
+
+		if (userRepository.existsByEmail(email)) {
+			throw new DuplicateResourceException("Email is already registered");
+		}
+
+		if (userRepository.existsByUsername(username)) {
+			throw new DuplicateResourceException("Username is already taken");
+		}
+
+		String passwordHash = passwordEncoder.encode(request.password());
+		User user = new User(email, username, passwordHash, Role.USER);
+
+		return userRepository.save(user);
+	}
+}
