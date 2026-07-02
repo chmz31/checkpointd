@@ -42,7 +42,6 @@ Start PostgreSQL with Docker Compose:
 docker compose up -d db
 ```
 
-```md
 Stop PostgreSQL without deleting the database volume:
 
 ```powershell
