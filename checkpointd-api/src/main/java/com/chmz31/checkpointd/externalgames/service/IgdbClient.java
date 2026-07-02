@@ -53,10 +53,41 @@ public class IgdbClient {
 		}
 	}
 
+	ExternalGameSearchResult fetchById(String externalId) {
+		if (baseUrl == null || baseUrl.isBlank()) {
+			throw new ServiceUnavailableException("External game provider is not configured");
+		}
+
+		try {
+			Map<?, ?>[] response = restClient.post()
+					.uri(baseUrl + "/games")
+					.header("Client-ID", twitchTokenClient.clientId())
+					.header("Authorization", "Bearer " + twitchTokenClient.accessToken())
+					.contentType(MediaType.TEXT_PLAIN)
+					.accept(MediaType.APPLICATION_JSON)
+					.body(fetchByIdBody(externalId))
+					.retrieve()
+					.body(Map[].class);
+
+			List<ExternalGameSearchResult> results = normalize(response);
+
+			return results.isEmpty() ? null : results.getFirst();
+		}
+		catch (RestClientException exception) {
+			throw new ServiceUnavailableException("External game provider is unavailable", exception);
+		}
+	}
+
 	private String searchBody(String query) {
 		return "search \"" + escape(query) + "\"; "
 				+ "fields id,name,slug,cover.url,first_release_date; "
 				+ "limit 20;";
+	}
+
+	private String fetchByIdBody(String externalId) {
+		return "fields id,name,slug,cover.url,first_release_date; "
+				+ "where id = " + externalId + "; "
+				+ "limit 1;";
 	}
 
 	private String escape(String query) {
