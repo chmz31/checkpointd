@@ -118,6 +118,11 @@ h3 {
   gap: 0.65rem;
 }
 
+.compact-select {
+  width: auto;
+  min-width: 150px;
+}
+
 .user-pill {
   border: 1px solid #3b4d61;
   border-radius: 999px;
@@ -176,16 +181,26 @@ h3 {
   gap: 0.8rem;
 }
 
+.library-entry-card {
+  border: 1px solid #253548;
+  border-radius: 8px;
+  background: #0f1721;
+  overflow: hidden;
+}
+
 .game-row,
 .library-entry {
   display: grid;
   grid-template-columns: 62px minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.85rem;
-  border: 1px solid #253548;
-  border-radius: 8px;
   padding: 0.75rem;
   background: #0f1721;
+}
+
+.game-row {
+  border: 1px solid #253548;
+  border-radius: 8px;
 }
 
 .selected {
@@ -194,6 +209,31 @@ h3 {
 
 .library-entry {
   grid-template-columns: 74px minmax(0, 1fr) auto;
+}
+
+.entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.edit-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.7fr) minmax(110px, 0.45fr) minmax(240px, 1.4fr);
+  gap: 0.75rem;
+  border-top: 1px solid #253548;
+  padding: 0.75rem;
+  background: #121b27;
+}
+
+.edit-actions {
+  grid-column: 1 / -1;
+}
+
+.compact-message {
+  margin: 0.5rem 0 0;
+  padding: 0.55rem 0.65rem;
 }
 
 .cover {
@@ -266,7 +306,8 @@ h3 {
 
   .search-form,
   .game-row,
-  .library-entry {
+  .library-entry,
+  .edit-form {
     grid-template-columns: 1fr;
   }
 
@@ -279,5 +320,13 @@ h3 {
   .game-row > button,
   .library-entry > button {
     width: fit-content;
+  }
+
+  .entry-actions {
+    justify-content: flex-start;
+  }
+
+  .compact-select {
+    width: 100%;
   }
 }

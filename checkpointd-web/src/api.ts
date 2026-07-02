@@ -4,6 +4,7 @@ import type {
   ExternalGameSearchResult,
   Game,
   LibraryEntry,
+  LibraryEntryUpdateInput,
   LibraryStatus,
 } from './types';
 
@@ -103,8 +104,16 @@ export const api = {
     });
   },
 
-  listLibrary() {
-    return apiRequest<LibraryEntry[]>('/api/v1/library');
+  listLibrary(status?: LibraryStatus) {
+    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    return apiRequest<LibraryEntry[]>(`/api/v1/library${query}`);
+  },
+
+  updateLibraryEntry(entryId: string, input: LibraryEntryUpdateInput) {
+    return apiRequest<LibraryEntry>(`/api/v1/library/${entryId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
   },
 
   deleteLibraryEntry(entryId: string) {

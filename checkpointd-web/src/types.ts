@@ -52,3 +52,9 @@ export type LibraryEntry = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type LibraryEntryUpdateInput = {
+  status?: LibraryStatus;
+  rating?: number;
+  notes?: string;
+};
