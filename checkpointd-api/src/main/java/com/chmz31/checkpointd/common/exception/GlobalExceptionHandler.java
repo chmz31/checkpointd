@@ -1,7 +1,9 @@
 package com.chmz31.checkpointd.common.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -29,8 +31,23 @@ public class GlobalExceptionHandler {
 		return error(HttpStatus.BAD_REQUEST, exception.getMessage());
 	}
 
+	@ExceptionHandler(ServiceUnavailableException.class)
+	ResponseEntity<ApiError> handleServiceUnavailable(ServiceUnavailableException exception) {
+		return error(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	ResponseEntity<ApiError> handleValidation() {
+		return error(HttpStatus.BAD_REQUEST, "Validation failed");
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	ResponseEntity<ApiError> handleMissingRequestParameter() {
+		return error(HttpStatus.BAD_REQUEST, "Validation failed");
+	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	ResponseEntity<ApiError> handleConstraintViolation() {
 		return error(HttpStatus.BAD_REQUEST, "Validation failed");
 	}
 
