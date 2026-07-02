@@ -1,6 +1,7 @@
 package com.chmz31.checkpointd;
 
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,9 @@ class CheckpointdApiApplicationTests {
 
 	@MockitoBean
 	private GameRepository gameRepository;
+
+	@MockitoBean
+	private LibraryEntryRepository libraryEntryRepository;
 
 	@Test
 	void contextLoads() {

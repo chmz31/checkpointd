@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -41,6 +42,9 @@ class GameControllerTests {
 
 	@MockitoBean
 	private UserRepository userRepository;
+
+	@MockitoBean
+	private LibraryEntryRepository libraryEntryRepository;
 
 	@Test
 	void createRequiresAuthentication() throws Exception {
