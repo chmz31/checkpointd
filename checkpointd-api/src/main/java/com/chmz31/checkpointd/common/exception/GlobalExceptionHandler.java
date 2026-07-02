@@ -19,6 +19,16 @@ public class GlobalExceptionHandler {
 		return error(HttpStatus.UNAUTHORIZED, exception.getMessage());
 	}
 
+	@ExceptionHandler(ResourceNotFoundException.class)
+	ResponseEntity<ApiError> handleResourceNotFound(ResourceNotFoundException exception) {
+		return error(HttpStatus.NOT_FOUND, exception.getMessage());
+	}
+
+	@ExceptionHandler(BadRequestException.class)
+	ResponseEntity<ApiError> handleBadRequest(BadRequestException exception) {
+		return error(HttpStatus.BAD_REQUEST, exception.getMessage());
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	ResponseEntity<ApiError> handleValidation() {
 		return error(HttpStatus.BAD_REQUEST, "Validation failed");
