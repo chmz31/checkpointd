@@ -47,6 +47,7 @@ Stop PostgreSQL without deleting the database volume:
 
 ```powershell
 docker compose down
+```
 
 Do not use docker compose down -v unless you intentionally want to delete local database data.
 
@@ -61,6 +62,21 @@ Run backend tests from `checkpointd-api`:
 ```powershell
 cd checkpointd-api
 .\mvnw.cmd clean test
+```
+
+Set the local JWT secret before running the API:
+
+```powershell
+$env:JWT_SECRET="dev-only-checkpointd-secret-with-enough-length-please-change-me"
+```
+
+This value is for local development only. Do not commit real secrets.
+
+Run the backend API with the dev profile:
+
+```powershell
+cd checkpointd-api
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
 ## Out Of Scope For v0.1

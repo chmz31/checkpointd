@@ -1,7 +1,9 @@
 package com.chmz31.checkpointd.auth.service;
 
+import com.chmz31.checkpointd.auth.dto.LoginRequest;
 import com.chmz31.checkpointd.auth.dto.RegisterRequest;
 import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
+import com.chmz31.checkpointd.common.exception.InvalidCredentialsException;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
@@ -37,5 +39,18 @@ public class AuthService {
 		User user = new User(email, username, passwordHash, Role.USER);
 
 		return userRepository.save(user);
+	}
+
+	@Transactional(readOnly = true)
+	public User login(LoginRequest request) {
+		String email = request.email().trim().toLowerCase();
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+
+		if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+			throw new InvalidCredentialsException("Invalid email or password");
+		}
+
+		return user;
 	}
 }
