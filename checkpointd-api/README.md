@@ -5,10 +5,52 @@ Spring Boot backend API for checkpointd.
 ## Stack
 
 - Java 25
-- Spring Boot 4.1.x
-- Maven
-- PostgreSQL
+- Spring Boot
+- Spring Security JWT
+- Spring Data JPA
+- PostgreSQL 18
 - Flyway
+- Maven Wrapper
+
+## Responsibilities
+
+- Auth and current-user endpoints
+- JWT access token generation and validation
+- Local game catalog persistence
+- External IGDB search through Twitch client credentials
+- External game import/cache
+- User library add/list/filter/get/update/delete
+
+## Local Development
+
+Start PostgreSQL from the repository root:
+
+```powershell
+docker compose up -d db
+```
+
+Create the root `.env` file from `.env.example` for Docker Compose:
+
+```powershell
+Copy-Item ..\.env.example ..\.env
+```
+
+Docker Compose reads the root `.env` file for PostgreSQL settings. Spring Boot does not automatically read the root `.env` file when launched through Maven; set required backend variables in your shell or IDE run configuration.
+
+IGDB variables are only needed for real external search/import calls. If they are missing, those endpoints return `503 Service Unavailable`.
+
+Run the API:
+
+```powershell
+$env:JWT_SECRET="replace-with-local-development-secret"
+$env:IGDB_CLIENT_ID="replace-with-client-id"
+$env:IGDB_CLIENT_SECRET="replace-with-client-secret"
+$env:IGDB_BASE_URL="https://api.igdb.com/v4"
+$env:TWITCH_TOKEN_URL="https://id.twitch.tv/oauth2/token"
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+The API runs on `http://localhost:8080` by default.
 
 ## Tests
 
@@ -18,4 +60,4 @@ Run from this directory:
 .\mvnw.cmd clean test
 ```
 
-This project currently contains only the generated application class and a default context-load test. Business features are intentionally not implemented yet.
+Tests do not require a local PostgreSQL instance.

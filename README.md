@@ -2,41 +2,108 @@
 
 checkpointd - your save file for every game you play.
 
-checkpointd is a video game backlog and library app inspired by Letterboxd, IMDb, Backloggd, and GameTrack. The goal is to help players search for games, track what they own or play, and keep personal notes, ratings, and status history in one place.
+checkpointd is a video game backlog and library app inspired by Letterboxd, IMDb, Backloggd, and GameTrack. It lets players search for games, import game metadata into a local catalog, and track their personal library with status, ratings, and notes.
 
-## Planned Stack
+## Current MVP
 
-- Java 25 LTS
-- Spring Boot 4.1.x
-- Maven
+- Register and login with JWT authentication.
+- Fetch the current authenticated user.
+- Search external games through the backend using IGDB.
+- Import external games into the local catalog/cache.
+- Create and browse local catalog games.
+- Add games to a personal library.
+- List, filter, fetch, update, and delete library entries.
+- Track library status, rating, and notes.
+- Use the React frontend for login/register, search, import, add-to-library, library filtering, editing, and deletion.
+
+## Tech Stack
+
+Backend:
+
+- Java 25
+- Spring Boot
+- Spring Security JWT
+- Spring Data JPA
 - PostgreSQL 18
 - Flyway
-- Spring Security + JWT
-- React + TypeScript + Vite later
-- Docker Compose for local development
-- GitHub Actions CI later
+- Docker Compose
+- Maven Wrapper
 
-## v0.1 API MVP Scope
+Frontend:
 
-- Backend API only
-- Auth
-- External game search from the backend
-- Local metadata cache
-- Personal game library
-- Status, rating, and notes
-- Basic filters
+- React
+- TypeScript
+- Vite
+- npm
 
-## Local Development
+Integrations and automation:
 
-v0.1 is API-only for now. The frontend workspace exists for a later milestone, but local development currently centers on PostgreSQL and the backend API.
+- IGDB through Twitch client credentials from the backend only
+- GitHub Actions backend CI
+- GitHub Actions frontend CI
 
-Create a local environment file from the safe example:
+## Monorepo Structure
+
+```text
+checkpointd/
+  checkpointd-api/      Spring Boot backend API
+  checkpointd-web/      React + TypeScript + Vite frontend
+  docs/                 Architecture notes and decisions
+  .github/workflows/    Backend and frontend CI workflows
+  docker-compose.yml    Local PostgreSQL
+```
+
+## Local Development Requirements
+
+- Java 25
+- Docker Desktop or Docker Engine with Compose
+- Node.js 24 or a compatible current Node.js version
+- npm
+- PowerShell on Windows for the commands below
+
+## Environment Variables
+
+Create the root environment file from the safe example:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Start PostgreSQL with Docker Compose:
+Docker Compose reads the root `.env` file for PostgreSQL settings and port mappings. Spring Boot does not automatically read the root `.env` file when launched through Maven; set required backend variables in your shell or IDE run configuration.
+
+Important root/backend variables:
+
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_PORT`
+- `API_PORT`
+- `JWT_SECRET`
+- `JWT_EXPIRATION_MINUTES`
+- `IGDB_CLIENT_ID`
+- `IGDB_CLIENT_SECRET`
+- `IGDB_BASE_URL`
+- `TWITCH_TOKEN_URL`
+- `CORS_ALLOWED_ORIGINS`
+
+Create the frontend environment file:
+
+```powershell
+cd checkpointd-web
+Copy-Item .env.example .env
+```
+
+Frontend variable:
+
+- `VITE_API_BASE_URL`, normally `http://localhost:8080` for local development
+
+Use Twitch Developer Console credentials locally for `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET`. Do not commit real secrets. The frontend does not receive IGDB credentials and never calls IGDB directly.
+
+IGDB variables are only needed for real external search/import calls. If they are missing, those external provider endpoints return `503 Service Unavailable` while the rest of the API can still run.
+
+## Run PostgreSQL
+
+From the repository root:
 
 ```powershell
 docker compose up -d db
@@ -48,54 +115,108 @@ Stop PostgreSQL without deleting the database volume:
 docker compose down
 ```
 
-Do not use docker compose down -v unless you intentionally want to delete local database data.
+Do not use `docker compose down -v` unless you intentionally want to delete local database data.
 
-Validate the Docker Compose configuration:
+## Run Backend
+
+From the repository root:
 
 ```powershell
-docker compose config
+cd checkpointd-api
+$env:JWT_SECRET="replace-with-local-development-secret"
+$env:IGDB_CLIENT_ID="replace-with-client-id"
+$env:IGDB_CLIENT_SECRET="replace-with-client-secret"
+$env:IGDB_BASE_URL="https://api.igdb.com/v4"
+$env:TWITCH_TOKEN_URL="https://id.twitch.tv/oauth2/token"
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
 ```
 
-Run backend tests from `checkpointd-api`:
+The backend runs locally on `http://localhost:8080` by default.
+
+## Run Frontend
+
+From the repository root:
+
+```powershell
+cd checkpointd-web
+npm install
+npm run dev
+```
+
+The Vite dev server runs locally on `http://localhost:5173` by default.
+
+## Validation Commands
+
+Backend tests:
 
 ```powershell
 cd checkpointd-api
 .\mvnw.cmd clean test
 ```
 
-Set the local JWT secret before running the API:
+Frontend production build:
 
 ```powershell
-$env:JWT_SECRET="dev-only-checkpointd-secret-with-enough-length-please-change-me"
+cd checkpointd-web
+npm run build
 ```
 
-This value is for local development only. Do not commit real secrets.
-
-Run the backend API with the dev profile:
+Docker Compose configuration:
 
 ```powershell
-cd checkpointd-api
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev"
+docker compose config
 ```
 
-## Out Of Scope For v0.1
+## API Overview
 
-- Frontend implementation
-- Public reviews
-- Public profiles
+Auth:
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/users/me`
+
+External games:
+
+- `GET /api/v1/external-games/search?q={query}`
+- `POST /api/v1/external-games/import`
+
+Local games:
+
+- `POST /api/v1/games`
+- `GET /api/v1/games`
+- `GET /api/v1/games/{gameId}`
+
+Library:
+
+- `POST /api/v1/library`
+- `GET /api/v1/library`
+- `GET /api/v1/library/{entryId}`
+- `PATCH /api/v1/library/{entryId}`
+- `DELETE /api/v1/library/{entryId}`
+
+## CI
+
+- `API CI` runs backend tests for `checkpointd-api`.
+- `Web CI` installs frontend dependencies with `npm ci` and builds `checkpointd-web`.
+
+## Security Notes
+
+- `JWT_SECRET` is required for local backend auth.
+- `IGDB_CLIENT_SECRET` must stay server-side.
+- `.env` files are ignored by git.
+- Use `.env.example` only for placeholder values and variable names.
+- The frontend sends JWT Bearer tokens to checkpointd only; it does not receive Twitch or IGDB credentials.
+
+## Roadmap
+
+- UI polish
+- Library stats
+- Public profiles and lists
 - Social features
-- Followers
-- Lists
-- Comments
-- Crossplay
-- Cross-save
-- Steam import
-- Achievements
+- Crossplay data
 - Recommendations
-- Advanced statistics
-- Production deployment
-- Domain, hosting, or VPS setup
+- Deployment
 
 ## Philosophy
 
-checkpointd is local-first and deploy-aware. Local development should be easy to run with Docker Compose and clear environment variables, while project decisions should leave room for production deployment later without coupling early code to one hosting provider or machine-specific setup.
+checkpointd is local-first and deploy-aware. Local development should be easy to run with Docker Compose and clear environment variables, while project decisions should leave room for production deployment later without coupling the app to one hosting provider or machine-specific setup.
