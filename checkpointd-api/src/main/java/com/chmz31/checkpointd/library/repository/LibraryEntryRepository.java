@@ -23,12 +23,12 @@ public interface LibraryEntryRepository extends JpaRepository<LibraryEntry, UUID
 	@Query("select avg(entry.rating) from LibraryEntry entry where entry.user.id = :userId and entry.rating is not null")
 	Double averageRatingByUserId(@Param("userId") UUID userId);
 
-	@EntityGraph(attributePaths = "game")
+	@EntityGraph(attributePaths = {"game", "game.genres", "game.platforms"})
 	Optional<LibraryEntry> findByIdAndUserId(UUID id, UUID userId);
 
-	@EntityGraph(attributePaths = "game")
+	@EntityGraph(attributePaths = {"game", "game.genres", "game.platforms"})
 	List<LibraryEntry> findTop50ByUserIdOrderByUpdatedAtDesc(UUID userId);
 
-	@EntityGraph(attributePaths = "game")
+	@EntityGraph(attributePaths = {"game", "game.genres", "game.platforms"})
 	List<LibraryEntry> findTop50ByUserIdAndStatusOrderByUpdatedAtDesc(UUID userId, LibraryStatus status);
 }

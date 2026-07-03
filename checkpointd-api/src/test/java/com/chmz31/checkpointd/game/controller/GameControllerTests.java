@@ -75,7 +75,10 @@ class GameControllerTests {
 								  "title": "Chrono Trigger",
 								  "slug": "chrono-trigger",
 								  "coverUrl": "https://img.example/cover.jpg",
-								  "releaseDate": "1995-03-11"
+								  "releaseDate": "1995-03-11",
+								  "summary": "Time travel RPG",
+								  "genres": ["RPG", "Adventure"],
+								  "platforms": ["SNES", "PC"]
 								}
 								"""))
 				.andExpect(status().isCreated())
@@ -85,7 +88,10 @@ class GameControllerTests {
 				.andExpect(jsonPath("$.title").value("Chrono Trigger"))
 				.andExpect(jsonPath("$.slug").value("chrono-trigger"))
 				.andExpect(jsonPath("$.coverUrl").value("https://img.example/cover.jpg"))
-				.andExpect(jsonPath("$.releaseDate").value("1995-03-11"));
+				.andExpect(jsonPath("$.releaseDate").value("1995-03-11"))
+				.andExpect(jsonPath("$.summary").value("Time travel RPG"))
+				.andExpect(jsonPath("$.genres[0]").value("RPG"))
+				.andExpect(jsonPath("$.platforms[0]").value("SNES"));
 	}
 
 	@Test
@@ -170,6 +176,9 @@ class GameControllerTests {
 	void getReturnsGame() throws Exception {
 		Game game = withId(new Game("Chrono Trigger"));
 		game.setReleaseDate(LocalDate.of(1995, 3, 11));
+		game.setSummary("Time travel RPG");
+		game.setGenres(List.of("RPG"));
+		game.setPlatforms(List.of("SNES"));
 
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game));
 
@@ -179,6 +188,9 @@ class GameControllerTests {
 				.andExpect(jsonPath("$.id").value(GAME_ID.toString()))
 				.andExpect(jsonPath("$.title").value("Chrono Trigger"))
 				.andExpect(jsonPath("$.releaseDate").value("1995-03-11"))
+				.andExpect(jsonPath("$.summary").value("Time travel RPG"))
+				.andExpect(jsonPath("$.genres[0]").value("RPG"))
+				.andExpect(jsonPath("$.platforms[0]").value("SNES"))
 				.andExpect(jsonPath("$.passwordHash").doesNotExist());
 	}
 

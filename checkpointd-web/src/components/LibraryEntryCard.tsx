@@ -3,6 +3,7 @@ import { api } from '../api';
 import { libraryStatuses } from '../constants';
 import type { LibraryEntry, LibraryStatus } from '../types';
 import { CoverImage } from './CoverImage';
+import { GameMetadata } from './GameMetadata';
 
 export function LibraryEntryCard({
   entry,
@@ -26,6 +27,11 @@ export function LibraryEntryCard({
     setRating(entry.rating ? String(entry.rating) : '');
     setNotes(entry.notes || '');
   }, [entry]);
+
+  function clearFeedback() {
+    setMessage(null);
+    setError(null);
+  }
 
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -67,6 +73,11 @@ export function LibraryEntryCard({
             <span>{entry.status}</span>
             {entry.rating && <span>{entry.rating}/10</span>}
           </p>
+          <GameMetadata
+            summary={entry.gameSummary}
+            genres={entry.gameGenres}
+            platforms={entry.gamePlatforms}
+          />
           {entry.notes && <p className="notes">{entry.notes}</p>}
           {message && <p className="success compact-message">{message}</p>}
         </div>
@@ -80,7 +91,13 @@ export function LibraryEntryCard({
         <form className="edit-form" onSubmit={save}>
           <label>
             Status
-            <select value={status} onChange={(event) => setStatus(event.target.value as LibraryStatus)}>
+            <select
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value as LibraryStatus);
+                clearFeedback();
+              }}
+            >
               {libraryStatuses.map((libraryStatus) => (
                 <option key={libraryStatus} value={libraryStatus}>
                   {libraryStatus}
@@ -92,7 +109,10 @@ export function LibraryEntryCard({
             Rating
             <input
               value={rating}
-              onChange={(event) => setRating(event.target.value)}
+              onChange={(event) => {
+                setRating(event.target.value);
+                clearFeedback();
+              }}
               min={1}
               max={10}
               type="number"
@@ -101,7 +121,14 @@ export function LibraryEntryCard({
           </label>
           <label className="notes-field">
             Notes
-            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} />
+            <textarea
+              value={notes}
+              onChange={(event) => {
+                setNotes(event.target.value);
+                clearFeedback();
+              }}
+              rows={3}
+            />
           </label>
           {error && <p className="error compact-message">{error}</p>}
           <div className="inline-actions edit-actions">

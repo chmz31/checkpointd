@@ -47,7 +47,7 @@ class ExternalGameSearchControllerTests {
 	void authenticatedSearchReturnsResults() throws Exception {
 		when(externalGameSearchService.search("chrono")).thenReturn(List.of(new ExternalGameSearchResult(
 				"igdb", "123", "Chrono Trigger", "chrono-trigger", "https://images.example/cover.jpg",
-				LocalDate.of(1995, 3, 11))));
+				LocalDate.of(1995, 3, 11), "Time travel RPG", List.of("RPG"), List.of("SNES"))));
 
 		mockMvc.perform(get("/api/v1/external-games/search")
 						.with(jwt())
@@ -59,7 +59,10 @@ class ExternalGameSearchControllerTests {
 				.andExpect(jsonPath("$[0].title").value("Chrono Trigger"))
 				.andExpect(jsonPath("$[0].slug").value("chrono-trigger"))
 				.andExpect(jsonPath("$[0].coverUrl").value("https://images.example/cover.jpg"))
-				.andExpect(jsonPath("$[0].releaseDate").value("1995-03-11"));
+				.andExpect(jsonPath("$[0].releaseDate").value("1995-03-11"))
+				.andExpect(jsonPath("$[0].summary").value("Time travel RPG"))
+				.andExpect(jsonPath("$[0].genres[0]").value("RPG"))
+				.andExpect(jsonPath("$[0].platforms[0]").value("SNES"));
 	}
 
 	@Test

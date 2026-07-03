@@ -3,6 +3,7 @@ package com.chmz31.checkpointd.library.dto;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record LibraryEntryResponse(
@@ -11,6 +12,9 @@ public record LibraryEntryResponse(
 		String gameTitle,
 		String gameSlug,
 		String gameCoverUrl,
+		String gameSummary,
+		List<String> gameGenres,
+		List<String> gamePlatforms,
 		LibraryStatus status,
 		Integer rating,
 		String notes,
@@ -26,6 +30,9 @@ public record LibraryEntryResponse(
 				entry.getGame().getTitle(),
 				entry.getGame().getSlug(),
 				entry.getGame().getCoverUrl(),
+				entry.getGame().getSummary(),
+				List.copyOf(entry.getGame().getGenres()),
+				List.copyOf(entry.getGame().getPlatforms()),
 				entry.getStatus(),
 				entry.getRating(),
 				entry.getNotes(),
