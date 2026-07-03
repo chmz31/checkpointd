@@ -5,6 +5,7 @@ import type {
   Game,
   LibraryEntry,
   LibraryEntryUpdateInput,
+  LibraryStats,
   LibraryStatus,
 } from './types';
 
@@ -107,6 +108,10 @@ export const api = {
   listLibrary(status?: LibraryStatus) {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';
     return apiRequest<LibraryEntry[]>(`/api/v1/library${query}`);
+  },
+
+  getLibraryStats() {
+    return apiRequest<LibraryStats>('/api/v1/library/stats');
   },
 
   updateLibraryEntry(entryId: string, input: LibraryEntryUpdateInput) {

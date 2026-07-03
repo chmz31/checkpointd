@@ -12,6 +12,7 @@ import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
+import com.chmz31.checkpointd.library.dto.LibraryStatsResponse;
 import com.chmz31.checkpointd.library.dto.UpdateLibraryEntryRequest;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
@@ -132,6 +133,31 @@ class LibraryServiceTests {
 		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
 
 		assertThat(libraryService.get(USER_ID, ENTRY_ID)).isSameAs(entry);
+	}
+
+	@Test
+	void statsReturnsCurrentUsersLibraryCounts() {
+		when(libraryEntryRepository.countByUserId(USER_ID)).thenReturn(6L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.WISHLIST)).thenReturn(1L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.BACKLOG)).thenReturn(1L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.PLAYING)).thenReturn(1L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.COMPLETED)).thenReturn(1L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.DROPPED)).thenReturn(1L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.PAUSED)).thenReturn(1L);
+		when(libraryEntryRepository.countByUserIdAndRatingIsNotNull(USER_ID)).thenReturn(3L);
+		when(libraryEntryRepository.averageRatingByUserId(USER_ID)).thenReturn(8.5);
+
+		LibraryStatsResponse stats = libraryService.stats(USER_ID);
+
+		assertThat(stats.totalEntries()).isEqualTo(6);
+		assertThat(stats.wishlistCount()).isEqualTo(1);
+		assertThat(stats.backlogCount()).isEqualTo(1);
+		assertThat(stats.playingCount()).isEqualTo(1);
+		assertThat(stats.completedCount()).isEqualTo(1);
+		assertThat(stats.droppedCount()).isEqualTo(1);
+		assertThat(stats.pausedCount()).isEqualTo(1);
+		assertThat(stats.ratedCount()).isEqualTo(3);
+		assertThat(stats.averageRating()).isEqualTo(8.5);
 	}
 
 	@Test

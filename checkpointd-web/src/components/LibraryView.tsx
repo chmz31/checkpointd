@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { libraryStatuses } from '../constants';
-import type { LibraryEntry, LibraryStatus } from '../types';
+import type { LibraryEntry, LibraryStats, LibraryStatus } from '../types';
 import { LibraryEntryCard } from './LibraryEntryCard';
+import { LibraryStatsPanel } from './LibraryStatsPanel';
 
 export function LibraryView({ refreshKey }: { refreshKey: number }) {
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
+  const [stats, setStats] = useState<LibraryStats | null>(null);
   const [statusFilter, setStatusFilter] = useState<LibraryStatus | 'ALL'>('ALL');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +19,12 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
     setError(null);
 
     try {
-      setEntries(await api.listLibrary(statusFilter === 'ALL' ? undefined : statusFilter));
+      const [nextEntries, nextStats] = await Promise.all([
+        api.listLibrary(statusFilter === 'ALL' ? undefined : statusFilter),
+        api.getLibraryStats(),
+      ]);
+      setEntries(nextEntries);
+      setStats(nextStats);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not load library');
     } finally {
@@ -30,9 +37,14 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
     try {
       await api.deleteLibraryEntry(entryId);
       setEntries((current) => current.filter((entry) => entry.id !== entryId));
+      await loadStats();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not remove entry');
     }
+  }
+
+  async function loadStats() {
+    setStats(await api.getLibraryStats());
   }
 
   function replaceEntry(updatedEntry: LibraryEntry) {
@@ -42,6 +54,9 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
       }
 
       return current.map((entry) => (entry.id === updatedEntry.id ? updatedEntry : entry));
+    });
+    loadStats().catch((caught) => {
+      setError(caught instanceof Error ? caught.message : 'Could not load library stats');
     });
   }
 
@@ -73,6 +88,7 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
           </button>
         </div>
       </div>
+      <LibraryStatsPanel stats={stats} />
       {error && <p className="error">{error}</p>}
       {loading && <p className="muted">Loading...</p>}
       {!loading && entries.length === 0 && <p className="empty-state">Your library is empty.</p>}
