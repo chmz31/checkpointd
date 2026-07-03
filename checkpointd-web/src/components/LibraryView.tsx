@@ -87,7 +87,7 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
       <div className="section-heading">
         <h2>Library</h2>
         <div className="inline-actions">
-          <span className="muted">{groupedCount} entries</span>
+          <span className="muted">{groupedCount} visible</span>
           <select
             className="compact-select"
             value={statusFilter}
@@ -102,7 +102,7 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
             ))}
           </select>
           <button onClick={loadLibrary} disabled={loading}>
-            Refresh
+            {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>
@@ -131,10 +131,12 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
         </label>
       </div>
       {error && <p className="error">{error}</p>}
-      {loading && <p className="muted">Loading...</p>}
-      {!loading && entries.length === 0 && <p className="empty-state">Your library is empty.</p>}
+      {loading && <p className="muted">Loading library...</p>}
+      {!loading && entries.length === 0 && (
+        <p className="empty-state">Your library is empty. Search for a game and add it to start tracking.</p>
+      )}
       {!loading && entries.length > 0 && visibleEntries.length === 0 && (
-        <p className="empty-state">No entries match your search.</p>
+        <p className="empty-state">No entries match the current search and filters.</p>
       )}
       <div className="library-list">
         {visibleEntries.map((entry) => (
