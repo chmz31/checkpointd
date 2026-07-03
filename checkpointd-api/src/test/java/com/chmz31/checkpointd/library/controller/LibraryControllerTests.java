@@ -94,6 +94,9 @@ class LibraryControllerTests {
 				.andExpect(jsonPath("$.gameTitle").value("Chrono Trigger"))
 				.andExpect(jsonPath("$.gameSlug").value("chrono-trigger"))
 				.andExpect(jsonPath("$.gameCoverUrl").value("https://img.example/cover.jpg"))
+				.andExpect(jsonPath("$.gameSummary").value("Time travel RPG"))
+				.andExpect(jsonPath("$.gameGenres[0]").value("RPG"))
+				.andExpect(jsonPath("$.gamePlatforms[0]").value("SNES"))
 				.andExpect(jsonPath("$.status").value("PLAYING"))
 				.andExpect(jsonPath("$.rating").value(9))
 				.andExpect(jsonPath("$.notes").value("Great"));
@@ -250,6 +253,9 @@ class LibraryControllerTests {
 		Game game = new Game("Chrono Trigger");
 		game.setSlug("chrono-trigger");
 		game.setCoverUrl("https://img.example/cover.jpg");
+		game.setSummary("Time travel RPG");
+		game.setGenres(List.of("RPG"));
+		game.setPlatforms(List.of("SNES"));
 		ReflectionTestUtils.setField(game, "id", GAME_ID);
 
 		return game;

@@ -80,12 +80,12 @@ public class IgdbClient {
 
 	private String searchBody(String query) {
 		return "search \"" + escape(query) + "\"; "
-				+ "fields id,name,slug,cover.url,first_release_date; "
+				+ "fields id,name,slug,cover.url,first_release_date,summary,genres.name,platforms.name; "
 				+ "limit 20;";
 	}
 
 	private String fetchByIdBody(String externalId) {
-		return "fields id,name,slug,cover.url,first_release_date; "
+		return "fields id,name,slug,cover.url,first_release_date,summary,genres.name,platforms.name; "
 				+ "where id = " + externalId + "; "
 				+ "limit 1;";
 	}
@@ -94,7 +94,7 @@ public class IgdbClient {
 		return query.replace("\\", "\\\\").replace("\"", "\\\"");
 	}
 
-	private List<ExternalGameSearchResult> normalize(Map<?, ?>[] response) {
+	List<ExternalGameSearchResult> normalize(Map<?, ?>[] response) {
 		List<ExternalGameSearchResult> results = new ArrayList<>();
 		if (response == null) {
 			return results;
@@ -113,10 +113,28 @@ public class IgdbClient {
 					String.valueOf(name),
 					stringValue(item.get("slug")),
 					coverUrl(item.get("cover")),
-					releaseDate(item.get("first_release_date"))));
+					releaseDate(item.get("first_release_date")),
+					stringValue(item.get("summary")),
+					names(item.get("genres")),
+					names(item.get("platforms"))));
 		}
 
 		return results;
+	}
+
+	private List<String> names(Object value) {
+		if (!(value instanceof List<?> items)) {
+			return List.of();
+		}
+
+		return items.stream()
+				.filter(Map.class::isInstance)
+				.map(Map.class::cast)
+				.map(item -> stringValue(item.get("name")))
+				.filter(name -> name != null && !name.isBlank())
+				.map(String::trim)
+				.distinct()
+				.toList();
 	}
 
 	private String coverUrl(Object cover) {

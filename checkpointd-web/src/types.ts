@@ -26,6 +26,9 @@ export type ExternalGameSearchResult = {
   slug?: string | null;
   coverUrl?: string | null;
   releaseDate?: string | null;
+  summary?: string | null;
+  genres: string[];
+  platforms: string[];
 };
 
 export type Game = {
@@ -36,6 +39,9 @@ export type Game = {
   slug?: string | null;
   coverUrl?: string | null;
   releaseDate?: string | null;
+  summary?: string | null;
+  genres: string[];
+  platforms: string[];
 };
 
 export type LibraryEntry = {
@@ -44,6 +50,9 @@ export type LibraryEntry = {
   gameTitle: string;
   gameSlug?: string | null;
   gameCoverUrl?: string | null;
+  gameSummary?: string | null;
+  gameGenres: string[];
+  gamePlatforms: string[];
   status: LibraryStatus;
   rating?: number | null;
   notes?: string | null;

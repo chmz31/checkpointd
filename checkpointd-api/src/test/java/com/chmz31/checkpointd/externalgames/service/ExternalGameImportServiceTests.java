@@ -15,6 +15,7 @@ import com.chmz31.checkpointd.externalgames.dto.ImportExternalGameRequest;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -59,7 +60,8 @@ class ExternalGameImportServiceTests {
 		when(gameRepository.findByExternalProviderAndExternalId("igdb", "112964")).thenReturn(Optional.empty());
 		when(igdbClient.fetchById("112964")).thenReturn(new ExternalGameSearchResult(
 				"igdb", "112964", "Hades", "hades", "https://images.example/hades.jpg",
-				LocalDate.of(2020, 9, 17)));
+				LocalDate.of(2020, 9, 17), "Escape the underworld", List.of("Roguelike", "Action"),
+				List.of("PC", "Switch")));
 		when(gameRepository.saveAndFlush(any(Game.class))).thenAnswer(invocation -> withId(invocation.getArgument(0)));
 
 		ImportedGameResult result = externalGameImportService.importGame(
@@ -77,6 +79,9 @@ class ExternalGameImportServiceTests {
 		assertThat(saved.getSlug()).isEqualTo("hades");
 		assertThat(saved.getCoverUrl()).isEqualTo("https://images.example/hades.jpg");
 		assertThat(saved.getReleaseDate()).isEqualTo(LocalDate.of(2020, 9, 17));
+		assertThat(saved.getSummary()).isEqualTo("Escape the underworld");
+		assertThat(saved.getGenres()).containsExactly("Roguelike", "Action");
+		assertThat(saved.getPlatforms()).containsExactly("PC", "Switch");
 	}
 
 	@Test

@@ -37,7 +37,8 @@ class GameServiceTests {
 	void createSavesGame() {
 		CreateGameRequest request = new CreateGameRequest(
 				" IGDB ", " 123 ", " Chrono Trigger ", " chrono-trigger ", " https://img.example/cover.jpg ",
-				LocalDate.of(1995, 3, 11));
+				LocalDate.of(1995, 3, 11), " Time travel RPG ", List.of(" RPG ", "Adventure"),
+				List.of(" SNES ", "PC"));
 
 		when(gameRepository.existsByExternalProviderAndExternalId("igdb", "123")).thenReturn(false);
 		when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -56,6 +57,9 @@ class GameServiceTests {
 		assertThat(saved.getSlug()).isEqualTo("chrono-trigger");
 		assertThat(saved.getCoverUrl()).isEqualTo("https://img.example/cover.jpg");
 		assertThat(saved.getReleaseDate()).isEqualTo(LocalDate.of(1995, 3, 11));
+		assertThat(saved.getSummary()).isEqualTo("Time travel RPG");
+		assertThat(saved.getGenres()).containsExactly("RPG", "Adventure");
+		assertThat(saved.getPlatforms()).containsExactly("SNES", "PC");
 	}
 
 	@Test

@@ -2,6 +2,7 @@ package com.chmz31.checkpointd.game.dto;
 
 import com.chmz31.checkpointd.game.entity.Game;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public record GameResponse(
@@ -11,7 +12,10 @@ public record GameResponse(
 		String title,
 		String slug,
 		String coverUrl,
-		LocalDate releaseDate) {
+		LocalDate releaseDate,
+		String summary,
+		List<String> genres,
+		List<String> platforms) {
 
 	public static GameResponse from(Game game) {
 		return new GameResponse(
@@ -21,6 +25,9 @@ public record GameResponse(
 				game.getTitle(),
 				game.getSlug(),
 				game.getCoverUrl(),
-				game.getReleaseDate());
+				game.getReleaseDate(),
+				game.getSummary(),
+				List.copyOf(game.getGenres()),
+				List.copyOf(game.getPlatforms()));
 	}
 }

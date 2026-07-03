@@ -17,6 +17,11 @@ export function AddSearchResultToLibrary({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  function clearFeedback() {
+    setMessage(null);
+    setError(null);
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
@@ -44,7 +49,13 @@ export function AddSearchResultToLibrary({
     <form className="direct-add-form" onSubmit={submit}>
       <label>
         Status
-        <select value={status} onChange={(event) => setStatus(event.target.value as LibraryStatus)}>
+        <select
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value as LibraryStatus);
+            clearFeedback();
+          }}
+        >
           {libraryStatuses.map((libraryStatus) => (
             <option key={libraryStatus} value={libraryStatus}>
               {libraryStatus}
@@ -56,7 +67,10 @@ export function AddSearchResultToLibrary({
         Rating
         <input
           value={rating}
-          onChange={(event) => setRating(event.target.value)}
+          onChange={(event) => {
+            setRating(event.target.value);
+            clearFeedback();
+          }}
           min={1}
           max={10}
           type="number"
@@ -65,7 +79,14 @@ export function AddSearchResultToLibrary({
       </label>
       <label className="notes-field">
         Notes
-        <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} />
+        <textarea
+          value={notes}
+          onChange={(event) => {
+            setNotes(event.target.value);
+            clearFeedback();
+          }}
+          rows={3}
+        />
       </label>
       {message && <p className="success compact-message">{message}</p>}
       {error && <p className="error compact-message">{error}</p>}

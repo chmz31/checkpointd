@@ -40,6 +40,9 @@ public class GameService {
 		game.setSlug(cleanOptional(request.slug()));
 		game.setCoverUrl(cleanOptional(request.coverUrl()));
 		game.setReleaseDate(request.releaseDate());
+		game.setSummary(cleanOptional(request.summary()));
+		game.setGenres(request.genres());
+		game.setPlatforms(request.platforms());
 
 		return gameRepository.save(game);
 	}

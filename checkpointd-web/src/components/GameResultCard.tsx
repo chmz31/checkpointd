@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ExternalGameSearchResult } from '../types';
 import { AddSearchResultToLibrary } from './AddSearchResultToLibrary';
 import { CoverImage } from './CoverImage';
+import { GameMetadata } from './GameMetadata';
 
 export function GameResultCard({
   result,
@@ -21,6 +22,7 @@ export function GameResultCard({
           <p className="muted">
             {[result.slug, result.releaseDate].filter(Boolean).join(' | ') || result.provider}
           </p>
+          <GameMetadata summary={result.summary} genres={result.genres} platforms={result.platforms} />
         </div>
         <div className="result-actions">
           <button onClick={() => setAdding((current) => !current)}>

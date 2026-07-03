@@ -51,6 +51,9 @@ public class ExternalGameImportService {
 		game.setSlug(externalGame.slug());
 		game.setCoverUrl(externalGame.coverUrl());
 		game.setReleaseDate(externalGame.releaseDate());
+		game.setSummary(externalGame.summary());
+		game.setGenres(externalGame.genres());
+		game.setPlatforms(externalGame.platforms());
 
 		try {
 			return new ImportedGameResult(gameRepository.saveAndFlush(game), true);

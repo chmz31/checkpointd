@@ -66,4 +66,27 @@ class ExternalGameSearchServiceTests {
 				.isInstanceOf(ServiceUnavailableException.class)
 				.hasMessage("External game provider is not configured");
 	}
+
+	@Test
+	void igdbClientMapsMetadata() {
+		IgdbClient client = new IgdbClient(RestClient.builder(), new TwitchTokenClient(
+				RestClient.builder(), "client-id", "secret", "https://token.example"), "https://igdb.example");
+
+		List<ExternalGameSearchResult> results = client.normalize(new Map<?, ?>[] {
+				Map.of(
+						"id", 123,
+						"name", "Chrono Trigger",
+						"slug", "chrono-trigger",
+						"summary", "Time travel RPG",
+						"genres", List.of(Map.of("name", "RPG")),
+						"platforms", List.of(Map.of("name", "SNES")),
+						"first_release_date", 795225600)
+		});
+
+		assertThat(results).hasSize(1);
+		ExternalGameSearchResult result = results.getFirst();
+		assertThat(result.summary()).isEqualTo("Time travel RPG");
+		assertThat(result.genres()).containsExactly("RPG");
+		assertThat(result.platforms()).containsExactly("SNES");
+	}
 }
