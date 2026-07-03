@@ -174,6 +174,38 @@ class LibraryControllerTests {
 	}
 
 	@Test
+	void statsRequiresAuthentication() throws Exception {
+		mockMvc.perform(get("/api/v1/library/stats"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void statsReturnsCurrentUsersCounts() throws Exception {
+		when(libraryEntryRepository.countByUserId(USER_ID)).thenReturn(4L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.WISHLIST)).thenReturn(1L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.BACKLOG)).thenReturn(0L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.PLAYING)).thenReturn(1L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.COMPLETED)).thenReturn(2L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.DROPPED)).thenReturn(0L);
+		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.PAUSED)).thenReturn(0L);
+		when(libraryEntryRepository.countByUserIdAndRatingIsNotNull(USER_ID)).thenReturn(2L);
+		when(libraryEntryRepository.averageRatingByUserId(USER_ID)).thenReturn(8.5);
+
+		mockMvc.perform(get("/api/v1/library/stats")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalEntries").value(4))
+				.andExpect(jsonPath("$.wishlistCount").value(1))
+				.andExpect(jsonPath("$.backlogCount").value(0))
+				.andExpect(jsonPath("$.playingCount").value(1))
+				.andExpect(jsonPath("$.completedCount").value(2))
+				.andExpect(jsonPath("$.droppedCount").value(0))
+				.andExpect(jsonPath("$.pausedCount").value(0))
+				.andExpect(jsonPath("$.ratedCount").value(2))
+				.andExpect(jsonPath("$.averageRating").value(8.5));
+	}
+
+	@Test
 	void updateReturnsUpdatedEntry() throws Exception {
 		LibraryEntry entry = entry();
 

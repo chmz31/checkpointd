@@ -58,3 +58,15 @@ export type LibraryEntryUpdateInput = {
   rating?: number;
   notes?: string;
 };
+
+export type LibraryStats = {
+  totalEntries: number;
+  wishlistCount: number;
+  backlogCount: number;
+  playingCount: number;
+  completedCount: number;
+  droppedCount: number;
+  pausedCount: number;
+  ratedCount: number;
+  averageRating: number | null;
+};

@@ -2,6 +2,7 @@ package com.chmz31.checkpointd.library.controller;
 
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
 import com.chmz31.checkpointd.library.dto.LibraryEntryResponse;
+import com.chmz31.checkpointd.library.dto.LibraryStatsResponse;
 import com.chmz31.checkpointd.library.dto.UpdateLibraryEntryRequest;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.service.LibraryService;
@@ -49,6 +50,11 @@ public class LibraryController {
 	@GetMapping("/{entryId}")
 	LibraryEntryResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID entryId) {
 		return LibraryEntryResponse.from(libraryService.get(currentUserId(jwt), entryId));
+	}
+
+	@GetMapping("/stats")
+	LibraryStatsResponse stats(@AuthenticationPrincipal Jwt jwt) {
+		return libraryService.stats(currentUserId(jwt));
 	}
 
 	@PatchMapping("/{entryId}")

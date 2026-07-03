@@ -5,6 +5,7 @@ import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
+import com.chmz31.checkpointd.library.dto.LibraryStatsResponse;
 import com.chmz31.checkpointd.library.dto.UpdateLibraryEntryRequest;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
@@ -63,6 +64,20 @@ public class LibraryService {
 	@Transactional(readOnly = true)
 	public LibraryEntry get(UUID userId, UUID entryId) {
 		return getUserEntry(userId, entryId);
+	}
+
+	@Transactional(readOnly = true)
+	public LibraryStatsResponse stats(UUID userId) {
+		return new LibraryStatsResponse(
+				libraryEntryRepository.countByUserId(userId),
+				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.WISHLIST),
+				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.BACKLOG),
+				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.PLAYING),
+				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.COMPLETED),
+				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.DROPPED),
+				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.PAUSED),
+				libraryEntryRepository.countByUserIdAndRatingIsNotNull(userId),
+				libraryEntryRepository.averageRatingByUserId(userId));
 	}
 
 	@Transactional

@@ -7,10 +7,21 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface LibraryEntryRepository extends JpaRepository<LibraryEntry, UUID> {
 
 	boolean existsByUserIdAndGameId(UUID userId, UUID gameId);
+
+	long countByUserId(UUID userId);
+
+	long countByUserIdAndStatus(UUID userId, LibraryStatus status);
+
+	long countByUserIdAndRatingIsNotNull(UUID userId);
+
+	@Query("select avg(entry.rating) from LibraryEntry entry where entry.user.id = :userId and entry.rating is not null")
+	Double averageRatingByUserId(@Param("userId") UUID userId);
 
 	@EntityGraph(attributePaths = "game")
 	Optional<LibraryEntry> findByIdAndUserId(UUID id, UUID userId);
