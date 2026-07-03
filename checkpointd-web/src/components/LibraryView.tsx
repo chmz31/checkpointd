@@ -5,14 +5,32 @@ import type { LibraryEntry, LibraryStats, LibraryStatus } from '../types';
 import { LibraryEntryCard } from './LibraryEntryCard';
 import { LibraryStatsPanel } from './LibraryStatsPanel';
 
+type LibrarySortOption = 'updatedDesc' | 'titleAsc' | 'ratingDesc' | 'ratingAsc' | 'status';
+
 export function LibraryView({ refreshKey }: { refreshKey: number }) {
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
   const [stats, setStats] = useState<LibraryStats | null>(null);
   const [statusFilter, setStatusFilter] = useState<LibraryStatus | 'ALL'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<LibrarySortOption>('updatedDesc');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const groupedCount = useMemo(() => entries.length, [entries]);
+  const visibleEntries = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const searchedEntries = query
+      ? entries.filter((entry) => {
+          const title = entry.gameTitle.toLowerCase();
+          const notes = entry.notes?.toLowerCase() || '';
+
+          return title.includes(query) || notes.includes(query);
+        })
+      : entries;
+
+    return [...searchedEntries].sort((first, second) => compareEntries(first, second, sortOption));
+  }, [entries, searchQuery, sortOption]);
+
+  const groupedCount = useMemo(() => visibleEntries.length, [visibleEntries]);
 
   async function loadLibrary() {
     setLoading(true);
@@ -89,11 +107,37 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
         </div>
       </div>
       <LibraryStatsPanel stats={stats} />
+      <div className="library-controls">
+        <label>
+          Search
+          <input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Title or notes"
+          />
+        </label>
+        <label>
+          Sort
+          <select
+            value={sortOption}
+            onChange={(event) => setSortOption(event.target.value as LibrarySortOption)}
+          >
+            <option value="updatedDesc">Recently updated</option>
+            <option value="titleAsc">Title A-Z</option>
+            <option value="ratingDesc">Rating high-low</option>
+            <option value="ratingAsc">Rating low-high</option>
+            <option value="status">Status</option>
+          </select>
+        </label>
+      </div>
       {error && <p className="error">{error}</p>}
       {loading && <p className="muted">Loading...</p>}
       {!loading && entries.length === 0 && <p className="empty-state">Your library is empty.</p>}
+      {!loading && entries.length > 0 && visibleEntries.length === 0 && (
+        <p className="empty-state">No entries match your search.</p>
+      )}
       <div className="library-list">
-        {entries.map((entry) => (
+        {visibleEntries.map((entry) => (
           <LibraryEntryCard
             key={entry.id}
             entry={entry}
@@ -104,4 +148,24 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
       </div>
     </section>
   );
+}
+
+function compareEntries(first: LibraryEntry, second: LibraryEntry, sortOption: LibrarySortOption) {
+  switch (sortOption) {
+    case 'titleAsc':
+      return first.gameTitle.localeCompare(second.gameTitle);
+    case 'ratingDesc':
+      return ratingValue(second.rating, -1) - ratingValue(first.rating, -1);
+    case 'ratingAsc':
+      return ratingValue(first.rating, Number.MAX_SAFE_INTEGER) - ratingValue(second.rating, Number.MAX_SAFE_INTEGER);
+    case 'status':
+      return first.status.localeCompare(second.status) || first.gameTitle.localeCompare(second.gameTitle);
+    case 'updatedDesc':
+    default:
+      return new Date(second.updatedAt).getTime() - new Date(first.updatedAt).getTime();
+  }
+}
+
+function ratingValue(rating: number | null | undefined, fallback: number) {
+  return rating == null ? fallback : rating;
 }
