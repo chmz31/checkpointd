@@ -1,10 +1,15 @@
 import { FormEvent, useState } from 'react';
 import { api } from '../api';
 import { libraryStatuses } from '../constants';
-import type { Game, LibraryStatus } from '../types';
-import { CoverImage } from './CoverImage';
+import type { ExternalGameSearchResult, LibraryStatus } from '../types';
 
-export function AddToLibraryForm({ game, onAdded }: { game: Game; onAdded: () => void }) {
+export function AddSearchResultToLibrary({
+  result,
+  onAdded,
+}: {
+  result: ExternalGameSearchResult;
+  onAdded: () => void;
+}) {
   const [status, setStatus] = useState<LibraryStatus>('BACKLOG');
   const [rating, setRating] = useState('');
   const [notes, setNotes] = useState('');
@@ -19,6 +24,7 @@ export function AddToLibraryForm({ game, onAdded }: { game: Game; onAdded: () =>
     setError(null);
 
     try {
+      const game = await api.importExternalGame(result.provider, result.externalId);
       await api.addLibraryEntry({
         gameId: game.id,
         status,
@@ -35,14 +41,7 @@ export function AddToLibraryForm({ game, onAdded }: { game: Game; onAdded: () =>
   }
 
   return (
-    <form className="stack" onSubmit={submit}>
-      <article className="game-row selected">
-        <CoverImage src={game.coverUrl} title={game.title} />
-        <div>
-          <h3>{game.title}</h3>
-          <p className="muted">{[game.slug, game.releaseDate].filter(Boolean).join(' | ')}</p>
-        </div>
-      </article>
+    <form className="direct-add-form" onSubmit={submit}>
       <label>
         Status
         <select value={status} onChange={(event) => setStatus(event.target.value as LibraryStatus)}>
@@ -64,15 +63,17 @@ export function AddToLibraryForm({ game, onAdded }: { game: Game; onAdded: () =>
           placeholder="1-10"
         />
       </label>
-      <label>
+      <label className="notes-field">
         Notes
-        <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={4} />
+        <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} />
       </label>
-      {message && <p className="success">{message}</p>}
-      {error && <p className="error">{error}</p>}
-      <button type="submit" disabled={loading}>
-        {loading ? 'Adding...' : 'Add to Library'}
-      </button>
+      {message && <p className="success compact-message">{message}</p>}
+      {error && <p className="error compact-message">{error}</p>}
+      <div className="inline-actions direct-add-actions">
+        <button type="submit" disabled={loading}>
+          {loading ? 'Adding...' : 'Add'}
+        </button>
+      </div>
     </form>
   );
 }
