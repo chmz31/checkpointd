@@ -21,6 +21,25 @@ Spring Boot backend API for checkpointd.
 - External game import/cache
 - User library add/list/filter/get/update/delete
 
+## Game Metadata
+
+checkpointd stores basic game metadata:
+
+- `summary`
+- `genres`
+- `platforms`
+
+Metadata is included in:
+
+- local game responses
+- external game search results
+- imported game responses
+- library entry responses
+
+Flyway migration `V3__add_game_metadata.sql` adds `games.summary`, `game_genres`, and `game_platforms`. Genres and platforms are simple ordered string collections, not full domain entities.
+
+Metadata is retrieved from IGDB during external search/import and persisted for newly imported/cached games. Existing cached games are not backfilled automatically.
+
 ## Local Development
 
 Start PostgreSQL from the repository root:

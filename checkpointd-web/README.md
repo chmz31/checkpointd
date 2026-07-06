@@ -7,9 +7,12 @@ React + TypeScript + Vite frontend for checkpointd.
 - Login and registration
 - JWT token storage in `localStorage`
 - External game search through the checkpointd backend
-- External game import
-- Add imported games to the authenticated user's library
-- Library list, status filter, edit, and delete
+- Direct add from external search results to the authenticated user's library
+- Metadata chips for genres and platforms
+- Short game summary previews
+- Library stats
+- Library list with status filter, local search, and sorting
+- Library entry edit and delete
 
 ## Local Development
 
