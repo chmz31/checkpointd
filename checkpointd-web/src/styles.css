@@ -437,6 +437,104 @@ h3 {
   text-decoration: none;
 }
 
+.detail-page {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #2c3b4b;
+  border-radius: 8px;
+  background: #0f1721;
+}
+
+.detail-backdrop {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  filter: blur(22px);
+  opacity: 0.24;
+  transform: scale(1.08);
+}
+
+.detail-content {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: linear-gradient(90deg, rgba(15, 23, 33, 0.96), rgba(15, 23, 33, 0.82));
+}
+
+.detail-poster .cover {
+  width: 100%;
+  max-width: 260px;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.36);
+}
+
+.detail-main {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.detail-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.detail-heading h2 {
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1;
+}
+
+.detail-actions {
+  justify-content: flex-end;
+}
+
+.detail-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.65rem;
+}
+
+.detail-fact {
+  display: grid;
+  gap: 0.2rem;
+  border: 1px solid #253548;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: rgba(15, 23, 33, 0.8);
+}
+
+.detail-fact span,
+.detail-chip-group > p {
+  margin-bottom: 0;
+  font-size: 0.82rem;
+}
+
+.detail-fact strong {
+  color: #f8fbff;
+}
+
+.detail-section {
+  display: grid;
+  gap: 0.6rem;
+  border-top: 1px solid #253548;
+  padding-top: 1rem;
+}
+
+.detail-section p {
+  margin-bottom: 0;
+  color: #c2cfdb;
+  line-height: 1.6;
+}
+
+.detail-chip-group {
+  display: grid;
+  gap: 0.4rem;
+}
+
 @media (max-width: 820px) {
   .section-heading {
     align-items: flex-start;
@@ -473,5 +571,17 @@ h3 {
 
   .compact-select {
     width: 100%;
+  }
+
+  .detail-content {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-heading {
+    flex-direction: column;
+  }
+
+  .detail-actions {
+    justify-content: flex-start;
   }
 }
