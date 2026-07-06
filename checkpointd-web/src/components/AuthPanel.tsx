@@ -1,14 +1,13 @@
 import { FormEvent, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 import type { AuthMode } from '../constants';
 
 export function AuthPanel({
   mode,
-  setMode,
   onToken,
 }: {
   mode: AuthMode;
-  setMode: (mode: AuthMode) => void;
   onToken: (token: string) => void;
 }) {
   const [email, setEmail] = useState('');
@@ -40,13 +39,9 @@ export function AuthPanel({
       <form className="panel auth-panel" onSubmit={submit}>
         <div className="section-heading">
           <h2>{mode === 'login' ? 'Login' : 'Create account'}</h2>
-          <button
-            type="button"
-            className="link-button"
-            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-          >
+          <Link className="link-button" to={mode === 'login' ? '/register' : '/login'}>
             {mode === 'login' ? 'Register' : 'Login'}
-          </button>
+          </Link>
         </div>
         <label>
           Email
