@@ -15,6 +15,7 @@ public record LibraryEntryResponse(
 		String gameSummary,
 		List<String> gameGenres,
 		List<String> gamePlatforms,
+		boolean gameMetadataSyncAvailable,
 		LibraryStatus status,
 		Integer rating,
 		String notes,
@@ -33,6 +34,7 @@ public record LibraryEntryResponse(
 				entry.getGame().getSummary(),
 				List.copyOf(entry.getGame().getGenres()),
 				List.copyOf(entry.getGame().getPlatforms()),
+				canSyncMetadata(entry),
 				entry.getStatus(),
 				entry.getRating(),
 				entry.getNotes(),
@@ -40,5 +42,13 @@ public record LibraryEntryResponse(
 				entry.getCompletedAt(),
 				entry.getCreatedAt(),
 				entry.getUpdatedAt());
+	}
+
+	private static boolean canSyncMetadata(LibraryEntry entry) {
+		String provider = entry.getGame().getExternalProvider();
+		String externalId = entry.getGame().getExternalId();
+
+		return provider != null && provider.equalsIgnoreCase("igdb")
+				&& externalId != null && !externalId.isBlank();
 	}
 }

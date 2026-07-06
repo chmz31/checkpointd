@@ -47,14 +47,14 @@ public class LibraryController {
 				.toList();
 	}
 
-	@GetMapping("/{entryId}")
-	LibraryEntryResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID entryId) {
-		return LibraryEntryResponse.from(libraryService.get(currentUserId(jwt), entryId));
-	}
-
 	@GetMapping("/stats")
 	LibraryStatsResponse stats(@AuthenticationPrincipal Jwt jwt) {
 		return libraryService.stats(currentUserId(jwt));
+	}
+
+	@GetMapping("/{entryId}")
+	LibraryEntryResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID entryId) {
+		return LibraryEntryResponse.from(libraryService.get(currentUserId(jwt), entryId));
 	}
 
 	@PatchMapping("/{entryId}")
@@ -63,6 +63,11 @@ public class LibraryController {
 			@PathVariable UUID entryId,
 			@Valid @RequestBody UpdateLibraryEntryRequest request) {
 		return LibraryEntryResponse.from(libraryService.update(currentUserId(jwt), entryId, request));
+	}
+
+	@PostMapping("/{entryId}/sync-metadata")
+	LibraryEntryResponse syncMetadata(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID entryId) {
+		return LibraryEntryResponse.from(libraryService.syncMetadata(currentUserId(jwt), entryId));
 	}
 
 	@DeleteMapping("/{entryId}")

@@ -19,6 +19,7 @@ export function LibraryEntryCard({
   const [rating, setRating] = useState(entry.rating ? String(entry.rating) : '');
   const [notes, setNotes] = useState(entry.notes || '');
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +64,22 @@ export function LibraryEntryCard({
     setError(null);
   }
 
+  async function syncMetadata() {
+    setSyncing(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const updatedEntry = await api.syncLibraryEntryMetadata(entry.id);
+      onUpdated(updatedEntry);
+      setMessage('Metadata refreshed.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not refresh metadata');
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <article className="library-entry-card">
       <div className="library-entry">
@@ -82,10 +99,16 @@ export function LibraryEntryCard({
           {message && <p className="success compact-message">{message}</p>}
         </div>
         <div className="entry-actions">
+          {entry.gameMetadataSyncAvailable && (
+            <button className="button-ghost button-small" onClick={syncMetadata} disabled={syncing || loading}>
+              {syncing ? 'Syncing...' : 'Sync'}
+            </button>
+          )}
           <button onClick={() => setEditing((current) => !current)}>{editing ? 'Close' : 'Edit'}</button>
           <button onClick={onDelete}>Delete</button>
         </div>
       </div>
+      {error && !editing && <p className="error compact-message card-message">{error}</p>}
 
       {editing && (
         <form className="edit-form" onSubmit={save}>

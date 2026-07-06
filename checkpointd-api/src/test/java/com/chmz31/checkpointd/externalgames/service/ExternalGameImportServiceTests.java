@@ -140,6 +140,57 @@ class ExternalGameImportServiceTests {
 		assertThat(result.created()).isFalse();
 	}
 
+	@Test
+	void syncMetadataUpdatesExistingGame() {
+		Game game = game();
+		when(igdbClient.fetchById("112964")).thenReturn(new ExternalGameSearchResult(
+				"igdb", "112964", "Hades II", "hades-ii", "https://images.example/hades-ii.jpg",
+				LocalDate.of(2024, 5, 6), "Return to the underworld", List.of("Action", "Roguelike"),
+				List.of("PC")));
+		when(gameRepository.save(game)).thenReturn(game);
+
+		Game synced = externalGameImportService.syncMetadata(game);
+
+		assertThat(synced).isSameAs(game);
+		assertThat(game.getTitle()).isEqualTo("Hades II");
+		assertThat(game.getSlug()).isEqualTo("hades-ii");
+		assertThat(game.getCoverUrl()).isEqualTo("https://images.example/hades-ii.jpg");
+		assertThat(game.getReleaseDate()).isEqualTo(LocalDate.of(2024, 5, 6));
+		assertThat(game.getSummary()).isEqualTo("Return to the underworld");
+		assertThat(game.getGenres()).containsExactly("Action", "Roguelike");
+		assertThat(game.getPlatforms()).containsExactly("PC");
+	}
+
+	@Test
+	void syncMetadataRejectsGameWithoutExternalIdentity() {
+		Game game = new Game("Local Game");
+
+		assertThatThrownBy(() -> externalGameImportService.syncMetadata(game))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessage("Game cannot be synced without external identity");
+	}
+
+	@Test
+	void syncMetadataRejectsUnsupportedProvider() {
+		Game game = game();
+		game.setExternalProvider("steam");
+
+		assertThatThrownBy(() -> externalGameImportService.syncMetadata(game))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessage("Unsupported external game provider");
+	}
+
+	@Test
+	void syncMetadataPropagatesUpstreamError() {
+		Game game = game();
+		when(igdbClient.fetchById("112964"))
+				.thenThrow(new ServiceUnavailableException("External game provider is unavailable"));
+
+		assertThatThrownBy(() -> externalGameImportService.syncMetadata(game))
+				.isInstanceOf(ServiceUnavailableException.class)
+				.hasMessage("External game provider is unavailable");
+	}
+
 	private Game game() {
 		Game game = new Game("Hades");
 		game.setExternalProvider("igdb");

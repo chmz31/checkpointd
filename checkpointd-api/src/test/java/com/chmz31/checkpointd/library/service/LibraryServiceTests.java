@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
+import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
@@ -47,6 +48,9 @@ class LibraryServiceTests {
 
 	@Mock
 	private UserRepository userRepository;
+
+	@Mock
+	private ExternalGameImportService externalGameImportService;
 
 	@InjectMocks
 	private LibraryService libraryService;
@@ -176,6 +180,37 @@ class LibraryServiceTests {
 		assertThat(entry.getRating()).isEqualTo(10);
 		assertThat(entry.getNotes()).isEqualTo("Done");
 		assertThat(entry.getCompletedAt()).isEqualTo(Instant.parse("2026-02-01T00:00:00Z"));
+	}
+
+	@Test
+	void syncMetadataRefreshesCurrentUsersEntryGame() {
+		LibraryEntry entry = entry();
+		Game game = entry.getGame();
+
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
+		when(externalGameImportService.syncMetadata(game)).thenAnswer(invocation -> {
+			game.setSummary("Updated summary");
+			game.setGenres(List.of("RPG"));
+			game.setPlatforms(List.of("PC"));
+			return game;
+		});
+
+		LibraryEntry synced = libraryService.syncMetadata(USER_ID, ENTRY_ID);
+
+		assertThat(synced).isSameAs(entry);
+		assertThat(synced.getGame().getSummary()).isEqualTo("Updated summary");
+		verify(externalGameImportService).syncMetadata(game);
+	}
+
+	@Test
+	void syncMetadataRejectsMissingOrOtherUsersEntry() {
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> libraryService.syncMetadata(USER_ID, ENTRY_ID))
+				.isInstanceOf(ResourceNotFoundException.class)
+				.hasMessage("Library entry not found");
+
+		verify(externalGameImportService, never()).syncMetadata(any(Game.class));
 	}
 
 	@Test
