@@ -9,12 +9,16 @@ checkpointd is a video game backlog and library app inspired by Letterboxd, IMDb
 - Register and login with JWT authentication.
 - Fetch the current authenticated user.
 - Search external games through the backend using IGDB.
-- Import external games into the local catalog/cache.
+- Import external games into the local catalog/cache with basic metadata.
+- Store and display game summaries, genres, and platforms.
 - Create and browse local catalog games.
 - Add games to a personal library.
 - List, filter, fetch, update, and delete library entries.
-- Track library status, rating, and notes.
-- Use the React frontend for login/register, search, import, add-to-library, library filtering, editing, and deletion.
+- Track library status, rating, notes, and library stats.
+- Use the React frontend for login/register, external search, direct add-to-library, library stats, filtering, search, sorting, editing, and deletion.
+- Show metadata chips and short summary previews in search results and library cards when metadata is available.
+
+Metadata appears for newly imported/cached games. Existing cached games are not automatically backfilled with IGDB metadata yet.
 
 ## Tech Stack
 
@@ -186,6 +190,8 @@ Local games:
 - `GET /api/v1/games`
 - `GET /api/v1/games/{gameId}`
 
+Local game responses include core fields plus optional `summary`, `genres`, and `platforms`.
+
 Library:
 
 - `POST /api/v1/library`
@@ -193,6 +199,8 @@ Library:
 - `GET /api/v1/library/{entryId}`
 - `PATCH /api/v1/library/{entryId}`
 - `DELETE /api/v1/library/{entryId}`
+
+Library entry responses include the tracked entry fields plus selected game metadata for card display.
 
 ## CI
 
@@ -209,8 +217,10 @@ Library:
 
 ## Roadmap
 
-- UI polish
-- Library stats
+- Ongoing UI polish
+- Re-sync or backfill metadata for existing cached games
+- Richer game detail pages
+- Pagination and server-side library search
 - Public profiles and lists
 - Social features
 - Crossplay data
