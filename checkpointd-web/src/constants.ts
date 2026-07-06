@@ -9,5 +9,4 @@ export const libraryStatuses: LibraryStatus[] = [
   'PAUSED',
 ];
 
-export type AppView = 'search' | 'library';
 export type AuthMode = 'login' | 'register';

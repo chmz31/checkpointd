@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { api, clearStoredToken, getStoredToken, setStoredToken } from './api';
 import { AuthPanel } from './components/AuthPanel';
-import { Header } from './components/Header';
+import { AppShell } from './components/AppShell';
 import { LibraryView } from './components/LibraryView';
 import { SearchView } from './components/SearchView';
-import type { AppView, AuthMode } from './constants';
 import type { CurrentUser } from './types';
 
 export default function App() {
   const [token, setToken] = useState(getStoredToken());
   const [user, setUser] = useState<CurrentUser | null>(null);
-  const [authMode, setAuthMode] = useState<AuthMode>('login');
-  const [view, setView] = useState<AppView>('search');
   const [libraryRefreshKey, setLibraryRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -38,23 +36,52 @@ export default function App() {
     clearStoredToken();
     setToken(null);
     setUser(null);
-    setView('search');
   }
 
   return (
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={<Navigate to={token ? '/library' : '/login'} replace />}
+        />
+        <Route
+          path="/login"
+          element={
+            token ? <Navigate to="/library" replace /> : <AuthPage mode="login" onToken={handleToken} />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            token ? <Navigate to="/library" replace /> : <AuthPage mode="register" onToken={handleToken} />
+          }
+        />
+        <Route
+          element={
+            token ? (
+              <AppShell user={user} onLogout={logout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route
+            path="/search"
+            element={<SearchView onLibraryChange={() => setLibraryRefreshKey((key) => key + 1)} />}
+          />
+          <Route path="/library" element={<LibraryView refreshKey={libraryRefreshKey} />} />
+        </Route>
+        <Route path="*" element={<Navigate to={token ? '/library' : '/'} replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function AuthPage({ mode, onToken }: { mode: 'login' | 'register'; onToken: (token: string) => void }) {
+  return (
     <main className="app-shell">
-      <Header user={user} view={view} setView={setView} onLogout={logout} />
-      {!token ? (
-        <AuthPanel mode={authMode} setMode={setAuthMode} onToken={handleToken} />
-      ) : (
-        <section className="workspace">
-          {view === 'search' ? (
-            <SearchView onLibraryChange={() => setLibraryRefreshKey((key) => key + 1)} />
-          ) : (
-            <LibraryView refreshKey={libraryRefreshKey} />
-          )}
-        </section>
-      )}
+      <AuthPanel mode={mode} onToken={onToken} />
     </main>
   );
 }
