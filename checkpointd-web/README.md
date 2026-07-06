@@ -6,14 +6,24 @@ React + TypeScript + Vite frontend for checkpointd.
 
 - Login and registration
 - JWT token storage in `localStorage`
-- Routed authenticated pages for Search and Library
+- React Router routes for auth, search, library, and library entry details
 - External game search through the checkpointd backend
 - Direct add from external search results to the authenticated user's library
 - Metadata chips for genres and platforms
 - Short game summary previews
 - Library stats
 - Library list with status filter, local search, and sorting
-- Library entry edit and delete
+- Library entry detail page with full metadata, tracking facts, notes, sync, edit, and delete
+
+## Routes
+
+- `/login` shows the login form.
+- `/register` shows the registration form.
+- `/search` is an authenticated page for external game search and direct add-to-library.
+- `/library` is an authenticated page for the current user's library, stats, search, filters, and sorting.
+- `/library/:entryId` is an authenticated detail page for one of the current user's library entries.
+
+`/library/:entryId` is not a public game page; it is scoped to the authenticated user's tracked entry.
 
 ## Local Development
 

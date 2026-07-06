@@ -26,9 +26,15 @@ External game flow:
 
 ## Frontend
 
-`checkpointd-web/` is a React + TypeScript + Vite app. It stores the JWT access token in `localStorage` and calls the checkpointd API with Bearer authentication.
+`checkpointd-web/` is a React + TypeScript + Vite app using React Router. It stores the JWT access token in `localStorage` and calls the checkpointd API with Bearer authentication.
 
-The current frontend supports auth, external game search, direct add-to-library, metadata chips, summary previews, library stats, library filtering, local search, sorting, editing, and deletion.
+The current frontend supports auth, external game search, direct add-to-library, metadata chips, summary previews, library stats, library filtering, local search, sorting, editing, deletion, metadata sync, and library entry detail pages.
+
+Frontend routing:
+
+- `/login` and `/register` are unauthenticated auth routes.
+- `/search`, `/library`, and `/library/:entryId` are authenticated routes rendered inside the app shell.
+- `/library/:entryId` is a protected user-library entry detail page backed by the library entry API. It is not a public game page.
 
 ## Data
 
@@ -43,6 +49,8 @@ Game metadata is stored simply:
 Genres and platforms are ordered string collections owned by a game. checkpointd does not currently model genres or platforms as full entities.
 
 Metadata is captured for newly imported/cached games. Existing cached games are not automatically re-synced or backfilled yet.
+
+Future frontend/API work may add public game pages, richer game detail metadata and media, reviews, lists, and social features.
 
 ## CI
 
