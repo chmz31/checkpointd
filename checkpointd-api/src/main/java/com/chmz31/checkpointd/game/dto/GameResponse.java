@@ -15,7 +15,10 @@ public record GameResponse(
 		LocalDate releaseDate,
 		String summary,
 		List<String> genres,
-		List<String> platforms) {
+		List<String> platforms,
+		List<String> screenshotUrls,
+		List<String> artworkUrls,
+		String backdropUrl) {
 
 	public static GameResponse from(Game game) {
 		return new GameResponse(
@@ -28,6 +31,9 @@ public record GameResponse(
 				game.getReleaseDate(),
 				game.getSummary(),
 				List.copyOf(game.getGenres()),
-				List.copyOf(game.getPlatforms()));
+				List.copyOf(game.getPlatforms()),
+				List.copyOf(game.getScreenshotUrls()),
+				List.copyOf(game.getArtworkUrls()),
+				game.getBackdropUrl());
 	}
 }

@@ -29,6 +29,9 @@ export type ExternalGameSearchResult = {
   summary?: string | null;
   genres: string[];
   platforms: string[];
+  screenshotUrls: string[];
+  artworkUrls: string[];
+  backdropUrl?: string | null;
 };
 
 export type Game = {
@@ -42,6 +45,9 @@ export type Game = {
   summary?: string | null;
   genres: string[];
   platforms: string[];
+  screenshotUrls: string[];
+  artworkUrls: string[];
+  backdropUrl?: string | null;
 };
 
 export type LibraryEntry = {
@@ -53,6 +59,9 @@ export type LibraryEntry = {
   gameSummary?: string | null;
   gameGenres: string[];
   gamePlatforms: string[];
+  gameScreenshotUrls: string[];
+  gameArtworkUrls: string[];
+  gameBackdropUrl?: string | null;
   gameMetadataSyncAvailable: boolean;
   status: LibraryStatus;
   rating?: number | null;

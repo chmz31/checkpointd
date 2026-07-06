@@ -61,7 +61,8 @@ class ExternalGameImportServiceTests {
 		when(igdbClient.fetchById("112964")).thenReturn(new ExternalGameSearchResult(
 				"igdb", "112964", "Hades", "hades", "https://images.example/hades.jpg",
 				LocalDate.of(2020, 9, 17), "Escape the underworld", List.of("Roguelike", "Action"),
-				List.of("PC", "Switch")));
+				List.of("PC", "Switch"), List.of("https://images.example/screenshot.jpg"),
+				List.of("https://images.example/artwork.jpg"), "https://images.example/artwork.jpg"));
 		when(gameRepository.saveAndFlush(any(Game.class))).thenAnswer(invocation -> withId(invocation.getArgument(0)));
 
 		ImportedGameResult result = externalGameImportService.importGame(
@@ -82,6 +83,9 @@ class ExternalGameImportServiceTests {
 		assertThat(saved.getSummary()).isEqualTo("Escape the underworld");
 		assertThat(saved.getGenres()).containsExactly("Roguelike", "Action");
 		assertThat(saved.getPlatforms()).containsExactly("PC", "Switch");
+		assertThat(saved.getScreenshotUrls()).containsExactly("https://images.example/screenshot.jpg");
+		assertThat(saved.getArtworkUrls()).containsExactly("https://images.example/artwork.jpg");
+		assertThat(saved.getBackdropUrl()).isEqualTo("https://images.example/artwork.jpg");
 	}
 
 	@Test
@@ -146,7 +150,8 @@ class ExternalGameImportServiceTests {
 		when(igdbClient.fetchById("112964")).thenReturn(new ExternalGameSearchResult(
 				"igdb", "112964", "Hades II", "hades-ii", "https://images.example/hades-ii.jpg",
 				LocalDate.of(2024, 5, 6), "Return to the underworld", List.of("Action", "Roguelike"),
-				List.of("PC")));
+				List.of("PC"), List.of("https://images.example/new-shot.jpg"),
+				List.of("https://images.example/new-art.jpg"), "https://images.example/new-art.jpg"));
 		when(gameRepository.save(game)).thenReturn(game);
 
 		Game synced = externalGameImportService.syncMetadata(game);
@@ -159,6 +164,9 @@ class ExternalGameImportServiceTests {
 		assertThat(game.getSummary()).isEqualTo("Return to the underworld");
 		assertThat(game.getGenres()).containsExactly("Action", "Roguelike");
 		assertThat(game.getPlatforms()).containsExactly("PC");
+		assertThat(game.getScreenshotUrls()).containsExactly("https://images.example/new-shot.jpg");
+		assertThat(game.getArtworkUrls()).containsExactly("https://images.example/new-art.jpg");
+		assertThat(game.getBackdropUrl()).isEqualTo("https://images.example/new-art.jpg");
 	}
 
 	@Test

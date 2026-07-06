@@ -85,13 +85,19 @@ export function LibraryEntryDetailsPage() {
     );
   }
 
+  const backdropUrl = entry.gameBackdropUrl || entry.gameCoverUrl;
+  const mediaItems = [
+    ...entry.gameArtworkUrls.map((url) => ({ kind: 'Artwork', url })),
+    ...entry.gameScreenshotUrls.map((url) => ({ kind: 'Screenshot', url })),
+  ].slice(0, 12);
+
   return (
     <article className="detail-page">
-      {entry.gameCoverUrl && (
+      {backdropUrl && (
         <div
           className="detail-backdrop"
           aria-hidden="true"
-          style={{ backgroundImage: `url(${entry.gameCoverUrl})` }}
+          style={{ backgroundImage: `url(${backdropUrl})` }}
         />
       )}
       <div className="detail-content">
@@ -151,6 +157,20 @@ export function LibraryEntryDetailsPage() {
               <h3>Metadata</h3>
               {entry.gameGenres.length > 0 && <ChipGroup label="Genres" values={entry.gameGenres} />}
               {entry.gamePlatforms.length > 0 && <ChipGroup label="Platforms" values={entry.gamePlatforms} />}
+            </section>
+          )}
+
+          {mediaItems.length > 0 && (
+            <section className="detail-section">
+              <h3>Media</h3>
+              <div className="media-grid">
+                {mediaItems.map((item, index) => (
+                  <figure className="media-tile" key={`${item.kind}-${item.url}-${index}`}>
+                    <img src={item.url} alt={`${entry.gameTitle} ${item.kind.toLowerCase()}`} loading="lazy" />
+                    <figcaption>{item.kind}</figcaption>
+                  </figure>
+                ))}
+              </div>
             </section>
           )}
 
