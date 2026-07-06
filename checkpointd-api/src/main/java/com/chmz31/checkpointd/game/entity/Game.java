@@ -64,6 +64,21 @@ public class Game {
 	@Column(name = "platform", nullable = false)
 	private List<String> platforms = new ArrayList<>();
 
+	@ElementCollection
+	@CollectionTable(name = "game_screenshots", joinColumns = @JoinColumn(name = "game_id"))
+	@OrderColumn(name = "screenshot_order")
+	@Column(name = "screenshot_url", nullable = false, length = 2048)
+	private List<String> screenshotUrls = new ArrayList<>();
+
+	@ElementCollection
+	@CollectionTable(name = "game_artworks", joinColumns = @JoinColumn(name = "game_id"))
+	@OrderColumn(name = "artwork_order")
+	@Column(name = "artwork_url", nullable = false, length = 2048)
+	private List<String> artworkUrls = new ArrayList<>();
+
+	@Column(name = "backdrop_url", length = 2048)
+	private String backdropUrl;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -163,6 +178,30 @@ public class Game {
 
 	public void setPlatforms(Collection<String> platforms) {
 		this.platforms = cleanMetadataList(platforms);
+	}
+
+	public List<String> getScreenshotUrls() {
+		return screenshotUrls;
+	}
+
+	public void setScreenshotUrls(Collection<String> screenshotUrls) {
+		this.screenshotUrls = cleanMetadataList(screenshotUrls);
+	}
+
+	public List<String> getArtworkUrls() {
+		return artworkUrls;
+	}
+
+	public void setArtworkUrls(Collection<String> artworkUrls) {
+		this.artworkUrls = cleanMetadataList(artworkUrls);
+	}
+
+	public String getBackdropUrl() {
+		return backdropUrl;
+	}
+
+	public void setBackdropUrl(String backdropUrl) {
+		this.backdropUrl = backdropUrl;
 	}
 
 	public Instant getCreatedAt() {

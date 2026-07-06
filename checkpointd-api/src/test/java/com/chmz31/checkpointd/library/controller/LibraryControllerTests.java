@@ -101,6 +101,9 @@ class LibraryControllerTests {
 				.andExpect(jsonPath("$.gameSummary").value("Time travel RPG"))
 				.andExpect(jsonPath("$.gameGenres[0]").value("RPG"))
 				.andExpect(jsonPath("$.gamePlatforms[0]").value("SNES"))
+				.andExpect(jsonPath("$.gameScreenshotUrls[0]").value("https://img.example/shot.jpg"))
+				.andExpect(jsonPath("$.gameArtworkUrls[0]").value("https://img.example/art.jpg"))
+				.andExpect(jsonPath("$.gameBackdropUrl").value("https://img.example/art.jpg"))
 				.andExpect(jsonPath("$.status").value("PLAYING"))
 				.andExpect(jsonPath("$.rating").value(9))
 				.andExpect(jsonPath("$.notes").value("Great"));
@@ -249,6 +252,9 @@ class LibraryControllerTests {
 			game.setSummary("Updated summary");
 			game.setGenres(List.of("RPG", "Adventure"));
 			game.setPlatforms(List.of("PC"));
+			game.setScreenshotUrls(List.of("https://img.example/new-shot.jpg"));
+			game.setArtworkUrls(List.of("https://img.example/new-art.jpg"));
+			game.setBackdropUrl("https://img.example/new-art.jpg");
 			return game;
 		});
 
@@ -260,7 +266,26 @@ class LibraryControllerTests {
 				.andExpect(jsonPath("$.gameSummary").value("Updated summary"))
 				.andExpect(jsonPath("$.gameGenres[0]").value("RPG"))
 				.andExpect(jsonPath("$.gamePlatforms[0]").value("PC"))
+				.andExpect(jsonPath("$.gameScreenshotUrls[0]").value("https://img.example/new-shot.jpg"))
+				.andExpect(jsonPath("$.gameArtworkUrls[0]").value("https://img.example/new-art.jpg"))
+				.andExpect(jsonPath("$.gameBackdropUrl").value("https://img.example/new-art.jpg"))
 				.andExpect(jsonPath("$.gameMetadataSyncAvailable").value(true));
+	}
+
+	@Test
+	void responseHandlesMissingMediaSafely() throws Exception {
+		Game game = new Game("Local Game");
+		ReflectionTestUtils.setField(game, "id", GAME_ID);
+		LibraryEntry entry = withEntryMetadata(new LibraryEntry(user(), game, LibraryStatus.BACKLOG));
+
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
+
+		mockMvc.perform(get("/api/v1/library/{entryId}", ENTRY_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.gameScreenshotUrls", hasSize(0)))
+				.andExpect(jsonPath("$.gameArtworkUrls", hasSize(0)))
+				.andExpect(jsonPath("$.gameBackdropUrl").doesNotExist());
 	}
 
 	@Test
@@ -299,6 +324,9 @@ class LibraryControllerTests {
 		game.setSummary("Time travel RPG");
 		game.setGenres(List.of("RPG"));
 		game.setPlatforms(List.of("SNES"));
+		game.setScreenshotUrls(List.of("https://img.example/shot.jpg"));
+		game.setArtworkUrls(List.of("https://img.example/art.jpg"));
+		game.setBackdropUrl("https://img.example/art.jpg");
 		ReflectionTestUtils.setField(game, "id", GAME_ID);
 
 		return game;

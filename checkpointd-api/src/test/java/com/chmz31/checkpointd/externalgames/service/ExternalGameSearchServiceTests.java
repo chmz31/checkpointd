@@ -80,6 +80,8 @@ class ExternalGameSearchServiceTests {
 						"summary", "Time travel RPG",
 						"genres", List.of(Map.of("name", "RPG")),
 						"platforms", List.of(Map.of("name", "SNES")),
+						"screenshots", List.of(Map.of("url", "//images.example/screenshot.jpg")),
+						"artworks", List.of(Map.of("image_id", "artwork-image-id")),
 						"first_release_date", 795225600)
 		});
 
@@ -88,5 +90,9 @@ class ExternalGameSearchServiceTests {
 		assertThat(result.summary()).isEqualTo("Time travel RPG");
 		assertThat(result.genres()).containsExactly("RPG");
 		assertThat(result.platforms()).containsExactly("SNES");
+		assertThat(result.screenshotUrls()).containsExactly("https://images.example/screenshot.jpg");
+		assertThat(result.artworkUrls())
+				.containsExactly("https://images.igdb.com/igdb/image/upload/t_original/artwork-image-id.jpg");
+		assertThat(result.backdropUrl()).isEqualTo("https://images.example/screenshot.jpg");
 	}
 }

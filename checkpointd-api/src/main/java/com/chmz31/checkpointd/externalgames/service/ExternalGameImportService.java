@@ -90,6 +90,9 @@ public class ExternalGameImportService {
 		game.setSummary(externalGame.summary());
 		game.setGenres(externalGame.genres());
 		game.setPlatforms(externalGame.platforms());
+		game.setScreenshotUrls(externalGame.screenshotUrls());
+		game.setArtworkUrls(externalGame.artworkUrls());
+		game.setBackdropUrl(externalGame.backdropUrl());
 	}
 
 	private String clean(String value) {

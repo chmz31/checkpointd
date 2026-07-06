@@ -85,7 +85,8 @@ public class IgdbClient {
 	}
 
 	private String fetchByIdBody(String externalId) {
-		return "fields id,name,slug,cover.url,first_release_date,summary,genres.name,platforms.name; "
+		return "fields id,name,slug,cover.url,first_release_date,summary,genres.name,platforms.name,"
+				+ "screenshots.url,screenshots.image_id,artworks.url,artworks.image_id; "
 				+ "where id = " + externalId + "; "
 				+ "limit 1;";
 	}
@@ -116,7 +117,10 @@ public class IgdbClient {
 					releaseDate(item.get("first_release_date")),
 					stringValue(item.get("summary")),
 					names(item.get("genres")),
-					names(item.get("platforms"))));
+					names(item.get("platforms")),
+					imageUrls(item.get("screenshots")),
+					imageUrls(item.get("artworks")),
+					backdropUrl(item.get("artworks"), item.get("screenshots"))));
 		}
 
 		return results;
@@ -141,7 +145,40 @@ public class IgdbClient {
 		if (!(cover instanceof Map<?, ?> coverMap)) {
 			return null;
 		}
-		String url = stringValue(coverMap.get("url"));
+		return imageUrl(coverMap);
+	}
+
+	private List<String> imageUrls(Object value) {
+		if (!(value instanceof List<?> items)) {
+			return List.of();
+		}
+
+		return items.stream()
+				.filter(Map.class::isInstance)
+				.map(Map.class::cast)
+				.map(this::imageUrl)
+				.filter(url -> url != null && !url.isBlank())
+				.distinct()
+				.toList();
+	}
+
+	private String backdropUrl(Object artworks, Object screenshots) {
+		List<String> screenshotUrls = imageUrls(screenshots);
+		if (!screenshotUrls.isEmpty()) {
+			return screenshotUrls.getFirst();
+		}
+
+		List<String> artworkUrls = imageUrls(artworks);
+		return artworkUrls.isEmpty() ? null : artworkUrls.getFirst();
+	}
+
+	private String imageUrl(Map<?, ?> image) {
+		String imageId = stringValue(image.get("image_id"));
+		if (imageId != null && !imageId.isBlank()) {
+			return "https://images.igdb.com/igdb/image/upload/t_original/" + imageId.trim() + ".jpg";
+		}
+
+		String url = stringValue(image.get("url"));
 		if (url == null) {
 			return null;
 		}
