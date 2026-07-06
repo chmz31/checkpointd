@@ -15,8 +15,9 @@ checkpointd is a video game backlog and library app inspired by Letterboxd, IMDb
 - Add games to a personal library.
 - List, filter, fetch, update, and delete library entries.
 - Track library status, rating, notes, and library stats.
-- Use the React frontend for login/register, external search, direct add-to-library, library stats, filtering, search, sorting, editing, and deletion.
+- Use the React frontend for routed login/register, external search, direct add-to-library, library stats, filtering, search, sorting, editing, deletion, and metadata sync.
 - Show metadata chips and short summary previews in search results and library cards when metadata is available.
+- Open dedicated library entry detail pages with full metadata, tracking facts, notes, sync, edit, and delete actions.
 
 Metadata appears for newly imported/cached games. Existing cached games are not automatically backfilled with IGDB metadata yet.
 
@@ -38,6 +39,7 @@ Frontend:
 - React
 - TypeScript
 - Vite
+- React Router
 - npm
 
 Integrations and automation:
@@ -149,6 +151,15 @@ npm run dev
 
 The Vite dev server runs locally on `http://localhost:5173` by default.
 
+Frontend routes:
+
+- `/login` and `/register` for authentication
+- `/search` for authenticated external game search and direct add-to-library
+- `/library` for the authenticated user's library, stats, filters, search, and sorting
+- `/library/:entryId` for an authenticated user's library entry detail page
+
+`/library/:entryId` is a user-library detail page, not a public game page.
+
 ## Validation Commands
 
 Backend tests:
@@ -196,11 +207,13 @@ Library:
 
 - `POST /api/v1/library`
 - `GET /api/v1/library`
+- `GET /api/v1/library/stats`
 - `GET /api/v1/library/{entryId}`
 - `PATCH /api/v1/library/{entryId}`
+- `POST /api/v1/library/{entryId}/sync-metadata`
 - `DELETE /api/v1/library/{entryId}`
 
-Library entry responses include the tracked entry fields plus selected game metadata for card display.
+Library entry responses include the tracked entry fields plus selected game metadata for card and detail display.
 
 ## CI
 
@@ -219,7 +232,8 @@ Library entry responses include the tracked entry fields plus selected game meta
 
 - Ongoing UI polish
 - Re-sync or backfill metadata for existing cached games
-- Richer game detail pages
+- Public game pages
+- Richer game detail metadata and media
 - Pagination and server-side library search
 - Public profiles and lists
 - Social features
