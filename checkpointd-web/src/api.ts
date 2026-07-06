@@ -121,6 +121,12 @@ export const api = {
     });
   },
 
+  syncLibraryEntryMetadata(entryId: string) {
+    return apiRequest<LibraryEntry>(`/api/v1/library/${entryId}/sync-metadata`, {
+      method: 'POST',
+    });
+  },
+
   deleteLibraryEntry(entryId: string) {
     return apiRequest<void>(`/api/v1/library/${entryId}`, {
       method: 'DELETE',

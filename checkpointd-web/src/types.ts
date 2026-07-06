@@ -53,6 +53,7 @@ export type LibraryEntry = {
   gameSummary?: string | null;
   gameGenres: string[];
   gamePlatforms: string[];
+  gameMetadataSyncAvailable: boolean;
   status: LibraryStatus;
   rating?: number | null;
   notes?: string | null;

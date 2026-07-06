@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
@@ -53,6 +54,9 @@ class LibraryControllerTests {
 
 	@MockitoBean
 	private UserRepository userRepository;
+
+	@MockitoBean
+	private ExternalGameImportService externalGameImportService;
 
 	@Test
 	void createRequiresAuthentication() throws Exception {
@@ -230,6 +234,45 @@ class LibraryControllerTests {
 				.andExpect(jsonPath("$.status").value("COMPLETED"))
 				.andExpect(jsonPath("$.rating").value(10))
 				.andExpect(jsonPath("$.completedAt").value("2026-02-01T00:00:00Z"));
+	}
+
+	@Test
+	void syncMetadataReturnsUpdatedEntry() throws Exception {
+		LibraryEntry entry = entry();
+		Game game = entry.getGame();
+		game.setExternalProvider("igdb");
+		game.setExternalId("123");
+
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
+		when(externalGameImportService.syncMetadata(game)).thenAnswer(invocation -> {
+			game.setTitle("Chrono Trigger Updated");
+			game.setSummary("Updated summary");
+			game.setGenres(List.of("RPG", "Adventure"));
+			game.setPlatforms(List.of("PC"));
+			return game;
+		});
+
+		mockMvc.perform(post("/api/v1/library/{entryId}/sync-metadata", ENTRY_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.gameTitle").value("Chrono Trigger Updated"))
+				.andExpect(jsonPath("$.gameSummary").value("Updated summary"))
+				.andExpect(jsonPath("$.gameGenres[0]").value("RPG"))
+				.andExpect(jsonPath("$.gamePlatforms[0]").value("PC"))
+				.andExpect(jsonPath("$.gameMetadataSyncAvailable").value(true));
+	}
+
+	@Test
+	void syncMetadataMissingEntryReturnsNotFound() throws Exception {
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.empty());
+
+		mockMvc.perform(post("/api/v1/library/{entryId}/sync-metadata", ENTRY_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf()))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.status").value(404))
+				.andExpect(jsonPath("$.message").value("Library entry not found"));
 	}
 
 	@Test

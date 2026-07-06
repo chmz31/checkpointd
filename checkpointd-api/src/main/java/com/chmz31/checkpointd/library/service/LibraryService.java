@@ -2,6 +2,7 @@ package com.chmz31.checkpointd.library.service;
 
 import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
+import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
@@ -23,14 +24,17 @@ public class LibraryService {
 	private final LibraryEntryRepository libraryEntryRepository;
 	private final GameRepository gameRepository;
 	private final UserRepository userRepository;
+	private final ExternalGameImportService externalGameImportService;
 
 	public LibraryService(
 			LibraryEntryRepository libraryEntryRepository,
 			GameRepository gameRepository,
-			UserRepository userRepository) {
+			UserRepository userRepository,
+			ExternalGameImportService externalGameImportService) {
 		this.libraryEntryRepository = libraryEntryRepository;
 		this.gameRepository = gameRepository;
 		this.userRepository = userRepository;
+		this.externalGameImportService = externalGameImportService;
 	}
 
 	@Transactional
@@ -101,6 +105,14 @@ public class LibraryService {
 		}
 
 		return libraryEntryRepository.save(entry);
+	}
+
+	@Transactional
+	public LibraryEntry syncMetadata(UUID userId, UUID entryId) {
+		LibraryEntry entry = getUserEntry(userId, entryId);
+		externalGameImportService.syncMetadata(entry.getGame());
+
+		return entry;
 	}
 
 	@Transactional

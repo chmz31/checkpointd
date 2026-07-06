@@ -47,6 +47,22 @@ button:disabled {
   opacity: 0.62;
 }
 
+.button-ghost {
+  border-color: #34475d;
+  color: #c2cfdb;
+  background: transparent;
+}
+
+.button-ghost:hover:not(:disabled) {
+  border-color: #58708a;
+  background: #172333;
+}
+
+.button-small {
+  padding: 0.48rem 0.65rem;
+  font-size: 0.9rem;
+}
+
 input,
 select,
 textarea {
@@ -305,6 +321,10 @@ h3 {
 .compact-message {
   margin: 0.5rem 0 0;
   padding: 0.55rem 0.65rem;
+}
+
+.card-message {
+  margin: 0 0.75rem 0.75rem;
 }
 
 .cover {

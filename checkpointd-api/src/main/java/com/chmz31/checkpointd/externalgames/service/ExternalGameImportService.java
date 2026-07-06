@@ -28,12 +28,7 @@ public class ExternalGameImportService {
 		String provider = request.provider().trim().toLowerCase(Locale.ROOT);
 		String externalId = request.externalId().trim();
 
-		if (!IGDB_PROVIDER.equals(provider)) {
-			throw new BadRequestException("Unsupported external game provider");
-		}
-		if (!externalId.matches("\\d+")) {
-			throw new BadRequestException("IGDB externalId must be numeric");
-		}
+		validateIgdbIdentity(provider, externalId);
 
 		Optional<Game> existing = gameRepository.findByExternalProviderAndExternalId(provider, externalId);
 		if (existing.isPresent()) {
@@ -48,12 +43,7 @@ public class ExternalGameImportService {
 		Game game = new Game(externalGame.title());
 		game.setExternalProvider(provider);
 		game.setExternalId(externalId);
-		game.setSlug(externalGame.slug());
-		game.setCoverUrl(externalGame.coverUrl());
-		game.setReleaseDate(externalGame.releaseDate());
-		game.setSummary(externalGame.summary());
-		game.setGenres(externalGame.genres());
-		game.setPlatforms(externalGame.platforms());
+		applyExternalGame(game, externalGame);
 
 		try {
 			return new ImportedGameResult(gameRepository.saveAndFlush(game), true);
@@ -62,5 +52,51 @@ public class ExternalGameImportService {
 			return new ImportedGameResult(gameRepository.findByExternalProviderAndExternalId(provider, externalId)
 					.orElseThrow(() -> exception), false);
 		}
+	}
+
+	public Game syncMetadata(Game game) {
+		String provider = clean(game.getExternalProvider());
+		String externalId = clean(game.getExternalId());
+		if (provider == null || externalId == null) {
+			throw new BadRequestException("Game cannot be synced without external identity");
+		}
+
+		validateIgdbIdentity(provider, externalId);
+
+		ExternalGameSearchResult externalGame = igdbClient.fetchById(externalId);
+		if (externalGame == null) {
+			throw new ResourceNotFoundException("External game not found");
+		}
+
+		applyExternalGame(game, externalGame);
+
+		return gameRepository.save(game);
+	}
+
+	private void validateIgdbIdentity(String provider, String externalId) {
+		if (!IGDB_PROVIDER.equals(provider)) {
+			throw new BadRequestException("Unsupported external game provider");
+		}
+		if (!externalId.matches("\\d+")) {
+			throw new BadRequestException("IGDB externalId must be numeric");
+		}
+	}
+
+	private void applyExternalGame(Game game, ExternalGameSearchResult externalGame) {
+		game.setTitle(externalGame.title());
+		game.setSlug(externalGame.slug());
+		game.setCoverUrl(externalGame.coverUrl());
+		game.setReleaseDate(externalGame.releaseDate());
+		game.setSummary(externalGame.summary());
+		game.setGenres(externalGame.genres());
+		game.setPlatforms(externalGame.platforms());
+	}
+
+	private String clean(String value) {
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+
+		return value.trim().toLowerCase(Locale.ROOT);
 	}
 }
