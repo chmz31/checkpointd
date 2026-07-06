@@ -110,6 +110,10 @@ export const api = {
     return apiRequest<LibraryEntry[]>(`/api/v1/library${query}`);
   },
 
+  getLibraryEntry(entryId: string) {
+    return apiRequest<LibraryEntry>(`/api/v1/library/${entryId}`);
+  },
+
   getLibraryStats() {
     return apiRequest<LibraryStats>('/api/v1/library/stats');
   },
