@@ -10,7 +10,7 @@ checkpointd is a video game backlog and library app inspired by Letterboxd, IMDb
 - Fetch the current authenticated user.
 - Search external games through the backend using IGDB.
 - Import external games into the local catalog/cache with basic metadata.
-- Store and display game summaries, genres, and platforms.
+- Store and display game summaries, genres, platforms, screenshots, artworks, and backdrop images.
 - Create and browse local catalog games.
 - Add games to a personal library.
 - List, filter, fetch, update, and delete library entries.
@@ -18,8 +18,9 @@ checkpointd is a video game backlog and library app inspired by Letterboxd, IMDb
 - Use the React frontend for routed login/register, external search, direct add-to-library, library stats, filtering, search, sorting, editing, deletion, and metadata sync.
 - Show metadata chips and short summary previews in search results and library cards when metadata is available.
 - Open dedicated library entry detail pages with full metadata, tracking facts, notes, sync, edit, and delete actions.
+- Show a detail-page Media section with screenshots/artworks when visual media is available.
 
-Metadata appears for newly imported/cached games. Existing cached games are not automatically backfilled with IGDB metadata yet.
+Metadata appears for newly imported/cached games. Existing cached games are not automatically backfilled with IGDB metadata yet, but `Sync metadata` can refresh summary, genres, platforms, screenshots, artworks, and backdrop images for individual IGDB-backed library entries.
 
 ## Tech Stack
 
@@ -201,7 +202,7 @@ Local games:
 - `GET /api/v1/games`
 - `GET /api/v1/games/{gameId}`
 
-Local game responses include core fields plus optional `summary`, `genres`, and `platforms`.
+Local game responses include core fields plus optional `summary`, `genres`, `platforms`, `screenshotUrls`, `artworkUrls`, and `backdropUrl`.
 
 Library:
 
@@ -213,7 +214,7 @@ Library:
 - `POST /api/v1/library/{entryId}/sync-metadata`
 - `DELETE /api/v1/library/{entryId}`
 
-Library entry responses include the tracked entry fields plus selected game metadata for card and detail display.
+Library entry responses include the tracked entry fields plus selected game metadata and media for card and detail display.
 
 ## CI
 
