@@ -43,12 +43,15 @@ PostgreSQL is the system of record for users, local games, and library entries. 
 Game metadata is stored simply:
 
 - `games.summary`
+- `games.backdrop_url`
 - `game_genres`
 - `game_platforms`
+- `game_screenshots`
+- `game_artworks`
 
-Genres and platforms are ordered string collections owned by a game. checkpointd does not currently model genres or platforms as full entities.
+Genres, platforms, screenshots, and artworks are ordered string collections owned by a game. checkpointd does not currently model genres, platforms, or media as full entities.
 
-Metadata is captured for newly imported/cached games. Existing cached games are not automatically re-synced or backfilled yet.
+External search remains lightweight. Richer media is captured during IGDB fetch-by-id flows used by import and metadata sync. Existing cached games are not automatically re-synced or backfilled yet, but individual IGDB-backed library entries can refresh metadata and media through sync.
 
 Future frontend/API work may add public game pages, richer game detail metadata and media, reviews, lists, and social features.
 

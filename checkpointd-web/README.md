@@ -14,6 +14,7 @@ React + TypeScript + Vite frontend for checkpointd.
 - Library stats
 - Library list with status filter, local search, and sorting
 - Library entry detail page with full metadata, tracking facts, notes, sync, edit, and delete
+- Library entry media gallery for screenshots/artworks when available
 
 ## Routes
 
@@ -24,6 +25,8 @@ React + TypeScript + Vite frontend for checkpointd.
 - `/library/:entryId` is an authenticated detail page for one of the current user's library entries.
 
 `/library/:entryId` is not a public game page; it is scoped to the authenticated user's tracked entry.
+
+The detail page uses a backdrop image when available, falling back to the cover image. The Media section appears only when the backend has screenshots or artworks for that game.
 
 ## Local Development
 

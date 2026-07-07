@@ -28,6 +28,9 @@ checkpointd stores basic game metadata:
 - `summary`
 - `genres`
 - `platforms`
+- `screenshotUrls`
+- `artworkUrls`
+- `backdropUrl`
 
 Metadata is included in:
 
@@ -38,7 +41,11 @@ Metadata is included in:
 
 Flyway migration `V3__add_game_metadata.sql` adds `games.summary`, `game_genres`, and `game_platforms`. Genres and platforms are simple ordered string collections, not full domain entities.
 
-Metadata is retrieved from IGDB during external search/import and persisted for newly imported/cached games. Existing cached games are not backfilled automatically.
+Flyway migration `V4__add_game_media_metadata.sql` adds `games.backdrop_url`, `game_screenshots`, and `game_artworks`. Screenshots and artworks are simple ordered URL collections owned by a game.
+
+External search remains lightweight and focuses on core metadata. Richer visual media is retrieved during IGDB fetch-by-id flows used by import and metadata sync, then persisted for newly imported/cached or individually synced games.
+
+Existing cached games are not backfilled automatically.
 
 ## Local Development
 
