@@ -85,11 +85,7 @@ export function LibraryEntryDetailsPage() {
     );
   }
 
-  const backdropUrl = entry.gameBackdropUrl || entry.gameCoverUrl;
-  const mediaItems = [
-    ...entry.gameArtworkUrls.map((url) => ({ kind: 'Artwork', url })),
-    ...entry.gameScreenshotUrls.map((url) => ({ kind: 'Screenshot', url })),
-  ].slice(0, 12);
+  const backdropUrl = entry.gameCoverUrl;
 
   return (
     <article className="detail-page">
@@ -107,13 +103,16 @@ export function LibraryEntryDetailsPage() {
         <section className="detail-main">
           <div className="detail-heading">
             <div>
-              <p className="eyebrow">Library entry</p>
+              <p className="eyebrow">Your checkpoint</p>
               <h2>{entry.gameTitle}</h2>
               <p className="muted">{entry.gameSlug || 'Library entry'}</p>
             </div>
             <div className="inline-actions detail-actions">
               <Link className="nav-link button-small" to="/library">
                 Back to library
+              </Link>
+              <Link className="nav-link button-small" to={`/games/${entry.gameId}`}>
+                View game page
               </Link>
               {entry.gameMetadataSyncAvailable && (
                 <button className="button-ghost button-small" onClick={syncMetadata} disabled={syncing || deleting}>
@@ -145,35 +144,6 @@ export function LibraryEntryDetailsPage() {
             <LibraryEntryEditForm entry={entry} onSaved={handleSaved} onCancel={() => setEditing(false)} />
           )}
 
-          {entry.gameSummary && (
-            <section className="detail-section">
-              <h3>Summary</h3>
-              <p>{entry.gameSummary}</p>
-            </section>
-          )}
-
-          {(entry.gameGenres.length > 0 || entry.gamePlatforms.length > 0) && (
-            <section className="detail-section">
-              <h3>Metadata</h3>
-              {entry.gameGenres.length > 0 && <ChipGroup label="Genres" values={entry.gameGenres} />}
-              {entry.gamePlatforms.length > 0 && <ChipGroup label="Platforms" values={entry.gamePlatforms} />}
-            </section>
-          )}
-
-          {mediaItems.length > 0 && (
-            <section className="detail-section">
-              <h3>Media</h3>
-              <div className="media-grid">
-                {mediaItems.map((item, index) => (
-                  <figure className="media-tile" key={`${item.kind}-${item.url}-${index}`}>
-                    <img src={item.url} alt={`${entry.gameTitle} ${item.kind.toLowerCase()}`} loading="lazy" />
-                    <figcaption>{item.kind}</figcaption>
-                  </figure>
-                ))}
-              </div>
-            </section>
-          )}
-
           {entry.notes && (
             <section className="detail-section">
               <h3>Notes</h3>
@@ -191,21 +161,6 @@ function Fact({ label, value }: { label: string; value: string }) {
     <div className="detail-fact">
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
-  );
-}
-
-function ChipGroup({ label, values }: { label: string; values: string[] }) {
-  return (
-    <div className="detail-chip-group">
-      <p className="muted">{label}</p>
-      <div className="chip-list">
-        {values.map((value, index) => (
-          <span className="metadata-chip" key={`${label}-${value}-${index}`}>
-            {value}
-          </span>
-        ))}
-      </div>
     </div>
   );
 }

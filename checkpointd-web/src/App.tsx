@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { api, clearStoredToken, getStoredToken, setStoredToken } from './api';
 import { AuthPanel } from './components/AuthPanel';
 import { AppShell } from './components/AppShell';
+import { GameDetailsPage } from './components/GameDetailsPage';
 import { LibraryEntryDetailsPage } from './components/LibraryEntryDetailsPage';
 import { LibraryView } from './components/LibraryView';
 import { SearchView } from './components/SearchView';
@@ -73,6 +74,7 @@ export default function App() {
           />
           <Route path="/library" element={<LibraryView refreshKey={libraryRefreshKey} />} />
           <Route path="/library/:entryId" element={<LibraryEntryDetailsPage />} />
+          <Route path="/games/:gameId" element={<GameDetailsPage />} />
         </Route>
         <Route path="*" element={<Navigate to={token ? '/library' : '/'} replace />} />
       </Routes>

@@ -184,6 +184,39 @@ class LibraryControllerTests {
 	}
 
 	@Test
+	void getByGameReturnsCurrentUsersEntry() throws Exception {
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(entry()));
+
+		mockMvc.perform(get("/api/v1/library/by-game/{gameId}", GAME_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(ENTRY_ID.toString()))
+				.andExpect(jsonPath("$.gameId").value(GAME_ID.toString()))
+				.andExpect(jsonPath("$.gameTitle").value("Chrono Trigger"));
+	}
+
+	@Test
+	void getByGameReturnsNotFoundWhenGameIsNotInCurrentUsersLibrary() throws Exception {
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
+
+		mockMvc.perform(get("/api/v1/library/by-game/{gameId}", GAME_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.status").value(404))
+				.andExpect(jsonPath("$.message").value("Library entry not found"));
+	}
+
+	@Test
+	void getByGameDoesNotReturnAnotherUsersEntry() throws Exception {
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
+
+		mockMvc.perform(get("/api/v1/library/by-game/{gameId}", GAME_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value("Library entry not found"));
+	}
+
+	@Test
 	void statsRequiresAuthentication() throws Exception {
 		mockMvc.perform(get("/api/v1/library/stats"))
 				.andExpect(status().isUnauthorized());

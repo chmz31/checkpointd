@@ -27,6 +27,9 @@ public interface LibraryEntryRepository extends JpaRepository<LibraryEntry, UUID
 	Optional<LibraryEntry> findByIdAndUserId(UUID id, UUID userId);
 
 	@EntityGraph(attributePaths = {"game", "game.genres", "game.platforms", "game.screenshotUrls", "game.artworkUrls"})
+	Optional<LibraryEntry> findByUserIdAndGameId(UUID userId, UUID gameId);
+
+	@EntityGraph(attributePaths = {"game", "game.genres", "game.platforms", "game.screenshotUrls", "game.artworkUrls"})
 	List<LibraryEntry> findTop50ByUserIdOrderByUpdatedAtDesc(UUID userId);
 
 	@EntityGraph(attributePaths = {"game", "game.genres", "game.platforms", "game.screenshotUrls", "game.artworkUrls"})

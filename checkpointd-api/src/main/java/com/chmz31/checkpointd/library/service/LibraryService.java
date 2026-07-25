@@ -71,6 +71,12 @@ public class LibraryService {
 	}
 
 	@Transactional(readOnly = true)
+	public LibraryEntry getByGame(UUID userId, UUID gameId) {
+		return libraryEntryRepository.findByUserIdAndGameId(userId, gameId)
+				.orElseThrow(() -> new ResourceNotFoundException("Library entry not found"));
+	}
+
+	@Transactional(readOnly = true)
 	public LibraryStatsResponse stats(UUID userId) {
 		return new LibraryStatsResponse(
 				libraryEntryRepository.countByUserId(userId),

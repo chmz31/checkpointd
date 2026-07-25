@@ -140,6 +140,24 @@ class LibraryServiceTests {
 	}
 
 	@Test
+	void getByGameReturnsCurrentUsersEntry() {
+		LibraryEntry entry = entry();
+
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(entry));
+
+		assertThat(libraryService.getByGame(USER_ID, GAME_ID)).isSameAs(entry);
+	}
+
+	@Test
+	void getByGameRejectsMissingOrOtherUsersEntry() {
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> libraryService.getByGame(USER_ID, GAME_ID))
+				.isInstanceOf(ResourceNotFoundException.class)
+				.hasMessage("Library entry not found");
+	}
+
+	@Test
 	void statsReturnsCurrentUsersLibraryCounts() {
 		when(libraryEntryRepository.countByUserId(USER_ID)).thenReturn(6L);
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.WISHLIST)).thenReturn(1L);

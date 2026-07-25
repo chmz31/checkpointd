@@ -48,6 +48,8 @@ export type Game = {
   screenshotUrls: string[];
   artworkUrls: string[];
   backdropUrl?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 };
 
 export type LibraryEntry = {

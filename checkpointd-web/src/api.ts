@@ -93,6 +93,10 @@ export const api = {
     });
   },
 
+  getGame(gameId: string) {
+    return apiRequest<Game>(`/api/v1/games/${gameId}`);
+  },
+
   addLibraryEntry(input: {
     gameId: string;
     status: LibraryStatus;
@@ -112,6 +116,10 @@ export const api = {
 
   getLibraryEntry(entryId: string) {
     return apiRequest<LibraryEntry>(`/api/v1/library/${entryId}`);
+  },
+
+  getLibraryEntryByGame(gameId: string) {
+    return apiRequest<LibraryEntry>(`/api/v1/library/by-game/${gameId}`);
   },
 
   getLibraryStats() {
