@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api } from '../api';
+import { api, isApiErrorStatus } from '../api';
 import { libraryStatuses } from '../constants';
 import type { Game, LibraryEntry, LibraryStatus } from '../types';
 import { CoverImage } from './CoverImage';
@@ -35,8 +35,8 @@ export function GameDetailsPage() {
         try {
           setLibraryEntry(await api.getLibraryEntryByGame(loadedGame.id));
         } catch (caught) {
-          const message = caught instanceof Error ? caught.message : '';
-          if (message !== 'Library entry not found') {
+          if (!isApiErrorStatus(caught, 404)) {
+            const message = caught instanceof Error ? caught.message : '';
             setError(message || 'Could not check library status');
           }
         }

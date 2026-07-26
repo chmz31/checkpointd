@@ -217,6 +217,66 @@ class LibraryControllerTests {
 	}
 
 	@Test
+	void getByExternalGameReturnsCurrentUsersEntry() throws Exception {
+		Game game = game();
+
+		when(gameRepository.findByExternalProviderAndExternalId("igdb", "123")).thenReturn(Optional.of(game));
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(entry()));
+
+		mockMvc.perform(get("/api/v1/library/by-external-game")
+						.param("provider", "IGDB")
+						.param("externalId", "123")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(ENTRY_ID.toString()))
+				.andExpect(jsonPath("$.gameId").value(GAME_ID.toString()))
+				.andExpect(jsonPath("$.gameTitle").value("Chrono Trigger"));
+	}
+
+	@Test
+	void getByExternalGameReturnsNotFoundWhenGameIsNotCached() throws Exception {
+		when(gameRepository.findByExternalProviderAndExternalId("igdb", "123")).thenReturn(Optional.empty());
+
+		mockMvc.perform(get("/api/v1/library/by-external-game")
+						.param("provider", "igdb")
+						.param("externalId", "123")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.status").value(404))
+				.andExpect(jsonPath("$.message").value("Library entry not found"));
+	}
+
+	@Test
+	void getByExternalGameReturnsNotFoundWhenGameIsNotInCurrentUsersLibrary() throws Exception {
+		Game game = game();
+
+		when(gameRepository.findByExternalProviderAndExternalId("igdb", "123")).thenReturn(Optional.of(game));
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
+
+		mockMvc.perform(get("/api/v1/library/by-external-game")
+						.param("provider", "igdb")
+						.param("externalId", "123")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value("Library entry not found"));
+	}
+
+	@Test
+	void getByExternalGameDoesNotReturnAnotherUsersEntry() throws Exception {
+		Game game = game();
+
+		when(gameRepository.findByExternalProviderAndExternalId("igdb", "123")).thenReturn(Optional.of(game));
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
+
+		mockMvc.perform(get("/api/v1/library/by-external-game")
+						.param("provider", "igdb")
+						.param("externalId", "123")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value("Library entry not found"));
+	}
+
+	@Test
 	void statsRequiresAuthentication() throws Exception {
 		mockMvc.perform(get("/api/v1/library/stats"))
 				.andExpect(status().isUnauthorized());
@@ -352,6 +412,8 @@ class LibraryControllerTests {
 
 	private Game game() {
 		Game game = new Game("Chrono Trigger");
+		game.setExternalProvider("igdb");
+		game.setExternalId("123");
 		game.setSlug("chrono-trigger");
 		game.setCoverUrl("https://img.example/cover.jpg");
 		game.setSummary("Time travel RPG");

@@ -57,6 +57,14 @@ public class LibraryController {
 		return LibraryEntryResponse.from(libraryService.getByGame(currentUserId(jwt), gameId));
 	}
 
+	@GetMapping("/by-external-game")
+	LibraryEntryResponse getByExternalGame(
+			@AuthenticationPrincipal Jwt jwt,
+			@RequestParam String provider,
+			@RequestParam String externalId) {
+		return LibraryEntryResponse.from(libraryService.getByExternalGame(currentUserId(jwt), provider, externalId));
+	}
+
 	@GetMapping("/{entryId}")
 	LibraryEntryResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID entryId) {
 		return LibraryEntryResponse.from(libraryService.get(currentUserId(jwt), entryId));

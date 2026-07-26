@@ -1,14 +1,14 @@
 import { FormEvent, useState } from 'react';
 import { api } from '../api';
 import { libraryStatuses } from '../constants';
-import type { ExternalGameSearchResult, LibraryStatus } from '../types';
+import type { ExternalGameSearchResult, LibraryEntry, LibraryStatus } from '../types';
 
 export function AddSearchResultToLibrary({
   result,
   onAdded,
 }: {
   result: ExternalGameSearchResult;
-  onAdded: () => void;
+  onAdded: (entry: LibraryEntry) => void;
 }) {
   const [status, setStatus] = useState<LibraryStatus>('BACKLOG');
   const [rating, setRating] = useState('');
@@ -30,14 +30,14 @@ export function AddSearchResultToLibrary({
 
     try {
       const game = await api.importExternalGame(result.provider, result.externalId);
-      await api.addLibraryEntry({
+      const entry = await api.addLibraryEntry({
         gameId: game.id,
         status,
         rating: rating ? Number(rating) : null,
         notes: notes.trim() || undefined,
       });
       setMessage('Added to library.');
-      onAdded();
+      onAdded(entry);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not add to library');
     } finally {

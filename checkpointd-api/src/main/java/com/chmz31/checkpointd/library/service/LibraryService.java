@@ -14,6 +14,7 @@ import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,6 +75,20 @@ public class LibraryService {
 	public LibraryEntry getByGame(UUID userId, UUID gameId) {
 		return libraryEntryRepository.findByUserIdAndGameId(userId, gameId)
 				.orElseThrow(() -> new ResourceNotFoundException("Library entry not found"));
+	}
+
+	@Transactional(readOnly = true)
+	public LibraryEntry getByExternalGame(UUID userId, String provider, String externalId) {
+		String cleanProvider = provider == null ? null : provider.trim().toLowerCase(Locale.ROOT);
+		String cleanExternalId = externalId == null ? null : externalId.trim();
+		if (cleanProvider == null || cleanProvider.isBlank() || cleanExternalId == null || cleanExternalId.isBlank()) {
+			throw new ResourceNotFoundException("Library entry not found");
+		}
+
+		Game game = gameRepository.findByExternalProviderAndExternalId(cleanProvider, cleanExternalId)
+				.orElseThrow(() -> new ResourceNotFoundException("Library entry not found"));
+
+		return getByGame(userId, game.getId());
 	}
 
 	@Transactional(readOnly = true)

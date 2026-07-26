@@ -12,6 +12,20 @@ import type {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const TOKEN_KEY = 'checkpointd.accessToken';
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+export function isApiErrorStatus(error: unknown, status: number) {
+  return error instanceof ApiError && error.status === status;
+}
+
 export function getStoredToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -42,7 +56,7 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
 
   if (!response.ok) {
     const message = await readErrorMessage(response);
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
 
   if (response.status === 204) {
@@ -120,6 +134,12 @@ export const api = {
 
   getLibraryEntryByGame(gameId: string) {
     return apiRequest<LibraryEntry>(`/api/v1/library/by-game/${gameId}`);
+  },
+
+  getLibraryEntryByExternalGame(provider: string, externalId: string) {
+    return apiRequest<LibraryEntry>(
+      `/api/v1/library/by-external-game?provider=${encodeURIComponent(provider)}&externalId=${encodeURIComponent(externalId)}`,
+    );
   },
 
   getLibraryStats() {
