@@ -158,6 +158,40 @@ class LibraryServiceTests {
 	}
 
 	@Test
+	void getByExternalGameReturnsCurrentUsersEntry() {
+		Game game = game();
+		LibraryEntry entry = entry();
+
+		when(gameRepository.findByExternalProviderAndExternalId("igdb", "123")).thenReturn(Optional.of(game));
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(entry));
+
+		assertThat(libraryService.getByExternalGame(USER_ID, " IGDB ", " 123 ")).isSameAs(entry);
+	}
+
+	@Test
+	void getByExternalGameRejectsUncachedGame() {
+		when(gameRepository.findByExternalProviderAndExternalId("igdb", "123")).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> libraryService.getByExternalGame(USER_ID, "igdb", "123"))
+				.isInstanceOf(ResourceNotFoundException.class)
+				.hasMessage("Library entry not found");
+
+		verify(libraryEntryRepository, never()).findByUserIdAndGameId(any(UUID.class), any(UUID.class));
+	}
+
+	@Test
+	void getByExternalGameRejectsGameNotInCurrentUsersLibrary() {
+		Game game = game();
+
+		when(gameRepository.findByExternalProviderAndExternalId("igdb", "123")).thenReturn(Optional.of(game));
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> libraryService.getByExternalGame(USER_ID, "igdb", "123"))
+				.isInstanceOf(ResourceNotFoundException.class)
+				.hasMessage("Library entry not found");
+	}
+
+	@Test
 	void statsReturnsCurrentUsersLibraryCounts() {
 		when(libraryEntryRepository.countByUserId(USER_ID)).thenReturn(6L);
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.WISHLIST)).thenReturn(1L);
@@ -260,6 +294,8 @@ class LibraryServiceTests {
 
 	private Game game() {
 		Game game = new Game("Chrono Trigger");
+		game.setExternalProvider("igdb");
+		game.setExternalId("123");
 		game.setSlug("chrono-trigger");
 		game.setCoverUrl("https://img.example/cover.jpg");
 		ReflectionTestUtils.setField(game, "id", GAME_ID);

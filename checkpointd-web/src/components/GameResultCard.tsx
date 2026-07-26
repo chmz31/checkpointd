@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '../api';
-import type { ExternalGameSearchResult } from '../types';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { api, isApiErrorStatus } from '../api';
+import type { ExternalGameSearchResult, LibraryEntry } from '../types';
 import { AddSearchResultToLibrary } from './AddSearchResultToLibrary';
 import { CoverImage } from './CoverImage';
 import { GameMetadata } from './GameMetadata';
@@ -16,7 +16,36 @@ export function GameResultCard({
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
   const [viewing, setViewing] = useState(false);
+  const [libraryEntry, setLibraryEntry] = useState<LibraryEntry | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLibraryEntry(null);
+    setLookupError(null);
+
+    api
+      .getLibraryEntryByExternalGame(result.provider, result.externalId)
+      .then((entry) => {
+        if (!cancelled) {
+          setLibraryEntry(entry);
+          setAdding(false);
+        }
+      })
+      .catch((caught) => {
+        if (cancelled) return;
+
+        if (!isApiErrorStatus(caught, 404)) {
+          const message = caught instanceof Error ? caught.message : '';
+          setLookupError(message || 'Could not check library status');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [result.provider, result.externalId]);
 
   async function viewGamePage() {
     setViewing(true);
@@ -44,16 +73,33 @@ export function GameResultCard({
           <GameMetadata summary={result.summary} genres={result.genres} platforms={result.platforms} />
         </div>
         <div className="result-actions">
+          {libraryEntry && <span className="user-pill">In Library</span>}
           <button className="button-ghost button-small" onClick={viewGamePage} disabled={viewing}>
             {viewing ? 'Opening...' : 'View game page'}
           </button>
-          <button onClick={() => setAdding((current) => !current)}>
-            {adding ? 'Close' : 'Add to Library'}
-          </button>
+          {libraryEntry ? (
+            <Link className="nav-link button-small" to={`/library/${libraryEntry.id}`}>
+              View library entry
+            </Link>
+          ) : (
+            <button onClick={() => setAdding((current) => !current)}>
+              {adding ? 'Close' : 'Add to Library'}
+            </button>
+          )}
         </div>
       </div>
       {error && <p className="error compact-message card-message">{error}</p>}
-      {adding && <AddSearchResultToLibrary result={result} onAdded={onAdded} />}
+      {lookupError && <p className="error compact-message card-message">{lookupError}</p>}
+      {adding && !libraryEntry && (
+        <AddSearchResultToLibrary
+          result={result}
+          onAdded={(entry) => {
+            setLibraryEntry(entry);
+            setAdding(false);
+            onAdded();
+          }}
+        />
+      )}
     </article>
   );
 }
