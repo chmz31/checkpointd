@@ -2,6 +2,7 @@ package com.chmz31.checkpointd.library.dto;
 
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
+import com.chmz31.checkpointd.game.dto.GameWebsiteResponse;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -16,6 +17,14 @@ public record LibraryEntryResponse(
 		String gameSummary,
 		List<String> gameGenres,
 		List<String> gamePlatforms,
+		List<String> gameDevelopers,
+		List<String> gamePublishers,
+		List<String> gameModes,
+		List<String> gameThemes,
+		List<String> gamePlayerPerspectives,
+		List<GameWebsiteResponse> gameWebsites,
+		Double gameExternalRating,
+		Integer gameExternalRatingCount,
 		List<String> gameScreenshotUrls,
 		List<String> gameArtworkUrls,
 		String gameBackdropUrl,
@@ -38,6 +47,14 @@ public record LibraryEntryResponse(
 				entry.getGame().getSummary(),
 				List.copyOf(entry.getGame().getGenres()),
 				List.copyOf(entry.getGame().getPlatforms()),
+				List.copyOf(entry.getGame().getDevelopers()),
+				List.copyOf(entry.getGame().getPublishers()),
+				List.copyOf(entry.getGame().getGameModes()),
+				List.copyOf(entry.getGame().getThemes()),
+				List.copyOf(entry.getGame().getPlayerPerspectives()),
+				entry.getGame().getWebsites().stream().map(GameWebsiteResponse::from).toList(),
+				entry.getGame().getExternalRating(),
+				entry.getGame().getExternalRatingCount(),
 				List.copyOf(entry.getGame().getScreenshotUrls()),
 				List.copyOf(entry.getGame().getArtworkUrls()),
 				entry.getGame().getBackdropUrl(),

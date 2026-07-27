@@ -17,7 +17,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -65,6 +68,41 @@ public class Game {
 	private List<String> platforms = new ArrayList<>();
 
 	@ElementCollection
+	@CollectionTable(name = "game_developers", joinColumns = @JoinColumn(name = "game_id"))
+	@OrderColumn(name = "developer_order")
+	@Column(name = "developer", nullable = false)
+	private List<String> developers = new ArrayList<>();
+
+	@ElementCollection
+	@CollectionTable(name = "game_publishers", joinColumns = @JoinColumn(name = "game_id"))
+	@OrderColumn(name = "publisher_order")
+	@Column(name = "publisher", nullable = false)
+	private List<String> publishers = new ArrayList<>();
+
+	@ElementCollection
+	@CollectionTable(name = "game_modes", joinColumns = @JoinColumn(name = "game_id"))
+	@OrderColumn(name = "mode_order")
+	@Column(name = "mode", nullable = false)
+	private List<String> gameModes = new ArrayList<>();
+
+	@ElementCollection
+	@CollectionTable(name = "game_themes", joinColumns = @JoinColumn(name = "game_id"))
+	@OrderColumn(name = "theme_order")
+	@Column(name = "theme", nullable = false)
+	private List<String> themes = new ArrayList<>();
+
+	@ElementCollection
+	@CollectionTable(name = "game_player_perspectives", joinColumns = @JoinColumn(name = "game_id"))
+	@OrderColumn(name = "perspective_order")
+	@Column(name = "player_perspective", nullable = false)
+	private List<String> playerPerspectives = new ArrayList<>();
+
+	@ElementCollection
+	@CollectionTable(name = "game_websites", joinColumns = @JoinColumn(name = "game_id"))
+	@OrderColumn(name = "website_order")
+	private List<GameWebsite> websites = new ArrayList<>();
+
+	@ElementCollection
 	@CollectionTable(name = "game_screenshots", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "screenshot_order")
 	@Column(name = "screenshot_url", nullable = false, length = 2048)
@@ -78,6 +116,12 @@ public class Game {
 
 	@Column(name = "backdrop_url", length = 2048)
 	private String backdropUrl;
+
+	@Column(name = "external_rating")
+	private Double externalRating;
+
+	@Column(name = "external_rating_count")
+	private Integer externalRatingCount;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -180,6 +224,54 @@ public class Game {
 		this.platforms = cleanMetadataList(platforms);
 	}
 
+	public List<String> getDevelopers() {
+		return developers;
+	}
+
+	public void setDevelopers(Collection<String> developers) {
+		this.developers = cleanMetadataList(developers);
+	}
+
+	public List<String> getPublishers() {
+		return publishers;
+	}
+
+	public void setPublishers(Collection<String> publishers) {
+		this.publishers = cleanMetadataList(publishers);
+	}
+
+	public List<String> getGameModes() {
+		return gameModes;
+	}
+
+	public void setGameModes(Collection<String> gameModes) {
+		this.gameModes = cleanMetadataList(gameModes);
+	}
+
+	public List<String> getThemes() {
+		return themes;
+	}
+
+	public void setThemes(Collection<String> themes) {
+		this.themes = cleanMetadataList(themes);
+	}
+
+	public List<String> getPlayerPerspectives() {
+		return playerPerspectives;
+	}
+
+	public void setPlayerPerspectives(Collection<String> playerPerspectives) {
+		this.playerPerspectives = cleanMetadataList(playerPerspectives);
+	}
+
+	public List<GameWebsite> getWebsites() {
+		return websites;
+	}
+
+	public void setWebsites(Collection<GameWebsite> websites) {
+		this.websites = cleanWebsites(websites);
+	}
+
 	public List<String> getScreenshotUrls() {
 		return screenshotUrls;
 	}
@@ -204,6 +296,22 @@ public class Game {
 		this.backdropUrl = backdropUrl;
 	}
 
+	public Double getExternalRating() {
+		return externalRating;
+	}
+
+	public void setExternalRating(Double externalRating) {
+		this.externalRating = externalRating;
+	}
+
+	public Integer getExternalRatingCount() {
+		return externalRatingCount;
+	}
+
+	public void setExternalRatingCount(Integer externalRatingCount) {
+		this.externalRatingCount = externalRatingCount;
+	}
+
 	public Instant getCreatedAt() {
 		return createdAt;
 	}
@@ -222,5 +330,28 @@ public class Game {
 				.map(String::trim)
 				.distinct()
 				.collect(Collectors.toCollection(ArrayList::new));
+	}
+
+	private List<GameWebsite> cleanWebsites(Collection<GameWebsite> values) {
+		if (values == null) {
+			return new ArrayList<>();
+		}
+
+		Map<String, GameWebsite> byUrl = new LinkedHashMap<>();
+		for (GameWebsite website : values) {
+			if (website == null || website.getUrl() == null || website.getUrl().isBlank()) {
+				continue;
+			}
+			String url = website.getUrl().trim();
+			String label = website.getLabel() == null || website.getLabel().isBlank()
+					? "Website" : website.getLabel().trim();
+			byUrl.putIfAbsent(normalizeUrl(url), new GameWebsite(label, url, website.isTrusted()));
+		}
+
+		return new ArrayList<>(byUrl.values());
+	}
+
+	private String normalizeUrl(String url) {
+		return url.trim().replaceAll("/+$", "").toLowerCase(Locale.ROOT);
 	}
 }

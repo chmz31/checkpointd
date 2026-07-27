@@ -3,8 +3,10 @@ package com.chmz31.checkpointd.externalgames.service;
 import com.chmz31.checkpointd.common.exception.BadRequestException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.externalgames.dto.ExternalGameSearchResult;
+import com.chmz31.checkpointd.externalgames.dto.ExternalGameWebsite;
 import com.chmz31.checkpointd.externalgames.dto.ImportExternalGameRequest;
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.game.entity.GameWebsite;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import java.util.Locale;
 import java.util.Optional;
@@ -90,6 +92,14 @@ public class ExternalGameImportService {
 		game.setSummary(externalGame.summary());
 		game.setGenres(externalGame.genres());
 		game.setPlatforms(externalGame.platforms());
+		game.setDevelopers(externalGame.developers());
+		game.setPublishers(externalGame.publishers());
+		game.setGameModes(externalGame.gameModes());
+		game.setThemes(externalGame.themes());
+		game.setPlayerPerspectives(externalGame.playerPerspectives());
+		game.setWebsites(externalGame.websites().stream().map(this::toGameWebsite).toList());
+		game.setExternalRating(externalGame.externalRating());
+		game.setExternalRatingCount(externalGame.externalRatingCount());
 		game.setScreenshotUrls(externalGame.screenshotUrls());
 		game.setArtworkUrls(externalGame.artworkUrls());
 		game.setBackdropUrl(externalGame.backdropUrl());
@@ -101,5 +111,9 @@ public class ExternalGameImportService {
 		}
 
 		return value.trim().toLowerCase(Locale.ROOT);
+	}
+
+	private GameWebsite toGameWebsite(ExternalGameWebsite website) {
+		return new GameWebsite(website.label(), website.url(), website.trusted());
 	}
 }

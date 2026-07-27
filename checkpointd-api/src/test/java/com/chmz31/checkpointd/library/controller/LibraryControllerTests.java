@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.game.entity.GameWebsite;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
@@ -103,6 +104,16 @@ class LibraryControllerTests {
 				.andExpect(jsonPath("$.gameSummary").value("Time travel RPG"))
 				.andExpect(jsonPath("$.gameGenres[0]").value("RPG"))
 				.andExpect(jsonPath("$.gamePlatforms[0]").value("SNES"))
+				.andExpect(jsonPath("$.gameDevelopers[0]").value("Square"))
+				.andExpect(jsonPath("$.gamePublishers[0]").value("Enix"))
+				.andExpect(jsonPath("$.gameModes[0]").value("Single player"))
+				.andExpect(jsonPath("$.gameThemes[0]").value("Time travel"))
+				.andExpect(jsonPath("$.gamePlayerPerspectives[0]").value("Bird view"))
+				.andExpect(jsonPath("$.gameWebsites[0].label").value("Official"))
+				.andExpect(jsonPath("$.gameWebsites[0].url").value("https://www.square-enix-games.com/chrono-trigger"))
+				.andExpect(jsonPath("$.gameWebsites[0].trusted").value(true))
+				.andExpect(jsonPath("$.gameExternalRating").value(92.5))
+				.andExpect(jsonPath("$.gameExternalRatingCount").value(50))
 				.andExpect(jsonPath("$.gameScreenshotUrls[0]").value("https://img.example/shot.jpg"))
 				.andExpect(jsonPath("$.gameArtworkUrls[0]").value("https://img.example/art.jpg"))
 				.andExpect(jsonPath("$.gameBackdropUrl").value("https://img.example/art.jpg"))
@@ -418,6 +429,15 @@ class LibraryControllerTests {
 			game.setSummary("Updated summary");
 			game.setGenres(List.of("RPG", "Adventure"));
 			game.setPlatforms(List.of("PC"));
+			game.setDevelopers(List.of("Square"));
+			game.setPublishers(List.of("Enix"));
+			game.setGameModes(List.of("Single player"));
+			game.setThemes(List.of("Adventure"));
+			game.setPlayerPerspectives(List.of("Side view"));
+			game.setWebsites(List.of(new GameWebsite(
+					"Official", "https://www.square-enix-games.com/chrono-trigger", true)));
+			game.setExternalRating(94.0);
+			game.setExternalRatingCount(75);
 			game.setScreenshotUrls(List.of("https://img.example/new-shot.jpg"));
 			game.setArtworkUrls(List.of("https://img.example/new-art.jpg"));
 			game.setBackdropUrl("https://img.example/new-art.jpg");
@@ -432,6 +452,16 @@ class LibraryControllerTests {
 				.andExpect(jsonPath("$.gameSummary").value("Updated summary"))
 				.andExpect(jsonPath("$.gameGenres[0]").value("RPG"))
 				.andExpect(jsonPath("$.gamePlatforms[0]").value("PC"))
+				.andExpect(jsonPath("$.gameDevelopers[0]").value("Square"))
+				.andExpect(jsonPath("$.gamePublishers[0]").value("Enix"))
+				.andExpect(jsonPath("$.gameModes[0]").value("Single player"))
+				.andExpect(jsonPath("$.gameThemes[0]").value("Adventure"))
+				.andExpect(jsonPath("$.gamePlayerPerspectives[0]").value("Side view"))
+				.andExpect(jsonPath("$.gameWebsites[0].label").value("Official"))
+				.andExpect(jsonPath("$.gameWebsites[0].url").value("https://www.square-enix-games.com/chrono-trigger"))
+				.andExpect(jsonPath("$.gameWebsites[0].trusted").value(true))
+				.andExpect(jsonPath("$.gameExternalRating").value(94.0))
+				.andExpect(jsonPath("$.gameExternalRatingCount").value(75))
 				.andExpect(jsonPath("$.gameScreenshotUrls[0]").value("https://img.example/new-shot.jpg"))
 				.andExpect(jsonPath("$.gameArtworkUrls[0]").value("https://img.example/new-art.jpg"))
 				.andExpect(jsonPath("$.gameBackdropUrl").value("https://img.example/new-art.jpg"))
@@ -492,6 +522,15 @@ class LibraryControllerTests {
 		game.setSummary("Time travel RPG");
 		game.setGenres(List.of("RPG"));
 		game.setPlatforms(List.of("SNES"));
+		game.setDevelopers(List.of("Square"));
+		game.setPublishers(List.of("Enix"));
+		game.setGameModes(List.of("Single player"));
+		game.setThemes(List.of("Time travel"));
+		game.setPlayerPerspectives(List.of("Bird view"));
+		game.setWebsites(List.of(new GameWebsite(
+				"Official", "https://www.square-enix-games.com/chrono-trigger", true)));
+		game.setExternalRating(92.5);
+		game.setExternalRatingCount(50);
 		game.setScreenshotUrls(List.of("https://img.example/shot.jpg"));
 		game.setArtworkUrls(List.of("https://img.example/art.jpg"));
 		game.setBackdropUrl("https://img.example/art.jpg");
