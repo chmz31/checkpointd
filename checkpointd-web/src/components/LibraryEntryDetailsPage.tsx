@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
+import { displayDate } from '../formHelpers';
 import type { LibraryEntry } from '../types';
 import { CoverImage } from './CoverImage';
 import { LibraryEntryEditForm } from './LibraryEntryEditForm';
@@ -131,10 +132,10 @@ export function LibraryEntryDetailsPage() {
           <div className="detail-facts">
             <Fact label="Status" value={entry.status} />
             <Fact label="Rating" value={entry.rating ? `${entry.rating}/10` : 'Unrated'} />
-            <Fact label="Started" value={formatDate(entry.startedAt)} />
-            <Fact label="Completed" value={formatDate(entry.completedAt)} />
-            <Fact label="Added" value={formatDate(entry.createdAt)} />
-            <Fact label="Updated" value={formatDate(entry.updatedAt)} />
+            <Fact label="Started" value={displayDate(entry.startedAt)} />
+            <Fact label="Completed" value={displayDate(entry.completedAt)} />
+            <Fact label="Added" value={displayDate(entry.createdAt)} />
+            <Fact label="Updated" value={displayDate(entry.updatedAt)} />
           </div>
 
           {message && <p className="success compact-message">{message}</p>}
@@ -165,14 +166,3 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatDate(value?: string | null) {
-  if (!value) {
-    return 'Not set';
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(value));
-}

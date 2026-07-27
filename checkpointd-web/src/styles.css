@@ -305,7 +305,7 @@ h3 {
 
 .edit-form {
   display: grid;
-  grid-template-columns: minmax(150px, 0.7fr) minmax(110px, 0.45fr) minmax(240px, 1.4fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.75rem;
   border-top: 1px solid #253548;
   padding: 0.75rem;
@@ -314,11 +314,15 @@ h3 {
 
 .direct-add-form {
   display: grid;
-  grid-template-columns: minmax(150px, 0.7fr) minmax(110px, 0.45fr) minmax(240px, 1.4fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.75rem;
   border-top: 1px solid #253548;
   padding: 0.75rem;
   background: #121b27;
+}
+
+.notes-field {
+  grid-column: 1 / -1;
 }
 
 .direct-add-actions {

@@ -58,6 +58,7 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
       await loadStats();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not remove entry');
+      throw caught;
     }
   }
 

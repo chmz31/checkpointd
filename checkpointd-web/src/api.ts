@@ -115,7 +115,9 @@ export const api = {
     gameId: string;
     status: LibraryStatus;
     rating?: number | null;
-    notes?: string;
+    notes?: string | null;
+    startedAt?: string | null;
+    completedAt?: string | null;
   }) {
     return apiRequest<LibraryEntry>('/api/v1/library', {
       method: 'POST',

@@ -22,6 +22,7 @@ import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -60,7 +61,7 @@ class LibraryServiceTests {
 		User user = user();
 		Game game = game();
 		AddLibraryEntryRequest request = new AddLibraryEntryRequest(
-				GAME_ID, LibraryStatus.PLAYING, 9, "Great", Instant.parse("2026-01-01T00:00:00Z"), null);
+				GAME_ID, LibraryStatus.PLAYING, 9, "Great", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-02-01"));
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game));
@@ -79,7 +80,8 @@ class LibraryServiceTests {
 		assertThat(saved.getStatus()).isEqualTo(LibraryStatus.PLAYING);
 		assertThat(saved.getRating()).isEqualTo(9);
 		assertThat(saved.getNotes()).isEqualTo("Great");
-		assertThat(saved.getStartedAt()).isEqualTo(Instant.parse("2026-01-01T00:00:00Z"));
+		assertThat(saved.getStartedAt()).isEqualTo(LocalDate.parse("2026-01-01"));
+		assertThat(saved.getCompletedAt()).isEqualTo(LocalDate.parse("2026-02-01"));
 	}
 
 	@Test
@@ -220,7 +222,7 @@ class LibraryServiceTests {
 	void updateCurrentUsersEntry() {
 		LibraryEntry entry = entry();
 		UpdateLibraryEntryRequest request = new UpdateLibraryEntryRequest(
-				LibraryStatus.COMPLETED, 10, "Done", null, Instant.parse("2026-02-01T00:00:00Z"));
+				LibraryStatus.COMPLETED, 10, "Done", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-02-01"));
 
 		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
 		when(libraryEntryRepository.save(entry)).thenReturn(entry);
@@ -231,7 +233,30 @@ class LibraryServiceTests {
 		assertThat(entry.getStatus()).isEqualTo(LibraryStatus.COMPLETED);
 		assertThat(entry.getRating()).isEqualTo(10);
 		assertThat(entry.getNotes()).isEqualTo("Done");
-		assertThat(entry.getCompletedAt()).isEqualTo(Instant.parse("2026-02-01T00:00:00Z"));
+		assertThat(entry.getStartedAt()).isEqualTo(LocalDate.parse("2026-01-01"));
+		assertThat(entry.getCompletedAt()).isEqualTo(LocalDate.parse("2026-02-01"));
+	}
+
+	@Test
+	void updateClearsNullableTrackingFields() {
+		LibraryEntry entry = entry();
+		entry.setRating(8);
+		entry.setNotes("Old notes");
+		entry.setStartedAt(LocalDate.parse("2026-01-01"));
+		entry.setCompletedAt(LocalDate.parse("2026-02-01"));
+		UpdateLibraryEntryRequest request = new UpdateLibraryEntryRequest(LibraryStatus.PLAYING, null, null, null, null);
+
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
+		when(libraryEntryRepository.save(entry)).thenReturn(entry);
+
+		LibraryEntry updated = libraryService.update(USER_ID, ENTRY_ID, request);
+
+		assertThat(updated).isSameAs(entry);
+		assertThat(entry.getStatus()).isEqualTo(LibraryStatus.PLAYING);
+		assertThat(entry.getRating()).isNull();
+		assertThat(entry.getNotes()).isNull();
+		assertThat(entry.getStartedAt()).isNull();
+		assertThat(entry.getCompletedAt()).isNull();
 	}
 
 	@Test

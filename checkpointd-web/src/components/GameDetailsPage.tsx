@@ -2,6 +2,13 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, isApiErrorStatus } from '../api';
 import { libraryStatuses } from '../constants';
+import {
+  displayDate,
+  optionalDate,
+  optionalNotes,
+  optionalRating,
+  ratingValidationMessage,
+} from '../formHelpers';
 import type { Game, LibraryEntry, LibraryStatus } from '../types';
 import { CoverImage } from './CoverImage';
 
@@ -11,11 +18,14 @@ export function GameDetailsPage() {
   const [status, setStatus] = useState<LibraryStatus>('BACKLOG');
   const [rating, setRating] = useState('');
   const [notes, setNotes] = useState('');
+  const [startedAt, setStartedAt] = useState('');
+  const [completedAt, setCompletedAt] = useState('');
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [libraryEntry, setLibraryEntry] = useState<LibraryEntry | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const ratingError = ratingValidationMessage(rating);
 
   useEffect(() => {
     if (!gameId) return;
@@ -58,6 +68,10 @@ export function GameDetailsPage() {
   async function addToLibrary(event: FormEvent) {
     event.preventDefault();
     if (!game) return;
+    if (ratingError) {
+      setError(ratingError);
+      return;
+    }
 
     setAdding(true);
     setMessage(null);
@@ -67,8 +81,10 @@ export function GameDetailsPage() {
       const entry = await api.addLibraryEntry({
         gameId: game.id,
         status,
-        rating: rating ? Number(rating) : null,
-        notes: notes.trim() || undefined,
+        rating: optionalRating(rating),
+        notes: optionalNotes(notes),
+        startedAt: optionalDate(startedAt),
+        completedAt: optionalDate(completedAt),
       });
       setLibraryEntry(entry);
       setMessage('Added to library.');
@@ -128,10 +144,10 @@ export function GameDetailsPage() {
           </div>
 
           <div className="detail-facts">
-            <Fact label="Release" value={formatDate(game.releaseDate)} />
+            <Fact label="Release" value={displayDate(game.releaseDate)} />
             <Fact label="Provider" value={game.externalProvider || 'Local'} />
-            {game.createdAt && <Fact label="Added" value={formatDate(game.createdAt)} />}
-            {game.updatedAt && <Fact label="Updated" value={formatDate(game.updatedAt)} />}
+            {game.createdAt && <Fact label="Added" value={displayDate(game.createdAt)} />}
+            {game.updatedAt && <Fact label="Updated" value={displayDate(game.updatedAt)} />}
           </div>
 
           {error && <p className="error compact-message">{error}</p>}
@@ -191,6 +207,29 @@ export function GameDetailsPage() {
                     max={10}
                     type="number"
                     placeholder="1-10"
+                    step={1}
+                  />
+                </label>
+                <label>
+                  Started
+                  <input
+                    value={startedAt}
+                    onChange={(event) => {
+                      setStartedAt(event.target.value);
+                      clearAddFeedback();
+                    }}
+                    type="date"
+                  />
+                </label>
+                <label>
+                  Completed
+                  <input
+                    value={completedAt}
+                    onChange={(event) => {
+                      setCompletedAt(event.target.value);
+                      clearAddFeedback();
+                    }}
+                    type="date"
                   />
                 </label>
                 <label className="notes-field">
@@ -205,11 +244,12 @@ export function GameDetailsPage() {
                   />
                 </label>
                 <div className="inline-actions direct-add-actions">
-                  <button type="submit" disabled={adding}>
+                  <button type="submit" disabled={adding || Boolean(ratingError)}>
                     {adding ? 'Adding...' : 'Add to Library'}
                   </button>
                 </div>
               </form>
+              {ratingError && <p className="error compact-message">{ratingError}</p>}
             </section>
           )}
 
@@ -271,14 +311,3 @@ function ChipGroup({ label, values }: { label: string; values: string[] }) {
   );
 }
 
-function formatDate(value?: string | null) {
-  if (!value) {
-    return 'Not set';
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(value));
-}

@@ -76,8 +76,10 @@ export type LibraryEntry = {
 
 export type LibraryEntryUpdateInput = {
   status?: LibraryStatus;
-  rating?: number;
-  notes?: string;
+  rating?: number | null;
+  notes?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
 };
 
 export type LibraryStats = {

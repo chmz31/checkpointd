@@ -112,18 +112,10 @@ public class LibraryService {
 		if (request.status() != null) {
 			entry.setStatus(request.status());
 		}
-		if (request.rating() != null) {
-			entry.setRating(request.rating());
-		}
-		if (request.notes() != null) {
-			entry.setNotes(request.notes());
-		}
-		if (request.startedAt() != null) {
-			entry.setStartedAt(request.startedAt());
-		}
-		if (request.completedAt() != null) {
-			entry.setCompletedAt(request.completedAt());
-		}
+		entry.setRating(request.rating());
+		entry.setNotes(request.notes());
+		entry.setStartedAt(request.startedAt());
+		entry.setCompletedAt(request.completedAt());
 
 		return libraryEntryRepository.save(entry);
 	}
