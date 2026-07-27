@@ -41,6 +41,7 @@ public class GameController {
 
 	@GetMapping("/{gameId}")
 	GameResponse get(@PathVariable UUID gameId) {
-		return GameResponse.from(gameService.get(gameId));
+		var game = gameService.get(gameId);
+		return GameResponse.from(game, gameService.isMetadataStale(game));
 	}
 }

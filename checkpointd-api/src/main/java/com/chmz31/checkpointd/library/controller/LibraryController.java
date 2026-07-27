@@ -67,7 +67,8 @@ public class LibraryController {
 
 	@GetMapping("/{entryId}")
 	LibraryEntryResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID entryId) {
-		return LibraryEntryResponse.from(libraryService.get(currentUserId(jwt), entryId));
+		var entry = libraryService.get(currentUserId(jwt), entryId);
+		return LibraryEntryResponse.from(entry, libraryService.isGameMetadataStale(entry));
 	}
 
 	@PatchMapping("/{entryId}")
@@ -80,7 +81,8 @@ public class LibraryController {
 
 	@PostMapping("/{entryId}/sync-metadata")
 	LibraryEntryResponse syncMetadata(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID entryId) {
-		return LibraryEntryResponse.from(libraryService.syncMetadata(currentUserId(jwt), entryId));
+		var entry = libraryService.syncMetadata(currentUserId(jwt), entryId);
+		return LibraryEntryResponse.from(entry, libraryService.isGameMetadataStale(entry));
 	}
 
 	@DeleteMapping("/{entryId}")

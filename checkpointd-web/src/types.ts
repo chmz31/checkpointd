@@ -48,6 +48,8 @@ export type GameWebsite = {
   trusted: boolean;
 };
 
+export type MetadataSyncStatus = 'NEVER_SYNCED' | 'SUCCESS' | 'REFRESHING' | 'FAILED';
+
 export type Game = {
   id: string;
   externalProvider?: string | null;
@@ -70,6 +72,11 @@ export type Game = {
   screenshotUrls: string[];
   artworkUrls: string[];
   backdropUrl?: string | null;
+  metadataSyncedAt?: string | null;
+  metadataSyncAttemptedAt?: string | null;
+  metadataSyncStatus?: MetadataSyncStatus | null;
+  metadataSyncError?: string | null;
+  metadataStale: boolean;
   createdAt?: string | null;
   updatedAt?: string | null;
 };
@@ -95,6 +102,11 @@ export type LibraryEntry = {
   gameArtworkUrls: string[];
   gameBackdropUrl?: string | null;
   gameMetadataSyncAvailable: boolean;
+  gameMetadataSyncedAt?: string | null;
+  gameMetadataSyncAttemptedAt?: string | null;
+  gameMetadataSyncStatus?: MetadataSyncStatus | null;
+  gameMetadataSyncError?: string | null;
+  gameMetadataStale: boolean;
   status: LibraryStatus;
   rating?: number | null;
   notes?: string | null;

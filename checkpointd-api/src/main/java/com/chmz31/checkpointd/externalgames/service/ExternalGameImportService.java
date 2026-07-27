@@ -7,7 +7,9 @@ import com.chmz31.checkpointd.externalgames.dto.ExternalGameWebsite;
 import com.chmz31.checkpointd.externalgames.dto.ImportExternalGameRequest;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.entity.GameWebsite;
+import com.chmz31.checkpointd.game.model.MetadataSyncStatus;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -46,6 +48,7 @@ public class ExternalGameImportService {
 		game.setExternalProvider(provider);
 		game.setExternalId(externalId);
 		applyExternalGame(game, externalGame);
+		markSyncSuccess(game, Instant.now());
 
 		try {
 			return new ImportedGameResult(gameRepository.saveAndFlush(game), true);
@@ -65,14 +68,29 @@ public class ExternalGameImportService {
 
 		validateIgdbIdentity(provider, externalId);
 
-		ExternalGameSearchResult externalGame = igdbClient.fetchById(externalId);
-		if (externalGame == null) {
-			throw new ResourceNotFoundException("External game not found");
+		Instant attemptedAt = Instant.now();
+		game.setMetadataSyncAttemptedAt(attemptedAt);
+		game.setMetadataSyncStatus(MetadataSyncStatus.REFRESHING);
+		game.setMetadataSyncError(null);
+
+		try {
+			ExternalGameSearchResult externalGame = igdbClient.fetchById(externalId);
+			if (externalGame == null) {
+				throw new ResourceNotFoundException("External game not found");
+			}
+
+			applyExternalGame(game, externalGame);
+			markSyncSuccess(game, Instant.now());
+
+			return gameRepository.save(game);
 		}
-
-		applyExternalGame(game, externalGame);
-
-		return gameRepository.save(game);
+		catch (RuntimeException exception) {
+			game.setMetadataSyncAttemptedAt(attemptedAt);
+			game.setMetadataSyncStatus(MetadataSyncStatus.FAILED);
+			game.setMetadataSyncError(cleanError(exception));
+			gameRepository.save(game);
+			throw exception;
+		}
 	}
 
 	private void validateIgdbIdentity(String provider, String externalId) {
@@ -115,5 +133,21 @@ public class ExternalGameImportService {
 
 	private GameWebsite toGameWebsite(ExternalGameWebsite website) {
 		return new GameWebsite(website.label(), website.url(), website.trusted());
+	}
+
+	private void markSyncSuccess(Game game, Instant syncedAt) {
+		game.setMetadataSyncedAt(syncedAt);
+		game.setMetadataSyncAttemptedAt(syncedAt);
+		game.setMetadataSyncStatus(MetadataSyncStatus.SUCCESS);
+		game.setMetadataSyncError(null);
+	}
+
+	private String cleanError(RuntimeException exception) {
+		String message = exception.getMessage();
+		if (message == null || message.isBlank()) {
+			message = exception.getClass().getSimpleName();
+		}
+
+		return message.length() > 500 ? message.substring(0, 500) : message;
 	}
 }

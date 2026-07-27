@@ -14,6 +14,7 @@ import com.chmz31.checkpointd.externalgames.dto.ExternalGameSearchResult;
 import com.chmz31.checkpointd.externalgames.dto.ExternalGameWebsite;
 import com.chmz31.checkpointd.externalgames.dto.ImportExternalGameRequest;
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.game.model.MetadataSyncStatus;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -98,6 +99,10 @@ class ExternalGameImportServiceTests {
 						"Official", "https://www.supergiantgames.com/games/hades/", true));
 		assertThat(saved.getExternalRating()).isEqualTo(93.5);
 		assertThat(saved.getExternalRatingCount()).isEqualTo(212);
+		assertThat(saved.getMetadataSyncedAt()).isNotNull();
+		assertThat(saved.getMetadataSyncAttemptedAt()).isNotNull();
+		assertThat(saved.getMetadataSyncStatus()).isEqualTo(MetadataSyncStatus.SUCCESS);
+		assertThat(saved.getMetadataSyncError()).isNull();
 		assertThat(saved.getScreenshotUrls()).containsExactly("https://images.example/screenshot.jpg");
 		assertThat(saved.getArtworkUrls()).containsExactly("https://images.example/artwork.jpg");
 		assertThat(saved.getBackdropUrl()).isEqualTo("https://images.example/artwork.jpg");
@@ -193,6 +198,10 @@ class ExternalGameImportServiceTests {
 						"Official", "https://www.supergiantgames.com/games/hades-ii/", true));
 		assertThat(game.getExternalRating()).isEqualTo(91.0);
 		assertThat(game.getExternalRatingCount()).isEqualTo(54);
+		assertThat(game.getMetadataSyncedAt()).isNotNull();
+		assertThat(game.getMetadataSyncAttemptedAt()).isNotNull();
+		assertThat(game.getMetadataSyncStatus()).isEqualTo(MetadataSyncStatus.SUCCESS);
+		assertThat(game.getMetadataSyncError()).isNull();
 		assertThat(game.getScreenshotUrls()).containsExactly("https://images.example/new-shot.jpg");
 		assertThat(game.getArtworkUrls()).containsExactly("https://images.example/new-art.jpg");
 		assertThat(game.getBackdropUrl()).isEqualTo("https://images.example/new-art.jpg");
@@ -222,10 +231,15 @@ class ExternalGameImportServiceTests {
 		Game game = game();
 		when(igdbClient.fetchById("112964"))
 				.thenThrow(new ServiceUnavailableException("External game provider is unavailable"));
+		when(gameRepository.save(game)).thenReturn(game);
 
 		assertThatThrownBy(() -> externalGameImportService.syncMetadata(game))
 				.isInstanceOf(ServiceUnavailableException.class)
 				.hasMessage("External game provider is unavailable");
+
+		assertThat(game.getMetadataSyncStatus()).isEqualTo(MetadataSyncStatus.FAILED);
+		assertThat(game.getMetadataSyncAttemptedAt()).isNotNull();
+		assertThat(game.getMetadataSyncError()).isEqualTo("External game provider is unavailable");
 	}
 
 	private Game game() {

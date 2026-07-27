@@ -144,6 +144,13 @@ export function GameDetailsPage() {
             {game.updatedAt && <DetailFact label="Updated" value={formatDate(game.updatedAt)} />}
           </div>
 
+          <MetadataStatus
+            status={game.metadataSyncStatus}
+            stale={game.metadataStale}
+            syncedAt={game.metadataSyncedAt}
+            error={game.metadataSyncError}
+          />
+
           {error && <p className="error compact-message">{error}</p>}
           {message && (
             <p className="success compact-message">
@@ -291,4 +298,35 @@ function inferWebsiteLabel(url: string) {
   } catch {
     return 'Website';
   }
+}
+
+function MetadataStatus({
+  status,
+  stale,
+  syncedAt,
+  error,
+}: {
+  status: Game['metadataSyncStatus'];
+  stale: boolean;
+  syncedAt?: string | null;
+  error?: string | null;
+}) {
+  if (status === 'REFRESHING') {
+    return <p className="metadata-status">Catalog metadata is refreshing...</p>;
+  }
+  if (status === 'FAILED') {
+    return (
+      <p className="metadata-status metadata-status-warning">
+        Metadata refresh failed. {error ? error : 'Try again from your library entry.'}
+      </p>
+    );
+  }
+  if (status === 'SUCCESS' && syncedAt && !stale) {
+    return <p className="metadata-status">Catalog metadata updated {formatDate(syncedAt)}.</p>;
+  }
+  if (stale) {
+    return <p className="metadata-status">Catalog metadata is queued for refresh.</p>;
+  }
+
+  return null;
 }

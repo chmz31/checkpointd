@@ -416,6 +416,30 @@ h3 {
   color: #d9fff8;
 }
 
+.metadata-status {
+  border: 1px solid rgba(139, 211, 199, 0.22);
+  border-radius: 8px;
+  margin: 0.85rem 0 0;
+  padding: 0.55rem 0.7rem;
+  color: #b6c5d3;
+  background: rgba(18, 29, 42, 0.68);
+  font-size: 0.9rem;
+}
+
+.metadata-status-warning {
+  border-color: rgba(255, 205, 117, 0.34);
+  color: #ffdca2;
+  background: rgba(66, 43, 20, 0.56);
+}
+
+.metadata-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .summary-preview {
   display: -webkit-box;
   margin-bottom: 0;
