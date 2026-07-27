@@ -1,6 +1,8 @@
 package com.chmz31.checkpointd.game.dto;
 
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.game.model.MetadataSyncStatus;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -26,9 +28,18 @@ public record GameResponse(
 		Integer externalRatingCount,
 		List<String> screenshotUrls,
 		List<String> artworkUrls,
-		String backdropUrl) {
+		String backdropUrl,
+		Instant metadataSyncedAt,
+		Instant metadataSyncAttemptedAt,
+		MetadataSyncStatus metadataSyncStatus,
+		String metadataSyncError,
+		boolean metadataStale) {
 
 	public static GameResponse from(Game game) {
+		return from(game, false);
+	}
+
+	public static GameResponse from(Game game, boolean metadataStale) {
 		return new GameResponse(
 				game.getId(),
 				game.getExternalProvider(),
@@ -50,6 +61,11 @@ public record GameResponse(
 				game.getExternalRatingCount(),
 				List.copyOf(game.getScreenshotUrls()),
 				List.copyOf(game.getArtworkUrls()),
-				game.getBackdropUrl());
+				game.getBackdropUrl(),
+				game.getMetadataSyncedAt(),
+				game.getMetadataSyncAttemptedAt(),
+				game.getMetadataSyncStatus(),
+				game.getMetadataSyncError(),
+				metadataStale);
 	}
 }

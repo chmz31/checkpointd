@@ -136,6 +136,8 @@ export function LibraryEntryDetailsPage() {
             <DetailFact label="Updated" value={formatDate(entry.updatedAt)} />
           </div>
 
+          <MetadataStatus entry={entry} syncing={syncing} deleting={deleting} onRetry={syncMetadata} />
+
           {message && <p className="success compact-message">{message}</p>}
           {error && <p className="error compact-message">{error}</p>}
 
@@ -150,10 +152,10 @@ export function LibraryEntryDetailsPage() {
             </section>
           )}
 
-          {entry.gameMetadataSyncAvailable && (
+          {entry.gameMetadataSyncAvailable && entry.gameMetadataSyncStatus !== 'FAILED' && (
             <section className="detail-section secondary-actions-section">
               <h3>Metadata</h3>
-              <p className="muted">Refresh catalog details and cover art for this game.</p>
+              <p className="muted">Catalog details refresh automatically when they look stale.</p>
               <div className="inline-actions">
                 <button className="button-ghost button-small" onClick={syncMetadata} disabled={syncing || deleting}>
                   {syncing ? 'Refreshing...' : 'Refresh metadata'}
@@ -165,4 +167,40 @@ export function LibraryEntryDetailsPage() {
       </div>
     </article>
   );
+}
+
+function MetadataStatus({
+  entry,
+  syncing,
+  deleting,
+  onRetry,
+}: {
+  entry: LibraryEntry;
+  syncing: boolean;
+  deleting: boolean;
+  onRetry: () => void;
+}) {
+  if (entry.gameMetadataSyncStatus === 'REFRESHING') {
+    return <p className="metadata-status">Catalog metadata is refreshing...</p>;
+  }
+  if (entry.gameMetadataSyncStatus === 'FAILED') {
+    return (
+      <div className="metadata-status metadata-status-warning metadata-status-row">
+        <span>Metadata refresh failed. {entry.gameMetadataSyncError || 'You can retry now.'}</span>
+        {entry.gameMetadataSyncAvailable && (
+          <button className="button-ghost button-small" onClick={onRetry} disabled={syncing || deleting}>
+            {syncing ? 'Retrying...' : 'Retry'}
+          </button>
+        )}
+      </div>
+    );
+  }
+  if (entry.gameMetadataSyncStatus === 'SUCCESS' && entry.gameMetadataSyncedAt && !entry.gameMetadataStale) {
+    return <p className="metadata-status">Catalog metadata updated {formatDate(entry.gameMetadataSyncedAt)}.</p>;
+  }
+  if (entry.gameMetadataStale) {
+    return <p className="metadata-status">Catalog metadata is queued for refresh.</p>;
+  }
+
+  return null;
 }

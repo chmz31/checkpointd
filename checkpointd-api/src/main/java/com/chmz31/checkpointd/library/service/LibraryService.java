@@ -5,6 +5,7 @@ import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.game.service.MetadataRefreshService;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
 import com.chmz31.checkpointd.library.dto.LibraryStatsResponse;
 import com.chmz31.checkpointd.library.dto.UpdateLibraryEntryRequest;
@@ -26,16 +27,19 @@ public class LibraryService {
 	private final GameRepository gameRepository;
 	private final UserRepository userRepository;
 	private final ExternalGameImportService externalGameImportService;
+	private final MetadataRefreshService metadataRefreshService;
 
 	public LibraryService(
 			LibraryEntryRepository libraryEntryRepository,
 			GameRepository gameRepository,
 			UserRepository userRepository,
-			ExternalGameImportService externalGameImportService) {
+			ExternalGameImportService externalGameImportService,
+			MetadataRefreshService metadataRefreshService) {
 		this.libraryEntryRepository = libraryEntryRepository;
 		this.gameRepository = gameRepository;
 		this.userRepository = userRepository;
 		this.externalGameImportService = externalGameImportService;
+		this.metadataRefreshService = metadataRefreshService;
 	}
 
 	@Transactional
@@ -68,7 +72,10 @@ public class LibraryService {
 
 	@Transactional(readOnly = true)
 	public LibraryEntry get(UUID userId, UUID entryId) {
-		return getUserEntry(userId, entryId);
+		LibraryEntry entry = getUserEntry(userId, entryId);
+		metadataRefreshService.triggerRefreshIfStale(entry.getGame());
+
+		return entry;
 	}
 
 	@Transactional(readOnly = true)
@@ -126,6 +133,10 @@ public class LibraryService {
 		externalGameImportService.syncMetadata(entry.getGame());
 
 		return entry;
+	}
+
+	public boolean isGameMetadataStale(LibraryEntry entry) {
+		return metadataRefreshService.isMetadataStale(entry.getGame());
 	}
 
 	@Transactional

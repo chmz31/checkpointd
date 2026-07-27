@@ -12,6 +12,7 @@ import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.game.service.MetadataRefreshService;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
 import com.chmz31.checkpointd.library.dto.LibraryStatsResponse;
 import com.chmz31.checkpointd.library.dto.UpdateLibraryEntryRequest;
@@ -52,6 +53,9 @@ class LibraryServiceTests {
 
 	@Mock
 	private ExternalGameImportService externalGameImportService;
+
+	@Mock
+	private MetadataRefreshService metadataRefreshService;
 
 	@InjectMocks
 	private LibraryService libraryService;
@@ -139,6 +143,7 @@ class LibraryServiceTests {
 		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
 
 		assertThat(libraryService.get(USER_ID, ENTRY_ID)).isSameAs(entry);
+		verify(metadataRefreshService).triggerRefreshIfStale(entry.getGame());
 	}
 
 	@Test

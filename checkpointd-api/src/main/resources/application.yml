@@ -34,3 +34,6 @@ checkpointd:
       twitch-token-url: ${TWITCH_TOKEN_URL:}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+  metadata:
+    refresh:
+      stale-after-days: ${METADATA_REFRESH_STALE_AFTER_DAYS:30}

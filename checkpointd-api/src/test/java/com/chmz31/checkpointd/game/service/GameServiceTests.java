@@ -30,6 +30,9 @@ class GameServiceTests {
 	@Mock
 	private GameRepository gameRepository;
 
+	@Mock
+	private MetadataRefreshService metadataRefreshService;
+
 	@InjectMocks
 	private GameService gameService;
 
@@ -114,5 +117,16 @@ class GameServiceTests {
 		assertThatThrownBy(() -> gameService.get(gameId))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Game not found");
+	}
+
+	@Test
+	void getTriggersBackgroundRefreshForStaleGame() {
+		UUID gameId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+		Game game = new Game("Chrono Trigger");
+		when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
+
+		assertThat(gameService.get(gameId)).isSameAs(game);
+
+		verify(metadataRefreshService).triggerRefreshIfStale(game);
 	}
 }

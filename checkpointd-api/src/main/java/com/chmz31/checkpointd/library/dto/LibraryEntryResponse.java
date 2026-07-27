@@ -3,6 +3,7 @@ package com.chmz31.checkpointd.library.dto;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.game.dto.GameWebsiteResponse;
+import com.chmz31.checkpointd.game.model.MetadataSyncStatus;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +30,11 @@ public record LibraryEntryResponse(
 		List<String> gameArtworkUrls,
 		String gameBackdropUrl,
 		boolean gameMetadataSyncAvailable,
+		Instant gameMetadataSyncedAt,
+		Instant gameMetadataSyncAttemptedAt,
+		MetadataSyncStatus gameMetadataSyncStatus,
+		String gameMetadataSyncError,
+		boolean gameMetadataStale,
 		LibraryStatus status,
 		Integer rating,
 		String notes,
@@ -38,6 +44,10 @@ public record LibraryEntryResponse(
 		Instant updatedAt) {
 
 	public static LibraryEntryResponse from(LibraryEntry entry) {
+		return from(entry, false);
+	}
+
+	public static LibraryEntryResponse from(LibraryEntry entry, boolean gameMetadataStale) {
 		return new LibraryEntryResponse(
 				entry.getId(),
 				entry.getGame().getId(),
@@ -59,6 +69,11 @@ public record LibraryEntryResponse(
 				List.copyOf(entry.getGame().getArtworkUrls()),
 				entry.getGame().getBackdropUrl(),
 				canSyncMetadata(entry),
+				entry.getGame().getMetadataSyncedAt(),
+				entry.getGame().getMetadataSyncAttemptedAt(),
+				entry.getGame().getMetadataSyncStatus(),
+				entry.getGame().getMetadataSyncError(),
+				gameMetadataStale,
 				entry.getStatus(),
 				entry.getRating(),
 				entry.getNotes(),

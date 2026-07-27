@@ -15,9 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class GameService {
 
 	private final GameRepository gameRepository;
+	private final MetadataRefreshService metadataRefreshService;
 
-	public GameService(GameRepository gameRepository) {
+	public GameService(GameRepository gameRepository, MetadataRefreshService metadataRefreshService) {
 		this.gameRepository = gameRepository;
+		this.metadataRefreshService = metadataRefreshService;
 	}
 
 	@Transactional
@@ -60,8 +62,15 @@ public class GameService {
 
 	@Transactional(readOnly = true)
 	public Game get(UUID gameId) {
-		return gameRepository.findById(gameId)
+		Game game = gameRepository.findById(gameId)
 				.orElseThrow(() -> new ResourceNotFoundException("Game not found"));
+		metadataRefreshService.triggerRefreshIfStale(game);
+
+		return game;
+	}
+
+	public boolean isMetadataStale(Game game) {
+		return metadataRefreshService.isMetadataStale(game);
 	}
 
 	private void validateExternalIdentity(String externalProvider, String externalId) {

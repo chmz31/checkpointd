@@ -8,11 +8,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import com.chmz31.checkpointd.game.model.MetadataSyncStatus;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -122,6 +125,19 @@ public class Game {
 
 	@Column(name = "external_rating_count")
 	private Integer externalRatingCount;
+
+	@Column(name = "metadata_synced_at")
+	private Instant metadataSyncedAt;
+
+	@Column(name = "metadata_sync_attempted_at")
+	private Instant metadataSyncAttemptedAt;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "metadata_sync_status", length = 40)
+	private MetadataSyncStatus metadataSyncStatus;
+
+	@Column(name = "metadata_sync_error", columnDefinition = "TEXT")
+	private String metadataSyncError;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -310,6 +326,38 @@ public class Game {
 
 	public void setExternalRatingCount(Integer externalRatingCount) {
 		this.externalRatingCount = externalRatingCount;
+	}
+
+	public Instant getMetadataSyncedAt() {
+		return metadataSyncedAt;
+	}
+
+	public void setMetadataSyncedAt(Instant metadataSyncedAt) {
+		this.metadataSyncedAt = metadataSyncedAt;
+	}
+
+	public Instant getMetadataSyncAttemptedAt() {
+		return metadataSyncAttemptedAt;
+	}
+
+	public void setMetadataSyncAttemptedAt(Instant metadataSyncAttemptedAt) {
+		this.metadataSyncAttemptedAt = metadataSyncAttemptedAt;
+	}
+
+	public MetadataSyncStatus getMetadataSyncStatus() {
+		return metadataSyncStatus;
+	}
+
+	public void setMetadataSyncStatus(MetadataSyncStatus metadataSyncStatus) {
+		this.metadataSyncStatus = metadataSyncStatus;
+	}
+
+	public String getMetadataSyncError() {
+		return metadataSyncError;
+	}
+
+	public void setMetadataSyncError(String metadataSyncError) {
+		this.metadataSyncError = metadataSyncError;
 	}
 
 	public Instant getCreatedAt() {
