@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
-import { displayDate } from '../formHelpers';
+import { formatDate } from '../dateUtils';
 import type { LibraryEntry } from '../types';
 import { CoverImage } from './CoverImage';
+import { DetailFact } from './DetailFact';
 import { LibraryEntryEditForm } from './LibraryEntryEditForm';
 
 export function LibraryEntryDetailsPage() {
@@ -130,12 +131,12 @@ export function LibraryEntryDetailsPage() {
           </div>
 
           <div className="detail-facts">
-            <Fact label="Status" value={entry.status} />
-            <Fact label="Rating" value={entry.rating ? `${entry.rating}/10` : 'Unrated'} />
-            <Fact label="Started" value={displayDate(entry.startedAt)} />
-            <Fact label="Completed" value={displayDate(entry.completedAt)} />
-            <Fact label="Added" value={displayDate(entry.createdAt)} />
-            <Fact label="Updated" value={displayDate(entry.updatedAt)} />
+            <DetailFact label="Status" value={entry.status} />
+            <DetailFact label="Rating" value={entry.rating ? `${entry.rating}/10` : 'Unrated'} />
+            <DetailFact label="Started" value={formatDate(entry.startedAt)} />
+            <DetailFact label="Completed" value={formatDate(entry.completedAt)} />
+            <DetailFact label="Added" value={formatDate(entry.createdAt)} />
+            <DetailFact label="Updated" value={formatDate(entry.updatedAt)} />
           </div>
 
           {message && <p className="success compact-message">{message}</p>}
@@ -156,13 +157,3 @@ export function LibraryEntryDetailsPage() {
     </article>
   );
 }
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="detail-fact">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-

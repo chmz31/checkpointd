@@ -1,31 +1,22 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, isApiErrorStatus } from '../api';
-import { libraryStatuses } from '../constants';
-import {
-  displayDate,
-  optionalDate,
-  optionalNotes,
-  optionalRating,
-  ratingValidationMessage,
-} from '../formHelpers';
-import type { Game, LibraryEntry, LibraryStatus } from '../types';
+import { formatDate } from '../dateUtils';
+import type { Game, LibraryEntry } from '../types';
+import { AddToLibraryForm, type AddToLibraryFormValues } from './AddToLibraryForm';
+import { ChipGroup } from './ChipGroup';
 import { CoverImage } from './CoverImage';
+import { DetailFact } from './DetailFact';
+import { MediaGallery } from './MediaGallery';
 
 export function GameDetailsPage() {
   const { gameId } = useParams();
   const [game, setGame] = useState<Game | null>(null);
-  const [status, setStatus] = useState<LibraryStatus>('BACKLOG');
-  const [rating, setRating] = useState('');
-  const [notes, setNotes] = useState('');
-  const [startedAt, setStartedAt] = useState('');
-  const [completedAt, setCompletedAt] = useState('');
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [libraryEntry, setLibraryEntry] = useState<LibraryEntry | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const ratingError = ratingValidationMessage(rating);
 
   useEffect(() => {
     if (!gameId) return;
@@ -65,13 +56,8 @@ export function GameDetailsPage() {
     setError(null);
   }
 
-  async function addToLibrary(event: FormEvent) {
-    event.preventDefault();
+  async function addToLibrary(values: AddToLibraryFormValues) {
     if (!game) return;
-    if (ratingError) {
-      setError(ratingError);
-      return;
-    }
 
     setAdding(true);
     setMessage(null);
@@ -80,11 +66,7 @@ export function GameDetailsPage() {
     try {
       const entry = await api.addLibraryEntry({
         gameId: game.id,
-        status,
-        rating: optionalRating(rating),
-        notes: optionalNotes(notes),
-        startedAt: optionalDate(startedAt),
-        completedAt: optionalDate(completedAt),
+        ...values,
       });
       setLibraryEntry(entry);
       setMessage('Added to library.');
@@ -111,10 +93,6 @@ export function GameDetailsPage() {
   }
 
   const backdropUrl = game.backdropUrl || game.coverUrl;
-  const mediaItems = [
-    ...game.artworkUrls.map((url) => ({ kind: 'Artwork', url })),
-    ...game.screenshotUrls.map((url) => ({ kind: 'Screenshot', url })),
-  ].slice(0, 12);
 
   return (
     <article className="detail-page">
@@ -144,10 +122,10 @@ export function GameDetailsPage() {
           </div>
 
           <div className="detail-facts">
-            <Fact label="Release" value={displayDate(game.releaseDate)} />
-            <Fact label="Provider" value={game.externalProvider || 'Local'} />
-            {game.createdAt && <Fact label="Added" value={displayDate(game.createdAt)} />}
-            {game.updatedAt && <Fact label="Updated" value={displayDate(game.updatedAt)} />}
+            <DetailFact label="Release" value={formatDate(game.releaseDate)} />
+            <DetailFact label="Provider" value={game.externalProvider || 'Local'} />
+            {game.createdAt && <DetailFact label="Added" value={formatDate(game.createdAt)} />}
+            {game.updatedAt && <DetailFact label="Updated" value={formatDate(game.updatedAt)} />}
           </div>
 
           {error && <p className="error compact-message">{error}</p>}
@@ -178,78 +156,13 @@ export function GameDetailsPage() {
           ) : (
             <section className="detail-section">
               <h3>Add to Library</h3>
-              <form className="direct-add-form detail-add-form" onSubmit={addToLibrary}>
-                <label>
-                  Status
-                  <select
-                    value={status}
-                    onChange={(event) => {
-                      setStatus(event.target.value as LibraryStatus);
-                      clearAddFeedback();
-                    }}
-                  >
-                    {libraryStatuses.map((libraryStatus) => (
-                      <option key={libraryStatus} value={libraryStatus}>
-                        {libraryStatus}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Rating
-                  <input
-                    value={rating}
-                    onChange={(event) => {
-                      setRating(event.target.value);
-                      clearAddFeedback();
-                    }}
-                    min={1}
-                    max={10}
-                    type="number"
-                    placeholder="1-10"
-                    step={1}
-                  />
-                </label>
-                <label>
-                  Started
-                  <input
-                    value={startedAt}
-                    onChange={(event) => {
-                      setStartedAt(event.target.value);
-                      clearAddFeedback();
-                    }}
-                    type="date"
-                  />
-                </label>
-                <label>
-                  Completed
-                  <input
-                    value={completedAt}
-                    onChange={(event) => {
-                      setCompletedAt(event.target.value);
-                      clearAddFeedback();
-                    }}
-                    type="date"
-                  />
-                </label>
-                <label className="notes-field">
-                  Notes
-                  <textarea
-                    value={notes}
-                    onChange={(event) => {
-                      setNotes(event.target.value);
-                      clearAddFeedback();
-                    }}
-                    rows={3}
-                  />
-                </label>
-                <div className="inline-actions direct-add-actions">
-                  <button type="submit" disabled={adding || Boolean(ratingError)}>
-                    {adding ? 'Adding...' : 'Add to Library'}
-                  </button>
-                </div>
-              </form>
-              {ratingError && <p className="error compact-message">{ratingError}</p>}
+              <AddToLibraryForm
+                onSubmit={addToLibrary}
+                submitting={adding}
+                submitLabel="Add to Library"
+                className="direct-add-form detail-add-form"
+                onChange={clearAddFeedback}
+              />
             </section>
           )}
 
@@ -263,51 +176,14 @@ export function GameDetailsPage() {
           {(game.genres.length > 0 || game.platforms.length > 0) && (
             <section className="detail-section">
               <h3>Metadata</h3>
-              {game.genres.length > 0 && <ChipGroup label="Genres" values={game.genres} />}
-              {game.platforms.length > 0 && <ChipGroup label="Platforms" values={game.platforms} />}
+              <ChipGroup label="Genres" values={game.genres} />
+              <ChipGroup label="Platforms" values={game.platforms} />
             </section>
           )}
 
-          {mediaItems.length > 0 && (
-            <section className="detail-section">
-              <h3>Media</h3>
-              <div className="media-grid">
-                {mediaItems.map((item, index) => (
-                  <figure className="media-tile" key={`${item.kind}-${item.url}-${index}`}>
-                    <img src={item.url} alt={`${game.title} ${item.kind.toLowerCase()}`} loading="lazy" />
-                    <figcaption>{item.kind}</figcaption>
-                  </figure>
-                ))}
-              </div>
-            </section>
-          )}
+          <MediaGallery title={game.title} artworkUrls={game.artworkUrls} screenshotUrls={game.screenshotUrls} />
         </section>
       </div>
     </article>
   );
 }
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="detail-fact">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function ChipGroup({ label, values }: { label: string; values: string[] }) {
-  return (
-    <div className="detail-chip-group">
-      <p className="muted">{label}</p>
-      <div className="chip-list">
-        {values.map((value, index) => (
-          <span className="metadata-chip" key={`${label}-${value}-${index}`}>
-            {value}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
