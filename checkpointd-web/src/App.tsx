@@ -73,7 +73,9 @@ export default function App() {
             element={<SearchView onLibraryChange={() => setLibraryRefreshKey((key) => key + 1)} />}
           />
           <Route path="/library" element={<LibraryView refreshKey={libraryRefreshKey} />} />
+          <Route path="/library/:entryId/:slug" element={<LibraryEntryDetailsPage />} />
           <Route path="/library/:entryId" element={<LibraryEntryDetailsPage />} />
+          <Route path="/games/:gameId/:slug" element={<GameDetailsPage />} />
           <Route path="/games/:gameId" element={<GameDetailsPage />} />
         </Route>
         <Route path="*" element={<Navigate to={token ? '/library' : '/'} replace />} />

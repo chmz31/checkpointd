@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, isApiErrorStatus } from '../api';
+import { gamePath, libraryEntryPath } from '../routePaths';
 import type { ExternalGameSearchResult, LibraryEntry } from '../types';
 import { AddSearchResultToLibrary } from './AddSearchResultToLibrary';
 import { CoverImage } from './CoverImage';
@@ -53,7 +54,7 @@ export function GameResultCard({
 
     try {
       const game = await api.importExternalGame(result.provider, result.externalId);
-      navigate(`/games/${game.id}`);
+      navigate(gamePath(game));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not open game page');
     } finally {
@@ -80,7 +81,7 @@ export function GameResultCard({
             {viewing ? 'Opening...' : 'View game page'}
           </button>
           {libraryEntry ? (
-            <Link className="nav-link button-small" to={`/library/${libraryEntry.id}`}>
+            <Link className="nav-link button-small" to={libraryEntryPath(libraryEntry)}>
               View library entry
             </Link>
           ) : (

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, isApiErrorStatus } from '../api';
 import { formatDate } from '../dateUtils';
+import { gamePath, libraryEntryPath, slugify } from '../routePaths';
 import type { Game, LibraryEntry } from '../types';
 import { AddToLibraryForm, type AddToLibraryFormValues } from './AddToLibraryForm';
 import { ChipGroup } from './ChipGroup';
@@ -10,7 +11,8 @@ import { DetailFact } from './DetailFact';
 import { MediaGallery } from './MediaGallery';
 
 export function GameDetailsPage() {
-  const { gameId } = useParams();
+  const { gameId, slug } = useParams();
+  const navigate = useNavigate();
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -32,6 +34,11 @@ export function GameDetailsPage() {
       try {
         const loadedGame = await api.getGame(currentGameId);
         setGame(loadedGame);
+        const canonicalPath = gamePath(loadedGame);
+        const canonicalSlug = slugify(loadedGame.slug || loadedGame.title || 'game');
+        if (slug !== canonicalSlug) {
+          navigate(canonicalPath, { replace: true });
+        }
 
         try {
           setLibraryEntry(await api.getLibraryEntryByGame(loadedGame.id));
@@ -49,7 +56,7 @@ export function GameDetailsPage() {
     }
 
     load();
-  }, [gameId]);
+  }, [gameId, navigate, slug]);
 
   function clearAddFeedback() {
     setMessage(null);
@@ -135,7 +142,7 @@ export function GameDetailsPage() {
               {libraryEntry && (
                 <>
                   {' '}
-                  <Link className="inline-link" to={`/library/${libraryEntry.id}`}>
+                  <Link className="inline-link" to={libraryEntryPath(libraryEntry)}>
                     View library entry
                   </Link>
                 </>
@@ -148,7 +155,7 @@ export function GameDetailsPage() {
               <h3>Library</h3>
               <p>
                 Already in your library.{' '}
-                <Link className="inline-link" to={`/library/${libraryEntry.id}`}>
+                <Link className="inline-link" to={libraryEntryPath(libraryEntry)}>
                   View library entry
                 </Link>
               </p>

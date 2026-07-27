@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { libraryEntryPath } from '../routePaths';
 import type { LibraryEntry } from '../types';
 import { CoverImage } from './CoverImage';
 import { GameMetadata } from './GameMetadata';
@@ -47,7 +48,7 @@ export function LibraryEntryCard({
   return (
     <article className="library-entry-card">
       <div className="library-entry">
-        <Link className="cover-link" to={`/library/${entry.id}`} aria-label={`View ${entry.gameTitle} details`}>
+        <Link className="cover-link" to={libraryEntryPath(entry)} aria-label={`View ${entry.gameTitle} details`}>
           <CoverImage src={entry.gameCoverUrl} title={entry.gameTitle} />
         </Link>
         <div className="entry-card-body">
@@ -65,7 +66,7 @@ export function LibraryEntryCard({
           {message && <p className="success compact-message">{message}</p>}
         </div>
         <div className="entry-actions">
-          <Link className="nav-link button-small" to={`/library/${entry.id}`}>
+          <Link className="nav-link button-small" to={libraryEntryPath(entry)}>
             Details
           </Link>
           <button onClick={startEditing} disabled={deleting}>
