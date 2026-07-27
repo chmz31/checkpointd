@@ -6,6 +6,8 @@ import { AppShell } from './components/AppShell';
 import { GameDetailsPage } from './components/GameDetailsPage';
 import { LibraryEntryDetailsPage } from './components/LibraryEntryDetailsPage';
 import { LibraryView } from './components/LibraryView';
+import { PublicProfilePage } from './components/PublicProfilePage';
+import { PublicShell } from './components/PublicShell';
 import { SearchView } from './components/SearchView';
 import type { CurrentUser } from './types';
 
@@ -59,6 +61,11 @@ export default function App() {
             token ? <Navigate to="/library" replace /> : <AuthPage mode="register" onToken={handleToken} />
           }
         />
+        <Route
+          element={token ? <AppShell user={user} onLogout={logout} /> : <PublicShell />}
+        >
+          <Route path="/u/:username" element={<PublicProfilePage currentUser={user} />} />
+        </Route>
         <Route
           element={
             token ? (

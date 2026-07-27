@@ -19,6 +19,10 @@ export function canonicalLibraryEntryPath(entryId: string, gameSlug?: string | n
   return `/library/${entryId}/${slugSegment(gameSlug || gameTitle || 'game')}`;
 }
 
+export function userProfilePath(username: string) {
+  return `/u/${encodeURIComponent(username)}`;
+}
+
 export function slugify(value: string) {
   const slug = value
     .trim()

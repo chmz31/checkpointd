@@ -241,6 +241,63 @@ h3 {
   margin-top: 1.25rem;
 }
 
+.profile-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.profile-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-heading h2 {
+  margin-bottom: 0.2rem;
+  font-size: clamp(1.8rem, 4vw, 3.1rem);
+}
+
+.profile-bio {
+  max-width: 760px;
+  color: #dce7f1;
+  line-height: 1.6;
+}
+
+.profile-stats {
+  margin-top: 0;
+}
+
+.profile-edit-form {
+  border: 1px solid rgba(139, 211, 199, 0.14);
+  border-radius: 8px;
+  padding: 1rem;
+  background: rgba(9, 15, 23, 0.58);
+}
+
+.profile-game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem;
+}
+
+.profile-game-card {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.profile-game-card:hover h3 {
+  color: #f1cc79;
+}
+
+.profile-game-card .cover {
+  aspect-ratio: 3 / 4;
+  min-height: 0;
+}
+
 .stat-tile {
   display: grid;
   gap: 0.2rem;
