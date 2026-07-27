@@ -22,6 +22,7 @@ import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -89,7 +90,8 @@ class LibraryControllerTests {
 								  "status": "PLAYING",
 								  "rating": 9,
 								  "notes": "Great",
-								  "startedAt": "2026-01-01T00:00:00Z"
+								  "startedAt": "2026-01-01",
+								  "completedAt": "2026-02-01"
 								}
 								"""))
 				.andExpect(status().isCreated())
@@ -106,7 +108,9 @@ class LibraryControllerTests {
 				.andExpect(jsonPath("$.gameBackdropUrl").value("https://img.example/art.jpg"))
 				.andExpect(jsonPath("$.status").value("PLAYING"))
 				.andExpect(jsonPath("$.rating").value(9))
-				.andExpect(jsonPath("$.notes").value("Great"));
+				.andExpect(jsonPath("$.notes").value("Great"))
+				.andExpect(jsonPath("$.startedAt").value("2026-01-01"))
+				.andExpect(jsonPath("$.completedAt").value("2026-02-01"));
 	}
 
 	@Test
@@ -151,6 +155,24 @@ class LibraryControllerTests {
 								{
 								  "status": "PLAYING",
 								  "rating": 11
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.message").value("Validation failed"));
+	}
+
+	@Test
+	void ratingBelowOneReturnsBadRequest() throws Exception {
+		mockMvc.perform(post("/api/v1/library")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf())
+						.contentType("application/json")
+						.content("""
+								{
+								  "gameId": "00000000-0000-0000-0000-000000000101",
+								  "status": "PLAYING",
+								  "rating": 0
 								}
 								"""))
 				.andExpect(status().isBadRequest())
@@ -323,13 +345,64 @@ class LibraryControllerTests {
 								{
 								  "status": "COMPLETED",
 								  "rating": 10,
-								  "completedAt": "2026-02-01T00:00:00Z"
+								  "startedAt": "2026-01-01",
+								  "completedAt": "2026-02-01"
 								}
 								"""))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("COMPLETED"))
 				.andExpect(jsonPath("$.rating").value(10))
-				.andExpect(jsonPath("$.completedAt").value("2026-02-01T00:00:00Z"));
+				.andExpect(jsonPath("$.startedAt").value("2026-01-01"))
+				.andExpect(jsonPath("$.completedAt").value("2026-02-01"));
+	}
+
+	@Test
+	void updateClearsNullableTrackingFields() throws Exception {
+		LibraryEntry entry = entry();
+		entry.setRating(9);
+		entry.setNotes("Great");
+		entry.setStartedAt(LocalDate.parse("2026-01-01"));
+		entry.setCompletedAt(LocalDate.parse("2026-02-01"));
+
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
+		when(libraryEntryRepository.save(entry)).thenAnswer(invocation -> invocation.getArgument(0));
+
+		mockMvc.perform(patch("/api/v1/library/{entryId}", ENTRY_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf())
+						.contentType("application/json")
+						.content("""
+								{
+								  "status": "PLAYING",
+								  "rating": null,
+								  "notes": null,
+								  "startedAt": null,
+								  "completedAt": null
+								}
+								"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("PLAYING"))
+				.andExpect(jsonPath("$.rating").doesNotExist())
+				.andExpect(jsonPath("$.notes").doesNotExist())
+				.andExpect(jsonPath("$.startedAt").doesNotExist())
+				.andExpect(jsonPath("$.completedAt").doesNotExist());
+	}
+
+	@Test
+	void updateRatingAboveTenReturnsBadRequest() throws Exception {
+		mockMvc.perform(patch("/api/v1/library/{entryId}", ENTRY_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf())
+						.contentType("application/json")
+						.content("""
+								{
+								  "status": "PLAYING",
+								  "rating": 11
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.status").value(400))
+				.andExpect(jsonPath("$.message").value("Validation failed"));
 	}
 
 	@Test

@@ -1,6 +1,12 @@
 import { FormEvent, useState } from 'react';
 import { api } from '../api';
 import { libraryStatuses } from '../constants';
+import {
+  optionalDate,
+  optionalNotes,
+  optionalRating,
+  ratingValidationMessage,
+} from '../formHelpers';
 import type { ExternalGameSearchResult, LibraryEntry, LibraryStatus } from '../types';
 
 export function AddSearchResultToLibrary({
@@ -13,9 +19,12 @@ export function AddSearchResultToLibrary({
   const [status, setStatus] = useState<LibraryStatus>('BACKLOG');
   const [rating, setRating] = useState('');
   const [notes, setNotes] = useState('');
+  const [startedAt, setStartedAt] = useState('');
+  const [completedAt, setCompletedAt] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const ratingError = ratingValidationMessage(rating);
 
   function clearFeedback() {
     setMessage(null);
@@ -24,6 +33,11 @@ export function AddSearchResultToLibrary({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (ratingError) {
+      setError(ratingError);
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
     setError(null);
@@ -33,8 +47,10 @@ export function AddSearchResultToLibrary({
       const entry = await api.addLibraryEntry({
         gameId: game.id,
         status,
-        rating: rating ? Number(rating) : null,
-        notes: notes.trim() || undefined,
+        rating: optionalRating(rating),
+        notes: optionalNotes(notes),
+        startedAt: optionalDate(startedAt),
+        completedAt: optionalDate(completedAt),
       });
       setMessage('Added to library.');
       onAdded(entry);
@@ -75,6 +91,29 @@ export function AddSearchResultToLibrary({
           max={10}
           type="number"
           placeholder="1-10"
+          step={1}
+        />
+      </label>
+      <label>
+        Started
+        <input
+          value={startedAt}
+          onChange={(event) => {
+            setStartedAt(event.target.value);
+            clearFeedback();
+          }}
+          type="date"
+        />
+      </label>
+      <label>
+        Completed
+        <input
+          value={completedAt}
+          onChange={(event) => {
+            setCompletedAt(event.target.value);
+            clearFeedback();
+          }}
+          type="date"
         />
       </label>
       <label className="notes-field">
@@ -89,9 +128,9 @@ export function AddSearchResultToLibrary({
         />
       </label>
       {message && <p className="success compact-message">{message}</p>}
-      {error && <p className="error compact-message">{error}</p>}
+      {(ratingError || error) && <p className="error compact-message">{ratingError || error}</p>}
       <div className="inline-actions direct-add-actions">
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || Boolean(ratingError)}>
           {loading ? 'Adding...' : 'Add'}
         </button>
       </div>

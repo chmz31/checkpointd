@@ -3,6 +3,7 @@ package com.chmz31.checkpointd.library.dto;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,8 +23,8 @@ public record LibraryEntryResponse(
 		LibraryStatus status,
 		Integer rating,
 		String notes,
-		Instant startedAt,
-		Instant completedAt,
+		LocalDate startedAt,
+		LocalDate completedAt,
 		Instant createdAt,
 		Instant updatedAt) {
 

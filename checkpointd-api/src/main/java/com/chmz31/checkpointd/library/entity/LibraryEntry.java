@@ -18,6 +18,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -48,10 +49,10 @@ public class LibraryEntry {
 	private String notes;
 
 	@Column(name = "started_at")
-	private Instant startedAt;
+	private LocalDate startedAt;
 
 	@Column(name = "completed_at")
-	private Instant completedAt;
+	private LocalDate completedAt;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -124,19 +125,19 @@ public class LibraryEntry {
 		this.notes = notes;
 	}
 
-	public Instant getStartedAt() {
+	public LocalDate getStartedAt() {
 		return startedAt;
 	}
 
-	public void setStartedAt(Instant startedAt) {
+	public void setStartedAt(LocalDate startedAt) {
 		this.startedAt = startedAt;
 	}
 
-	public Instant getCompletedAt() {
+	public LocalDate getCompletedAt() {
 		return completedAt;
 	}
 
-	public void setCompletedAt(Instant completedAt) {
+	public void setCompletedAt(LocalDate completedAt) {
 		this.completedAt = completedAt;
 	}
 

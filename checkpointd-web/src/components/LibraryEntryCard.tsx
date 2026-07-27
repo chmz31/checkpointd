@@ -13,10 +13,11 @@ export function LibraryEntryCard({
 }: {
   entry: LibraryEntry;
   onUpdated: (entry: LibraryEntry) => void;
-  onDelete: () => void;
+  onDelete: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +49,19 @@ export function LibraryEntryCard({
     }
   }
 
+  async function deleteEntry() {
+    setDeleting(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      await onDelete();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not remove entry');
+      setDeleting(false);
+    }
+  }
+
   return (
     <article className="library-entry-card">
       <div className="library-entry">
@@ -68,15 +82,19 @@ export function LibraryEntryCard({
         </div>
         <div className="entry-actions">
           {entry.gameMetadataSyncAvailable && (
-            <button className="button-ghost button-small" onClick={syncMetadata} disabled={syncing}>
+            <button className="button-ghost button-small" onClick={syncMetadata} disabled={syncing || deleting}>
               {syncing ? 'Syncing...' : 'Sync'}
             </button>
           )}
           <Link className="nav-link button-small" to={`/library/${entry.id}`}>
             Details
           </Link>
-          <button onClick={startEditing}>{editing ? 'Close' : 'Edit'}</button>
-          <button onClick={onDelete}>Delete</button>
+          <button onClick={startEditing} disabled={syncing || deleting}>
+            {editing ? 'Close' : 'Edit'}
+          </button>
+          <button onClick={deleteEntry} disabled={syncing || deleting}>
+            {deleting ? 'Deleting...' : 'Delete'}
+          </button>
         </div>
       </div>
       {error && !editing && <p className="error compact-message card-message">{error}</p>}

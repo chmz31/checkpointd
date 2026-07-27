@@ -1,6 +1,13 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '../api';
 import { libraryStatuses } from '../constants';
+import {
+  dateInputValue,
+  optionalDate,
+  optionalNotes,
+  optionalRating,
+  ratingValidationMessage,
+} from '../formHelpers';
 import type { LibraryEntry, LibraryStatus } from '../types';
 
 export function LibraryEntryEditForm({
@@ -15,13 +22,18 @@ export function LibraryEntryEditForm({
   const [status, setStatus] = useState<LibraryStatus>(entry.status);
   const [rating, setRating] = useState(entry.rating ? String(entry.rating) : '');
   const [notes, setNotes] = useState(entry.notes || '');
+  const [startedAt, setStartedAt] = useState(dateInputValue(entry.startedAt));
+  const [completedAt, setCompletedAt] = useState(dateInputValue(entry.completedAt));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ratingError = ratingValidationMessage(rating);
 
   useEffect(() => {
     setStatus(entry.status);
     setRating(entry.rating ? String(entry.rating) : '');
     setNotes(entry.notes || '');
+    setStartedAt(dateInputValue(entry.startedAt));
+    setCompletedAt(dateInputValue(entry.completedAt));
   }, [entry]);
 
   function clearFeedback() {
@@ -30,14 +42,21 @@ export function LibraryEntryEditForm({
 
   async function save(event: FormEvent) {
     event.preventDefault();
+    if (ratingError) {
+      setError(ratingError);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const updatedEntry = await api.updateLibraryEntry(entry.id, {
         status,
-        ...(rating ? { rating: Number(rating) } : {}),
-        notes,
+        rating: optionalRating(rating),
+        notes: optionalNotes(notes),
+        startedAt: optionalDate(startedAt),
+        completedAt: optionalDate(completedAt),
       });
       onSaved(updatedEntry);
     } catch (caught) {
@@ -77,6 +96,29 @@ export function LibraryEntryEditForm({
           max={10}
           type="number"
           placeholder="1-10"
+          step={1}
+        />
+      </label>
+      <label>
+        Started
+        <input
+          value={startedAt}
+          onChange={(event) => {
+            setStartedAt(event.target.value);
+            clearFeedback();
+          }}
+          type="date"
+        />
+      </label>
+      <label>
+        Completed
+        <input
+          value={completedAt}
+          onChange={(event) => {
+            setCompletedAt(event.target.value);
+            clearFeedback();
+          }}
+          type="date"
         />
       </label>
       <label className="notes-field">
@@ -90,9 +132,9 @@ export function LibraryEntryEditForm({
           rows={3}
         />
       </label>
-      {error && <p className="error compact-message">{error}</p>}
+      {(ratingError || error) && <p className="error compact-message">{ratingError || error}</p>}
       <div className="inline-actions edit-actions">
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || Boolean(ratingError)}>
           {loading ? 'Saving...' : 'Save'}
         </button>
         <button type="button" onClick={onCancel} disabled={loading}>
