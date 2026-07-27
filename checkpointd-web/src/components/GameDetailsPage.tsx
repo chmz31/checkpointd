@@ -100,6 +100,15 @@ export function GameDetailsPage() {
   }
 
   const backdropUrl = game.backdropUrl || game.artworkUrls[0] || game.screenshotUrls[0];
+  const hasCatalogDetails =
+    game.developers.length > 0 ||
+    game.publishers.length > 0 ||
+    game.gameModes.length > 0 ||
+    game.themes.length > 0 ||
+    game.playerPerspectives.length > 0 ||
+    game.websites.length > 0 ||
+    game.externalRating != null;
+  const visibleWebsites = labeledWebsites(game.websites).slice(0, 8);
 
   return (
     <article className="detail-page">
@@ -188,9 +197,98 @@ export function GameDetailsPage() {
             </section>
           )}
 
+          {hasCatalogDetails && (
+            <section className="detail-section">
+              <h3>Catalog details</h3>
+              <ChipGroup label="Developers" values={game.developers} />
+              <ChipGroup label="Publishers" values={game.publishers} />
+              <ChipGroup label="Game modes" values={game.gameModes} />
+              <ChipGroup label="Themes" values={game.themes} />
+              <ChipGroup label="Player perspectives" values={game.playerPerspectives} />
+              {game.externalRating != null && (
+                <div className="detail-chip-group">
+                  <p className="muted">External rating</p>
+                  <p>
+                    {Math.round(game.externalRating)}/100
+                    {game.externalRatingCount ? ` from ${game.externalRatingCount.toLocaleString()} ratings` : ''}
+                  </p>
+                </div>
+              )}
+              {visibleWebsites.length > 0 && (
+                <div className="detail-chip-group">
+                  <p className="muted">Websites</p>
+                  <div className="chip-list">
+                    {visibleWebsites.map((website) => (
+                      <a
+                        className="metadata-chip metadata-link-chip"
+                        href={website.url}
+                        key={website.key}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={website.url}
+                      >
+                        {website.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           <MediaGallery title={game.title} artworkUrls={game.artworkUrls} screenshotUrls={game.screenshotUrls} />
         </section>
       </div>
     </article>
   );
+}
+
+function labeledWebsites(websites: Game['websites']) {
+  const labelCounts = new Map<string, number>();
+
+  return websites
+    .filter((website) => website.url)
+    .map((website, index) => {
+      const baseLabel = website.label?.trim() || inferWebsiteLabel(website.url) || 'Website';
+      const count = (labelCounts.get(baseLabel) || 0) + 1;
+      labelCounts.set(baseLabel, count);
+
+      return {
+        key: `${website.url}-${index}`,
+        label: count === 1 ? baseLabel : `${baseLabel} ${count}`,
+        url: website.url,
+      };
+    });
+}
+
+function inferWebsiteLabel(url: string) {
+  try {
+    const parsed = new URL(url);
+    const domain = parsed.hostname.replace(/^www\./, '');
+    if (!domain) return 'Website';
+
+    const knownLabels: Array<[string, string]> = [
+      ['steampowered.com', 'Steam'],
+      ['gog.com', 'GOG'],
+      ['epicgames.com', 'Epic Games'],
+      ['playstation.com', 'PlayStation'],
+      ['xbox.com', 'Xbox'],
+      ['nintendo.com', 'Nintendo'],
+      ['youtube.com', 'YouTube'],
+      ['youtu.be', 'YouTube'],
+      ['twitch.tv', 'Twitch'],
+      ['discord.gg', 'Discord'],
+      ['discord.com', 'Discord'],
+      ['reddit.com', 'Reddit'],
+      ['wikipedia.org', 'Wikipedia'],
+    ];
+    const match = knownLabels.find(([host]) => domain.endsWith(host));
+    if (match) return match[1];
+
+    return domain.split('.')[0]?.replace(/(^|-)([a-z])/g, (_, separator: string, char: string) =>
+      `${separator}${char.toUpperCase()}`,
+    );
+  } catch {
+    return 'Website';
+  }
 }

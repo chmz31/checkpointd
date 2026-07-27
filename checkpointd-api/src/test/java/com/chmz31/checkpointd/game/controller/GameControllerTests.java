@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.game.entity.GameWebsite;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.user.repository.UserRepository;
@@ -179,6 +180,15 @@ class GameControllerTests {
 		game.setSummary("Time travel RPG");
 		game.setGenres(List.of("RPG"));
 		game.setPlatforms(List.of("SNES"));
+		game.setDevelopers(List.of("Square"));
+		game.setPublishers(List.of("Enix"));
+		game.setGameModes(List.of("Single player"));
+		game.setThemes(List.of("Science fiction"));
+		game.setPlayerPerspectives(List.of("Bird view"));
+		game.setWebsites(List.of(new GameWebsite(
+				"Official", "https://www.square-enix-games.com/chrono-trigger", true)));
+		game.setExternalRating(92.5);
+		game.setExternalRatingCount(50);
 
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game));
 
@@ -191,6 +201,16 @@ class GameControllerTests {
 				.andExpect(jsonPath("$.summary").value("Time travel RPG"))
 				.andExpect(jsonPath("$.genres[0]").value("RPG"))
 				.andExpect(jsonPath("$.platforms[0]").value("SNES"))
+				.andExpect(jsonPath("$.developers[0]").value("Square"))
+				.andExpect(jsonPath("$.publishers[0]").value("Enix"))
+				.andExpect(jsonPath("$.gameModes[0]").value("Single player"))
+				.andExpect(jsonPath("$.themes[0]").value("Science fiction"))
+				.andExpect(jsonPath("$.playerPerspectives[0]").value("Bird view"))
+				.andExpect(jsonPath("$.websites[0].label").value("Official"))
+				.andExpect(jsonPath("$.websites[0].url").value("https://www.square-enix-games.com/chrono-trigger"))
+				.andExpect(jsonPath("$.websites[0].trusted").value(true))
+				.andExpect(jsonPath("$.externalRating").value(92.5))
+				.andExpect(jsonPath("$.externalRatingCount").value(50))
 				.andExpect(jsonPath("$.passwordHash").doesNotExist());
 	}
 

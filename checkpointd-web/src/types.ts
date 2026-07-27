@@ -29,9 +29,23 @@ export type ExternalGameSearchResult = {
   summary?: string | null;
   genres: string[];
   platforms: string[];
+  developers: string[];
+  publishers: string[];
+  gameModes: string[];
+  themes: string[];
+  playerPerspectives: string[];
+  websites: GameWebsite[];
+  externalRating?: number | null;
+  externalRatingCount?: number | null;
   screenshotUrls: string[];
   artworkUrls: string[];
   backdropUrl?: string | null;
+};
+
+export type GameWebsite = {
+  label: string;
+  url: string;
+  trusted: boolean;
 };
 
 export type Game = {
@@ -45,6 +59,14 @@ export type Game = {
   summary?: string | null;
   genres: string[];
   platforms: string[];
+  developers: string[];
+  publishers: string[];
+  gameModes: string[];
+  themes: string[];
+  playerPerspectives: string[];
+  websites: GameWebsite[];
+  externalRating?: number | null;
+  externalRatingCount?: number | null;
   screenshotUrls: string[];
   artworkUrls: string[];
   backdropUrl?: string | null;
@@ -61,6 +83,14 @@ export type LibraryEntry = {
   gameSummary?: string | null;
   gameGenres: string[];
   gamePlatforms: string[];
+  gameDevelopers: string[];
+  gamePublishers: string[];
+  gameModes: string[];
+  gameThemes: string[];
+  gamePlayerPerspectives: string[];
+  gameWebsites: GameWebsite[];
+  gameExternalRating?: number | null;
+  gameExternalRatingCount?: number | null;
   gameScreenshotUrls: string[];
   gameArtworkUrls: string[];
   gameBackdropUrl?: string | null;

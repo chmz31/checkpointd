@@ -405,6 +405,17 @@ h3 {
   font-size: 0.8rem;
 }
 
+.metadata-link-chip {
+  color: #8bd3c7;
+  text-decoration: none;
+}
+
+.metadata-link-chip:hover,
+.metadata-link-chip:focus-visible {
+  border-color: #8bd3c7;
+  color: #d9fff8;
+}
+
 .summary-preview {
   display: -webkit-box;
   margin-bottom: 0;

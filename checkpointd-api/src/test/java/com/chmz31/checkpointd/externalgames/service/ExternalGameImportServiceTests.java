@@ -11,6 +11,7 @@ import com.chmz31.checkpointd.common.exception.BadRequestException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.common.exception.ServiceUnavailableException;
 import com.chmz31.checkpointd.externalgames.dto.ExternalGameSearchResult;
+import com.chmz31.checkpointd.externalgames.dto.ExternalGameWebsite;
 import com.chmz31.checkpointd.externalgames.dto.ImportExternalGameRequest;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
@@ -61,7 +62,11 @@ class ExternalGameImportServiceTests {
 		when(igdbClient.fetchById("112964")).thenReturn(new ExternalGameSearchResult(
 				"igdb", "112964", "Hades", "hades", "https://images.example/hades.jpg",
 				LocalDate.of(2020, 9, 17), "Escape the underworld", List.of("Roguelike", "Action"),
-				List.of("PC", "Switch"), List.of("https://images.example/screenshot.jpg"),
+				List.of("PC", "Switch"), List.of("Supergiant Games"), List.of("Private Division"),
+				List.of("Single player"), List.of("Action"), List.of("Bird view"),
+				List.of(new ExternalGameWebsite("Official", "https://www.supergiantgames.com/games/hades/", true)),
+				93.5, 212,
+				List.of("https://images.example/screenshot.jpg"),
 				List.of("https://images.example/artwork.jpg"), "https://images.example/artwork.jpg"));
 		when(gameRepository.saveAndFlush(any(Game.class))).thenAnswer(invocation -> withId(invocation.getArgument(0)));
 
@@ -83,6 +88,16 @@ class ExternalGameImportServiceTests {
 		assertThat(saved.getSummary()).isEqualTo("Escape the underworld");
 		assertThat(saved.getGenres()).containsExactly("Roguelike", "Action");
 		assertThat(saved.getPlatforms()).containsExactly("PC", "Switch");
+		assertThat(saved.getDevelopers()).containsExactly("Supergiant Games");
+		assertThat(saved.getPublishers()).containsExactly("Private Division");
+		assertThat(saved.getGameModes()).containsExactly("Single player");
+		assertThat(saved.getThemes()).containsExactly("Action");
+		assertThat(saved.getPlayerPerspectives()).containsExactly("Bird view");
+		assertThat(saved.getWebsites()).extracting("label", "url", "trusted")
+				.containsExactly(org.assertj.core.groups.Tuple.tuple(
+						"Official", "https://www.supergiantgames.com/games/hades/", true));
+		assertThat(saved.getExternalRating()).isEqualTo(93.5);
+		assertThat(saved.getExternalRatingCount()).isEqualTo(212);
 		assertThat(saved.getScreenshotUrls()).containsExactly("https://images.example/screenshot.jpg");
 		assertThat(saved.getArtworkUrls()).containsExactly("https://images.example/artwork.jpg");
 		assertThat(saved.getBackdropUrl()).isEqualTo("https://images.example/artwork.jpg");
@@ -150,7 +165,11 @@ class ExternalGameImportServiceTests {
 		when(igdbClient.fetchById("112964")).thenReturn(new ExternalGameSearchResult(
 				"igdb", "112964", "Hades II", "hades-ii", "https://images.example/hades-ii.jpg",
 				LocalDate.of(2024, 5, 6), "Return to the underworld", List.of("Action", "Roguelike"),
-				List.of("PC"), List.of("https://images.example/new-shot.jpg"),
+				List.of("PC"), List.of("Supergiant Games"), List.of("Supergiant Games"),
+				List.of("Single player"), List.of("Fantasy"), List.of("Bird view"),
+				List.of(new ExternalGameWebsite("Official", "https://www.supergiantgames.com/games/hades-ii/", true)),
+				91.0, 54,
+				List.of("https://images.example/new-shot.jpg"),
 				List.of("https://images.example/new-art.jpg"), "https://images.example/new-art.jpg"));
 		when(gameRepository.save(game)).thenReturn(game);
 
@@ -164,6 +183,16 @@ class ExternalGameImportServiceTests {
 		assertThat(game.getSummary()).isEqualTo("Return to the underworld");
 		assertThat(game.getGenres()).containsExactly("Action", "Roguelike");
 		assertThat(game.getPlatforms()).containsExactly("PC");
+		assertThat(game.getDevelopers()).containsExactly("Supergiant Games");
+		assertThat(game.getPublishers()).containsExactly("Supergiant Games");
+		assertThat(game.getGameModes()).containsExactly("Single player");
+		assertThat(game.getThemes()).containsExactly("Fantasy");
+		assertThat(game.getPlayerPerspectives()).containsExactly("Bird view");
+		assertThat(game.getWebsites()).extracting("label", "url", "trusted")
+				.containsExactly(org.assertj.core.groups.Tuple.tuple(
+						"Official", "https://www.supergiantgames.com/games/hades-ii/", true));
+		assertThat(game.getExternalRating()).isEqualTo(91.0);
+		assertThat(game.getExternalRatingCount()).isEqualTo(54);
 		assertThat(game.getScreenshotUrls()).containsExactly("https://images.example/new-shot.jpg");
 		assertThat(game.getArtworkUrls()).containsExactly("https://images.example/new-art.jpg");
 		assertThat(game.getBackdropUrl()).isEqualTo("https://images.example/new-art.jpg");
