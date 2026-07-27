@@ -38,6 +38,44 @@ export type CurrentUser = {
   role: string;
 };
 
+export type ProfileVisibility = 'PUBLIC' | 'PRIVATE';
+
+export type PublicProfileStats = {
+  totalGames: number;
+  completedGames: number;
+  ratedGames: number;
+  averageRating: number | null;
+};
+
+export type PublicProfileGame = {
+  libraryEntryId: string;
+  gameId: string;
+  gameSlug?: string | null;
+  gameTitle: string;
+  gameCoverUrl?: string | null;
+  status: LibraryStatus;
+  rating?: number | null;
+  updatedAt: string;
+  genres: string[];
+  platforms: string[];
+};
+
+export type PublicProfile = {
+  username: string;
+  displayName?: string | null;
+  bio?: string | null;
+  profileVisibility: ProfileVisibility;
+  joinedAt?: string | null;
+  stats: PublicProfileStats;
+  recentGames: PublicProfileGame[];
+};
+
+export type UpdateProfileInput = {
+  displayName?: string | null;
+  bio?: string | null;
+  profileVisibility?: ProfileVisibility;
+};
+
 export type ExternalGameSearchResult = {
   provider: string;
   externalId: string;

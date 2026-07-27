@@ -1,6 +1,7 @@
 package com.chmz31.checkpointd.user.entity;
 
 import com.chmz31.checkpointd.user.model.Role;
+import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -34,6 +35,16 @@ public class User {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private Role role;
+
+	@Column(name = "display_name", length = 80)
+	private String displayName;
+
+	@Column(columnDefinition = "TEXT")
+	private String bio;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "profile_visibility", nullable = false, length = 40)
+	private ProfileVisibility profileVisibility = ProfileVisibility.PUBLIC;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -97,6 +108,30 @@ public class User {
 
 	public void setRole(Role role) {
 		this.role = role;
+	}
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
+	public String getBio() {
+		return bio;
+	}
+
+	public void setBio(String bio) {
+		this.bio = bio;
+	}
+
+	public ProfileVisibility getProfileVisibility() {
+		return profileVisibility;
+	}
+
+	public void setProfileVisibility(ProfileVisibility profileVisibility) {
+		this.profileVisibility = profileVisibility;
 	}
 
 	public Instant getCreatedAt() {

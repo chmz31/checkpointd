@@ -1,0 +1,4 @@
+ALTER TABLE users
+    ADD COLUMN display_name VARCHAR(80) NULL,
+    ADD COLUMN bio TEXT NULL,
+    ADD COLUMN profile_visibility VARCHAR(40) NOT NULL DEFAULT 'PUBLIC';

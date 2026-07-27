@@ -9,6 +9,8 @@ import type {
   LibraryStats,
   LibraryStatus,
   PaginatedResponse,
+  PublicProfile,
+  UpdateProfileInput,
 } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -94,6 +96,21 @@ export const api = {
 
   me() {
     return apiRequest<CurrentUser>('/api/v1/users/me');
+  },
+
+  getPublicProfile(username: string) {
+    return apiRequest<PublicProfile>(`/api/v1/profiles/${encodeURIComponent(username)}`);
+  },
+
+  getMyProfile() {
+    return apiRequest<PublicProfile>('/api/v1/profiles/me');
+  },
+
+  updateMyProfile(input: UpdateProfileInput) {
+    return apiRequest<PublicProfile>('/api/v1/profiles/me', {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
   },
 
   searchExternalGames(query: string) {

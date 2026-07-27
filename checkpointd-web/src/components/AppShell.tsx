@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { userProfilePath } from '../routePaths';
 import type { CurrentUser } from '../types';
 
 export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogout: () => void }) {
@@ -17,7 +18,11 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
             <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/library">
               Library
             </NavLink>
-            {user && <span className="user-pill">{user.username}</span>}
+            {user && (
+              <NavLink className="user-pill" to={userProfilePath(user.username)}>
+                {user.username}
+              </NavLink>
+            )}
             <button onClick={onLogout}>Logout</button>
           </nav>
         </div>
