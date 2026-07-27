@@ -7,21 +7,27 @@ import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.game.service.MetadataRefreshService;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
+import com.chmz31.checkpointd.library.dto.LibraryEntryResponse;
 import com.chmz31.checkpointd.library.dto.LibraryStatsResponse;
 import com.chmz31.checkpointd.library.dto.UpdateLibraryEntryRequest;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
+import com.chmz31.checkpointd.library.model.LibrarySortOption;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.repository.UserRepository;
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class LibraryService {
+
+	private static final int DEFAULT_PAGE_SIZE = 24;
+	private static final int MAX_PAGE_SIZE = 100;
 
 	private final LibraryEntryRepository libraryEntryRepository;
 	private final GameRepository gameRepository;
@@ -62,12 +68,24 @@ public class LibraryService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<LibraryEntry> list(UUID userId, LibraryStatus status) {
-		if (status == null) {
-			return libraryEntryRepository.findTop50ByUserIdOrderByUpdatedAtDesc(userId);
+	public Page<LibraryEntryResponse> list(UUID userId, LibraryStatus status, String q, int page, int size, LibrarySortOption sort) {
+		int safePage = Math.max(page, 0);
+		int safeSize = size <= 0 ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
+		LibrarySortOption safeSort = sort == null ? LibrarySortOption.UPDATED_DESC : sort;
+		String cleanQuery = q == null || q.isBlank() ? null : q.trim().toLowerCase(Locale.ROOT);
+		PageRequest pageRequest = PageRequest.of(safePage, safeSize, safeSort.toSort());
+
+		if (cleanQuery == null) {
+			return libraryEntryRepository.findUserLibrary(userId, status, pageRequest)
+					.map(LibraryEntryResponse::from);
 		}
 
-		return libraryEntryRepository.findTop50ByUserIdAndStatusOrderByUpdatedAtDesc(userId, status);
+		return libraryEntryRepository.searchUserLibrary(
+				userId,
+				status,
+				"%" + cleanQuery + "%",
+				pageRequest)
+				.map(LibraryEntryResponse::from);
 	}
 
 	@Transactional(readOnly = true)

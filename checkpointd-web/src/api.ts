@@ -5,8 +5,10 @@ import type {
   Game,
   LibraryEntry,
   LibraryEntryUpdateInput,
+  LibrarySortOption,
   LibraryStats,
   LibraryStatus,
+  PaginatedResponse,
 } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -125,9 +127,33 @@ export const api = {
     });
   },
 
-  listLibrary(status?: LibraryStatus) {
-    const query = status ? `?status=${encodeURIComponent(status)}` : '';
-    return apiRequest<LibraryEntry[]>(`/api/v1/library${query}`);
+  listLibrary(params: {
+    page?: number;
+    size?: number;
+    status?: LibraryStatus;
+    q?: string;
+    sort?: LibrarySortOption;
+  } = {}) {
+    const query = new URLSearchParams();
+
+    if (params.page != null) {
+      query.set('page', String(params.page));
+    }
+    if (params.size != null) {
+      query.set('size', String(params.size));
+    }
+    if (params.status) {
+      query.set('status', params.status);
+    }
+    if (params.q?.trim()) {
+      query.set('q', params.q.trim());
+    }
+    if (params.sort) {
+      query.set('sort', params.sort);
+    }
+
+    const queryString = query.toString();
+    return apiRequest<PaginatedResponse<LibraryEntry>>(`/api/v1/library${queryString ? `?${queryString}` : ''}`);
   },
 
   getLibraryEntry(entryId: string) {

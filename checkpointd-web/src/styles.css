@@ -226,9 +226,19 @@ h3 {
 
 .library-controls {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.36fr);
+  grid-template-columns: minmax(220px, 1fr) auto minmax(180px, 0.36fr);
+  align-items: end;
   gap: 0.75rem;
   margin-bottom: 1.15rem;
+}
+
+.pagination-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
 }
 
 .stat-tile {

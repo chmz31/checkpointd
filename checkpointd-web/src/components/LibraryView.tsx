@@ -1,47 +1,48 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 import { api } from '../api';
 import { libraryStatuses } from '../constants';
-import type { LibraryEntry, LibraryStats, LibraryStatus } from '../types';
+import type { LibraryEntry, LibrarySortOption, LibraryStats, LibraryStatus, PaginatedResponse } from '../types';
 import { LibraryEntryCard } from './LibraryEntryCard';
 import { LibraryStatsPanel } from './LibraryStatsPanel';
 
-type LibrarySortOption = 'updatedDesc' | 'titleAsc' | 'ratingDesc' | 'ratingAsc' | 'status';
+const PAGE_SIZE = 24;
 
 export function LibraryView({ refreshKey }: { refreshKey: number }) {
   const [entries, setEntries] = useState<LibraryEntry[]>([]);
+  const [pageData, setPageData] = useState<PaginatedResponse<LibraryEntry> | null>(null);
   const [stats, setStats] = useState<LibraryStats | null>(null);
   const [statusFilter, setStatusFilter] = useState<LibraryStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState<LibrarySortOption>('updatedDesc');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<LibrarySortOption>('UPDATED_DESC');
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const visibleEntries = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    const searchedEntries = query
-      ? entries.filter((entry) => {
-          const title = entry.gameTitle.toLowerCase();
-          const notes = entry.notes?.toLowerCase() || '';
-
-          return title.includes(query) || notes.includes(query);
-        })
-      : entries;
-
-    return [...searchedEntries].sort((first, second) => compareEntries(first, second, sortOption));
-  }, [entries, searchQuery, sortOption]);
-
-  const groupedCount = useMemo(() => visibleEntries.length, [visibleEntries]);
+  const visibleCount = entries.length;
+  const totalElements = pageData?.totalElements ?? 0;
+  const totalPages = pageData?.totalPages ?? 0;
+  const currentPage = pageData?.page ?? page;
+  const hasActiveControls = statusFilter !== 'ALL' || Boolean(activeSearchQuery);
 
   async function loadLibrary() {
     setLoading(true);
     setError(null);
 
     try {
-      const [nextEntries, nextStats] = await Promise.all([
-        api.listLibrary(statusFilter === 'ALL' ? undefined : statusFilter),
+      const [nextPage, nextStats] = await Promise.all([
+        api.listLibrary({
+          page,
+          size: PAGE_SIZE,
+          status: statusFilter === 'ALL' ? undefined : statusFilter,
+          q: activeSearchQuery,
+          sort: sortOption,
+        }),
         api.getLibraryStats(),
       ]);
-      setEntries(nextEntries);
+      setEntries(nextPage.content);
+      setPageData(nextPage);
       setStats(nextStats);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not load library');
@@ -54,7 +55,11 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
     setError(null);
     try {
       await api.deleteLibraryEntry(entryId);
-      setEntries((current) => current.filter((entry) => entry.id !== entryId));
+      if (entries.length === 1 && page > 0) {
+        setPage((current) => Math.max(current - 1, 0));
+      } else {
+        await loadLibrary();
+      }
       await loadStats();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not remove entry');
@@ -67,32 +72,47 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
   }
 
   function replaceEntry(updatedEntry: LibraryEntry) {
-    setEntries((current) => {
-      if (statusFilter !== 'ALL' && updatedEntry.status !== statusFilter) {
-        return current.filter((entry) => entry.id !== updatedEntry.id);
-      }
-
-      return current.map((entry) => (entry.id === updatedEntry.id ? updatedEntry : entry));
+    setEntries((current) => current.map((entry) => (entry.id === updatedEntry.id ? updatedEntry : entry)));
+    loadLibrary().catch((caught) => {
+      setError(caught instanceof Error ? caught.message : 'Could not refresh library');
     });
     loadStats().catch((caught) => {
       setError(caught instanceof Error ? caught.message : 'Could not load library stats');
     });
   }
 
+  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPage(0);
+    setActiveSearchQuery(searchQuery.trim());
+  }
+
+  function handleStatusChange(nextStatus: LibraryStatus | 'ALL') {
+    setStatusFilter(nextStatus);
+    setPage(0);
+  }
+
+  function handleSortChange(nextSort: LibrarySortOption) {
+    setSortOption(nextSort);
+    setPage(0);
+  }
+
   useEffect(() => {
     loadLibrary();
-  }, [refreshKey, statusFilter]);
+  }, [refreshKey, statusFilter, activeSearchQuery, sortOption, page]);
 
   return (
     <section className="panel">
       <div className="section-heading">
         <h2>Library</h2>
         <div className="inline-actions">
-          <span className="muted">{groupedCount} visible</span>
+          <span className="muted">
+            {visibleCount} visible of {totalElements}
+          </span>
           <select
             className="compact-select"
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as LibraryStatus | 'ALL')}
+            onChange={(event) => handleStatusChange(event.target.value as LibraryStatus | 'ALL')}
             aria-label="Filter library by status"
           >
             <option value="ALL">ALL</option>
@@ -108,7 +128,7 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
         </div>
       </div>
       <LibraryStatsPanel stats={stats} />
-      <div className="library-controls">
+      <form className="library-controls" onSubmit={handleSearchSubmit}>
         <label>
           Search
           <input
@@ -117,20 +137,23 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
             placeholder="Title or notes"
           />
         </label>
+        <button type="submit" disabled={loading}>
+          Search
+        </button>
         <label>
           Sort
           <select
             value={sortOption}
-            onChange={(event) => setSortOption(event.target.value as LibrarySortOption)}
+            onChange={(event) => handleSortChange(event.target.value as LibrarySortOption)}
           >
-            <option value="updatedDesc">Recently updated</option>
-            <option value="titleAsc">Title A-Z</option>
-            <option value="ratingDesc">Rating high-low</option>
-            <option value="ratingAsc">Rating low-high</option>
-            <option value="status">Status</option>
+            <option value="UPDATED_DESC">Recently updated</option>
+            <option value="TITLE_ASC">Title A-Z</option>
+            <option value="RATING_DESC">Rating high-low</option>
+            <option value="RATING_ASC">Rating low-high</option>
+            <option value="STATUS_ASC">Status</option>
           </select>
         </label>
-      </div>
+      </form>
       {error && <p className="error">{error}</p>}
       {loading && (
         <div className="empty-state catalog-empty">
@@ -138,20 +161,20 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
           <p>Pulling your latest checkpoint cards.</p>
         </div>
       )}
-      {!loading && entries.length === 0 && (
+      {!loading && entries.length === 0 && !hasActiveControls && (
         <div className="empty-state catalog-empty">
           <h3>Your library is ready for its first game</h3>
           <p>Search for a game and add it to start tracking your status, notes, and play dates.</p>
         </div>
       )}
-      {!loading && entries.length > 0 && visibleEntries.length === 0 && (
+      {!loading && entries.length === 0 && hasActiveControls && (
         <div className="empty-state catalog-empty">
           <h3>No matching entries</h3>
           <p>Adjust the search, filter, or sort controls to bring more of your library back into view.</p>
         </div>
       )}
       <div className="library-list">
-        {visibleEntries.map((entry) => (
+        {entries.map((entry) => (
           <LibraryEntryCard
             key={entry.id}
             entry={entry}
@@ -160,26 +183,22 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
           />
         ))}
       </div>
+      {!loading && totalPages > 1 && (
+        <div className="pagination-controls" aria-label="Library pagination">
+          <button onClick={() => setPage((current) => Math.max(current - 1, 0))} disabled={pageData?.first ?? true}>
+            Previous
+          </button>
+          <span className="muted">
+            Page {currentPage + 1} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((current) => current + 1)}
+            disabled={pageData?.last ?? true}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </section>
   );
-}
-
-function compareEntries(first: LibraryEntry, second: LibraryEntry, sortOption: LibrarySortOption) {
-  switch (sortOption) {
-    case 'titleAsc':
-      return first.gameTitle.localeCompare(second.gameTitle);
-    case 'ratingDesc':
-      return ratingValue(second.rating, -1) - ratingValue(first.rating, -1);
-    case 'ratingAsc':
-      return ratingValue(first.rating, Number.MAX_SAFE_INTEGER) - ratingValue(second.rating, Number.MAX_SAFE_INTEGER);
-    case 'status':
-      return first.status.localeCompare(second.status) || first.gameTitle.localeCompare(second.gameTitle);
-    case 'updatedDesc':
-    default:
-      return new Date(second.updatedAt).getTime() - new Date(first.updatedAt).getTime();
-  }
-}
-
-function ratingValue(rating: number | null | undefined, fallback: number) {
-  return rating == null ? fallback : rating;
 }

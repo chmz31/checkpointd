@@ -3,6 +3,8 @@ package com.chmz31.checkpointd.library.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,6 +19,7 @@ import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
 import com.chmz31.checkpointd.library.dto.LibraryStatsResponse;
 import com.chmz31.checkpointd.library.dto.UpdateLibraryEntryRequest;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
+import com.chmz31.checkpointd.library.model.LibrarySortOption;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.user.entity.User;
@@ -33,6 +36,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -118,22 +124,122 @@ class LibraryServiceTests {
 	}
 
 	@Test
-	void listReturnsCurrentUsersEntries() {
-		List<LibraryEntry> entries = List.of(entry());
+	void listReturnsPaginatedCurrentUsersEntries() {
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
 
-		when(libraryEntryRepository.findTop50ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(entries);
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(entries);
 
-		assertThat(libraryService.list(USER_ID, null)).isSameAs(entries);
+		assertThat(libraryService.list(USER_ID, null, null, 0, 24, LibrarySortOption.UPDATED_DESC).getContent())
+				.extracting("id")
+				.containsExactly(ENTRY_ID);
 	}
 
 	@Test
 	void listFiltersCurrentUsersEntriesByStatus() {
-		List<LibraryEntry> entries = List.of(entry());
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
 
-		when(libraryEntryRepository.findTop50ByUserIdAndStatusOrderByUpdatedAtDesc(USER_ID, LibraryStatus.PLAYING))
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), eq(LibraryStatus.PLAYING), any(Pageable.class)))
 				.thenReturn(entries);
 
-		assertThat(libraryService.list(USER_ID, LibraryStatus.PLAYING)).isSameAs(entries);
+		assertThat(libraryService.list(USER_ID, LibraryStatus.PLAYING, null, 0, 24, LibrarySortOption.UPDATED_DESC)
+				.getContent())
+				.extracting("status")
+				.containsExactly(LibraryStatus.PLAYING);
+	}
+
+	@Test
+	void listTrimsBlankSearchToNoSearch() {
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
+
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(entries);
+
+		assertThat(libraryService.list(USER_ID, null, "   ", 0, 24, LibrarySortOption.UPDATED_DESC).getContent())
+				.hasSize(1);
+	}
+
+	@Test
+	void listPassesSearchTextForTitleOrNotesQuery() {
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
+
+		when(libraryEntryRepository.searchUserLibrary(eq(USER_ID), isNull(), eq("%chrono%"), any(Pageable.class)))
+				.thenReturn(entries);
+
+		assertThat(libraryService.list(USER_ID, null, " chrono ", 0, 24, LibrarySortOption.UPDATED_DESC).getContent())
+				.extracting("gameTitle")
+				.containsExactly("Chrono Trigger");
+	}
+
+	@Test
+	void listClampsNegativePageAndLargeSize() {
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
+		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(entries);
+
+		libraryService.list(USER_ID, null, null, -2, 500, LibrarySortOption.UPDATED_DESC);
+
+		verify(libraryEntryRepository).findUserLibrary(eq(USER_ID), isNull(), pageableCaptor.capture());
+		assertThat(pageableCaptor.getValue().getPageNumber()).isZero();
+		assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
+	}
+
+	@Test
+	void listUsesDefaultSizeWhenInvalid() {
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
+		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(entries);
+
+		libraryService.list(USER_ID, null, null, 0, 0, LibrarySortOption.UPDATED_DESC);
+
+		verify(libraryEntryRepository).findUserLibrary(eq(USER_ID), isNull(), pageableCaptor.capture());
+		assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(24);
+	}
+
+	@Test
+	void listSortsByUpdatedDescByDefault() {
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
+		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(entries);
+
+		libraryService.list(USER_ID, null, null, 0, 24, null);
+
+		verify(libraryEntryRepository).findUserLibrary(eq(USER_ID), isNull(), pageableCaptor.capture());
+		assertThat(pageableCaptor.getValue().getSort().getOrderFor("updatedAt").isDescending()).isTrue();
+	}
+
+	@Test
+	void listSortsByTitleAsc() {
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
+		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(entries);
+
+		libraryService.list(USER_ID, null, null, 0, 24, LibrarySortOption.TITLE_ASC);
+
+		verify(libraryEntryRepository).findUserLibrary(eq(USER_ID), isNull(), pageableCaptor.capture());
+		assertThat(pageableCaptor.getValue().getSort().getOrderFor("game.title").isAscending()).isTrue();
+	}
+
+	@Test
+	void listSortsByRatingDesc() {
+		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
+		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(entries);
+
+		libraryService.list(USER_ID, null, null, 0, 24, LibrarySortOption.RATING_DESC);
+
+		verify(libraryEntryRepository).findUserLibrary(eq(USER_ID), isNull(), pageableCaptor.capture());
+		assertThat(pageableCaptor.getValue().getSort().getOrderFor("rating").isDescending()).isTrue();
 	}
 
 	@Test

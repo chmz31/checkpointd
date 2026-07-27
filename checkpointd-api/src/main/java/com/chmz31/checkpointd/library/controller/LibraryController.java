@@ -1,13 +1,14 @@
 package com.chmz31.checkpointd.library.controller;
 
+import com.chmz31.checkpointd.common.dto.PaginatedResponse;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
 import com.chmz31.checkpointd.library.dto.LibraryEntryResponse;
 import com.chmz31.checkpointd.library.dto.LibraryStatsResponse;
 import com.chmz31.checkpointd.library.dto.UpdateLibraryEntryRequest;
+import com.chmz31.checkpointd.library.model.LibrarySortOption;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.service.LibraryService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,11 +41,15 @@ public class LibraryController {
 	}
 
 	@GetMapping
-	List<LibraryEntryResponse> list(@AuthenticationPrincipal Jwt jwt,
-			@RequestParam(required = false) LibraryStatus status) {
-		return libraryService.list(currentUserId(jwt), status).stream()
-				.map(LibraryEntryResponse::from)
-				.toList();
+	PaginatedResponse<LibraryEntryResponse> list(
+			@AuthenticationPrincipal Jwt jwt,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "24") int size,
+			@RequestParam(required = false) LibraryStatus status,
+			@RequestParam(required = false) String q,
+			@RequestParam(defaultValue = "UPDATED_DESC") LibrarySortOption sort) {
+		var entries = libraryService.list(currentUserId(jwt), status, q, page, size, sort);
+		return PaginatedResponse.from(entries, entries.getContent());
 	}
 
 	@GetMapping("/stats")
