@@ -87,17 +87,8 @@ export function LibraryEntryDetailsPage() {
     );
   }
 
-  const backdropUrl = entry.gameCoverUrl;
-
   return (
     <article className="detail-page">
-      {backdropUrl && (
-        <div
-          className="detail-backdrop"
-          aria-hidden="true"
-          style={{ backgroundImage: `url(${backdropUrl})` }}
-        />
-      )}
       <div className="detail-content">
         <aside className="detail-poster">
           <CoverImage src={entry.gameCoverUrl} title={entry.gameTitle} />
@@ -116,15 +107,10 @@ export function LibraryEntryDetailsPage() {
               <Link className="nav-link button-small" to={`/games/${entry.gameId}`}>
                 View game page
               </Link>
-              {entry.gameMetadataSyncAvailable && (
-                <button className="button-ghost button-small" onClick={syncMetadata} disabled={syncing || deleting}>
-                  {syncing ? 'Syncing...' : 'Sync'}
-                </button>
-              )}
               <button onClick={() => setEditing((current) => !current)} disabled={deleting}>
                 {editing ? 'Close' : 'Edit'}
               </button>
-              <button onClick={deleteEntry} disabled={deleting}>
+              <button className="button-danger" onClick={deleteEntry} disabled={deleting}>
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
@@ -147,9 +133,21 @@ export function LibraryEntryDetailsPage() {
           )}
 
           {entry.notes && (
-            <section className="detail-section">
+            <section className="detail-section notes-section">
               <h3>Notes</h3>
               <p>{entry.notes}</p>
+            </section>
+          )}
+
+          {entry.gameMetadataSyncAvailable && (
+            <section className="detail-section secondary-actions-section">
+              <h3>Metadata</h3>
+              <p className="muted">Refresh catalog details and cover art for this game.</p>
+              <div className="inline-actions">
+                <button className="button-ghost button-small" onClick={syncMetadata} disabled={syncing || deleting}>
+                  {syncing ? 'Refreshing...' : 'Refresh metadata'}
+                </button>
+              </div>
             </section>
           )}
         </section>

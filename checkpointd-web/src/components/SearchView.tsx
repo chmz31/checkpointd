@@ -8,6 +8,7 @@ export function SearchView({ onLibraryChange }: { onLibraryChange: () => void })
   const [results, setResults] = useState<ExternalGameSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   async function search(event: FormEvent) {
     event.preventDefault();
@@ -15,6 +16,7 @@ export function SearchView({ onLibraryChange }: { onLibraryChange: () => void })
 
     setLoading(true);
     setError(null);
+    setHasSearched(true);
 
     try {
       setResults(await api.searchExternalGames(query.trim()));
@@ -43,6 +45,18 @@ export function SearchView({ onLibraryChange }: { onLibraryChange: () => void })
         </button>
       </form>
       {error && <p className="error">{error}</p>}
+      {!loading && !error && !hasSearched && (
+        <div className="empty-state catalog-empty">
+          <h3>Build your library</h3>
+          <p>Search the catalog and start tracking the games you play.</p>
+        </div>
+      )}
+      {!loading && !error && hasSearched && results.length === 0 && (
+        <div className="empty-state catalog-empty">
+          <h3>No games found</h3>
+          <p>Try a different title or a shorter search phrase.</p>
+        </div>
+      )}
       <div className="result-list">
         {results.map((result) => (
           <GameResultCard

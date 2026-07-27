@@ -92,7 +92,7 @@ export function GameDetailsPage() {
     );
   }
 
-  const backdropUrl = game.backdropUrl || game.coverUrl;
+  const backdropUrl = game.backdropUrl || game.artworkUrls[0] || game.screenshotUrls[0];
 
   return (
     <article className="detail-page">
@@ -144,7 +144,7 @@ export function GameDetailsPage() {
           )}
 
           {libraryEntry ? (
-            <section className="detail-section">
+            <section className="detail-section callout-section">
               <h3>Library</h3>
               <p>
                 Already in your library.{' '}
@@ -154,7 +154,7 @@ export function GameDetailsPage() {
               </p>
             </section>
           ) : (
-            <section className="detail-section">
+            <section className="detail-section callout-section">
               <h3>Add to Library</h3>
               <AddToLibraryForm
                 onSubmit={addToLibrary}

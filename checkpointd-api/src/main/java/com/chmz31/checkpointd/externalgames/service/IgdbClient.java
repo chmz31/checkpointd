@@ -80,12 +80,12 @@ public class IgdbClient {
 
 	private String searchBody(String query) {
 		return "search \"" + escape(query) + "\"; "
-				+ "fields id,name,slug,cover.url,first_release_date,summary,genres.name,platforms.name; "
+				+ "fields id,name,slug,cover.url,cover.image_id,first_release_date,summary,genres.name,platforms.name; "
 				+ "limit 20;";
 	}
 
 	private String fetchByIdBody(String externalId) {
-		return "fields id,name,slug,cover.url,first_release_date,summary,genres.name,platforms.name,"
+		return "fields id,name,slug,cover.url,cover.image_id,first_release_date,summary,genres.name,platforms.name,"
 				+ "screenshots.url,screenshots.image_id,artworks.url,artworks.image_id; "
 				+ "where id = " + externalId + "; "
 				+ "limit 1;";
@@ -145,7 +145,7 @@ public class IgdbClient {
 		if (!(cover instanceof Map<?, ?> coverMap)) {
 			return null;
 		}
-		return imageUrl(coverMap);
+		return imageUrl(coverMap, "t_cover_big_2x");
 	}
 
 	private List<String> imageUrls(Object value) {
@@ -156,7 +156,7 @@ public class IgdbClient {
 		return items.stream()
 				.filter(Map.class::isInstance)
 				.map(Map.class::cast)
-				.map(this::imageUrl)
+				.map(image -> imageUrl(image, "t_1080p"))
 				.filter(url -> url != null && !url.isBlank())
 				.distinct()
 				.toList();
@@ -172,10 +172,10 @@ public class IgdbClient {
 		return artworkUrls.isEmpty() ? null : artworkUrls.getFirst();
 	}
 
-	private String imageUrl(Map<?, ?> image) {
+	private String imageUrl(Map<?, ?> image, String size) {
 		String imageId = stringValue(image.get("image_id"));
 		if (imageId != null && !imageId.isBlank()) {
-			return "https://images.igdb.com/igdb/image/upload/t_original/" + imageId.trim() + ".jpg";
+			return "https://images.igdb.com/igdb/image/upload/" + size + "/" + imageId.trim() + ".jpg";
 		}
 
 		String url = stringValue(image.get("url"));

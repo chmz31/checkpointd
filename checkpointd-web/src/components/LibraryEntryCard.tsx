@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../api';
 import type { LibraryEntry } from '../types';
 import { CoverImage } from './CoverImage';
 import { GameMetadata } from './GameMetadata';
@@ -16,7 +15,6 @@ export function LibraryEntryCard({
   onDelete: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,22 +29,6 @@ export function LibraryEntryCard({
     onUpdated(updatedEntry);
     setEditing(false);
     setMessage('Saved.');
-  }
-
-  async function syncMetadata() {
-    setSyncing(true);
-    setMessage(null);
-    setError(null);
-
-    try {
-      const updatedEntry = await api.syncLibraryEntryMetadata(entry.id);
-      onUpdated(updatedEntry);
-      setMessage('Metadata refreshed.');
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not refresh metadata');
-    } finally {
-      setSyncing(false);
-    }
   }
 
   async function deleteEntry() {
@@ -65,34 +47,31 @@ export function LibraryEntryCard({
   return (
     <article className="library-entry-card">
       <div className="library-entry">
-        <CoverImage src={entry.gameCoverUrl} title={entry.gameTitle} />
-        <div>
+        <Link className="cover-link" to={`/library/${entry.id}`} aria-label={`View ${entry.gameTitle} details`}>
+          <CoverImage src={entry.gameCoverUrl} title={entry.gameTitle} />
+        </Link>
+        <div className="entry-card-body">
           <h3>{entry.gameTitle}</h3>
           <p className="status-line">
-            <span>{entry.status}</span>
-            {entry.rating && <span>{entry.rating}/10</span>}
+            <span className="status-badge">{entry.status}</span>
+            {entry.rating && <span className="rating-badge">{entry.rating}/10</span>}
           </p>
           <GameMetadata
             summary={entry.gameSummary}
             genres={entry.gameGenres}
             platforms={entry.gamePlatforms}
           />
-          {entry.notes && <p className="notes">{entry.notes}</p>}
+          {entry.notes && <p className="notes entry-notes">{entry.notes}</p>}
           {message && <p className="success compact-message">{message}</p>}
         </div>
         <div className="entry-actions">
-          {entry.gameMetadataSyncAvailable && (
-            <button className="button-ghost button-small" onClick={syncMetadata} disabled={syncing || deleting}>
-              {syncing ? 'Syncing...' : 'Sync'}
-            </button>
-          )}
           <Link className="nav-link button-small" to={`/library/${entry.id}`}>
             Details
           </Link>
-          <button onClick={startEditing} disabled={syncing || deleting}>
+          <button onClick={startEditing} disabled={deleting}>
             {editing ? 'Close' : 'Edit'}
           </button>
-          <button onClick={deleteEntry} disabled={syncing || deleting}>
+          <button className="button-danger" onClick={deleteEntry} disabled={deleting}>
             {deleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
