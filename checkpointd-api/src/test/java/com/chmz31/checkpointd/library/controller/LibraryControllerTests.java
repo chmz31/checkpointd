@@ -2,6 +2,8 @@ package com.chmz31.checkpointd.library.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -31,6 +33,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -192,28 +197,82 @@ class LibraryControllerTests {
 	}
 
 	@Test
-	void listReturnsCurrentUsersEntries() throws Exception {
-		when(libraryEntryRepository.findTop50ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of(entry()));
+	void listRequiresAuthentication() throws Exception {
+		mockMvc.perform(get("/api/v1/library")
+						.param("page", "0")
+						.param("size", "24")
+						.param("sort", "UPDATED_DESC"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void listReturnsPaginatedCurrentUsersEntries() throws Exception {
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(entry()), PageRequest.of(0, 24), 51));
 
 		mockMvc.perform(get("/api/v1/library")
+						.param("page", "0")
+						.param("size", "24")
+						.param("sort", "UPDATED_DESC")
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].id").value(ENTRY_ID.toString()))
-				.andExpect(jsonPath("$[0].gameTitle").value("Chrono Trigger"));
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].id").value(ENTRY_ID.toString()))
+				.andExpect(jsonPath("$.content[0].gameTitle").value("Chrono Trigger"))
+				.andExpect(jsonPath("$.page").value(0))
+				.andExpect(jsonPath("$.size").value(24))
+				.andExpect(jsonPath("$.totalElements").value(51))
+				.andExpect(jsonPath("$.totalPages").value(3))
+				.andExpect(jsonPath("$.first").value(true))
+				.andExpect(jsonPath("$.last").value(false));
 	}
 
 	@Test
 	void listFiltersByStatus() throws Exception {
-		when(libraryEntryRepository.findTop50ByUserIdAndStatusOrderByUpdatedAtDesc(USER_ID, LibraryStatus.PLAYING))
-				.thenReturn(List.of(entry()));
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), eq(LibraryStatus.PLAYING), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(entry()), PageRequest.of(0, 24), 1));
 
 		mockMvc.perform(get("/api/v1/library")
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
 						.param("status", "PLAYING"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].status").value("PLAYING"));
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].status").value("PLAYING"));
+	}
+
+	@Test
+	void listAcceptsPaginationSearchAndSort() throws Exception {
+		when(libraryEntryRepository.searchUserLibrary(eq(USER_ID), eq(LibraryStatus.PLAYING), eq("%devil%"), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(entry()), PageRequest.of(1, 12), 25));
+
+		mockMvc.perform(get("/api/v1/library")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.param("page", "1")
+						.param("size", "12")
+						.param("status", "PLAYING")
+						.param("q", "devil")
+						.param("sort", "TITLE_ASC"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.page").value(1))
+				.andExpect(jsonPath("$.size").value(12))
+				.andExpect(jsonPath("$.totalElements").value(25))
+				.andExpect(jsonPath("$.totalPages").value(3));
+	}
+
+	@Test
+	void listTreatsBlankSearchLikeNoSearch() throws Exception {
+		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(entry()), PageRequest.of(0, 24), 1));
+
+		mockMvc.perform(get("/api/v1/library")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.param("page", "0")
+						.param("size", "24")
+						.param("q", "   ")
+						.param("sort", "UPDATED_DESC"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)));
 	}
 
 	@Test

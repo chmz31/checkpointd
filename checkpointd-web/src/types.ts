@@ -6,6 +6,25 @@ export type LibraryStatus =
   | 'DROPPED'
   | 'PAUSED';
 
+export type LibrarySortOption =
+  | 'UPDATED_DESC'
+  | 'ADDED_DESC'
+  | 'TITLE_ASC'
+  | 'TITLE_DESC'
+  | 'RATING_DESC'
+  | 'RATING_ASC'
+  | 'STATUS_ASC';
+
+export type PaginatedResponse<T> = {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+};
+
 export type AuthResponse = {
   accessToken: string;
   tokenType: string;
