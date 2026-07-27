@@ -132,12 +132,23 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
         </label>
       </div>
       {error && <p className="error">{error}</p>}
-      {loading && <p className="muted">Loading library...</p>}
+      {loading && (
+        <div className="empty-state catalog-empty">
+          <h3>Loading library...</h3>
+          <p>Pulling your latest checkpoint cards.</p>
+        </div>
+      )}
       {!loading && entries.length === 0 && (
-        <p className="empty-state">Your library is empty. Search for a game and add it to start tracking.</p>
+        <div className="empty-state catalog-empty">
+          <h3>Your library is ready for its first game</h3>
+          <p>Search for a game and add it to start tracking your status, notes, and play dates.</p>
+        </div>
       )}
       {!loading && entries.length > 0 && visibleEntries.length === 0 && (
-        <p className="empty-state">No entries match the current search and filters.</p>
+        <div className="empty-state catalog-empty">
+          <h3>No matching entries</h3>
+          <p>Adjust the search, filter, or sort controls to bring more of your library back into view.</p>
+        </div>
       )}
       <div className="library-list">
         {visibleEntries.map((entry) => (

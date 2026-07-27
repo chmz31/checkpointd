@@ -84,7 +84,7 @@ export default function App() {
 
 function AuthPage({ mode, onToken }: { mode: 'login' | 'register'; onToken: (token: string) => void }) {
   return (
-    <main className="app-shell">
+    <main className="auth-page">
       <AuthPanel mode={mode} onToken={onToken} />
     </main>
   );

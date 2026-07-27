@@ -77,6 +77,7 @@ class ExternalGameSearchServiceTests {
 						"id", 123,
 						"name", "Chrono Trigger",
 						"slug", "chrono-trigger",
+						"cover", Map.of("url", "//images.example/low-res-cover.jpg", "image_id", "cover-image-id"),
 						"summary", "Time travel RPG",
 						"genres", List.of(Map.of("name", "RPG")),
 						"platforms", List.of(Map.of("name", "SNES")),
@@ -87,12 +88,14 @@ class ExternalGameSearchServiceTests {
 
 		assertThat(results).hasSize(1);
 		ExternalGameSearchResult result = results.getFirst();
+		assertThat(result.coverUrl())
+				.isEqualTo("https://images.igdb.com/igdb/image/upload/t_cover_big_2x/cover-image-id.jpg");
 		assertThat(result.summary()).isEqualTo("Time travel RPG");
 		assertThat(result.genres()).containsExactly("RPG");
 		assertThat(result.platforms()).containsExactly("SNES");
 		assertThat(result.screenshotUrls()).containsExactly("https://images.example/screenshot.jpg");
 		assertThat(result.artworkUrls())
-				.containsExactly("https://images.igdb.com/igdb/image/upload/t_original/artwork-image-id.jpg");
+				.containsExactly("https://images.igdb.com/igdb/image/upload/t_1080p/artwork-image-id.jpg");
 		assertThat(result.backdropUrl()).isEqualTo("https://images.example/screenshot.jpg");
 	}
 }

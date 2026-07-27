@@ -64,8 +64,10 @@ export function GameResultCard({
   return (
     <article className="search-result-card">
       <div className="game-row search-result-summary">
-        <CoverImage src={result.coverUrl} title={result.title} />
-        <div>
+        <div className="cover-link">
+          <CoverImage src={result.coverUrl} title={result.title} />
+        </div>
+        <div className="entry-card-body">
           <h3>{result.title}</h3>
           <p className="muted">
             {[result.slug, result.releaseDate].filter(Boolean).join(' | ') || result.provider}
@@ -73,7 +75,7 @@ export function GameResultCard({
           <GameMetadata summary={result.summary} genres={result.genres} platforms={result.platforms} />
         </div>
         <div className="result-actions">
-          {libraryEntry && <span className="user-pill">In Library</span>}
+          {libraryEntry && <span className="user-pill status-badge">In Library</span>}
           <button className="button-ghost button-small" onClick={viewGamePage} disabled={viewing}>
             {viewing ? 'Opening...' : 'View game page'}
           </button>
