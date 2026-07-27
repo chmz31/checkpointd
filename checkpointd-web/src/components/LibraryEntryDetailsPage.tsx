@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { formatDate } from '../dateUtils';
+import { canonicalGamePath, libraryEntryPath, slugify } from '../routePaths';
 import type { LibraryEntry } from '../types';
 import { CoverImage } from './CoverImage';
 import { DetailFact } from './DetailFact';
 import { LibraryEntryEditForm } from './LibraryEntryEditForm';
 
 export function LibraryEntryDetailsPage() {
-  const { entryId } = useParams();
+  const { entryId, slug } = useParams();
   const navigate = useNavigate();
   const [entry, setEntry] = useState<LibraryEntry | null>(null);
   const [editing, setEditing] = useState(false);
@@ -25,12 +26,19 @@ export function LibraryEntryDetailsPage() {
     setError(null);
     api
       .getLibraryEntry(entryId)
-      .then(setEntry)
+      .then((loadedEntry) => {
+        setEntry(loadedEntry);
+        const canonicalPath = libraryEntryPath(loadedEntry);
+        const canonicalSlug = slugify(loadedEntry.gameSlug || loadedEntry.gameTitle || 'game');
+        if (slug !== canonicalSlug) {
+          navigate(canonicalPath, { replace: true });
+        }
+      })
       .catch((caught) => {
         setError(caught instanceof Error ? caught.message : 'Could not load library entry');
       })
       .finally(() => setLoading(false));
-  }, [entryId]);
+  }, [entryId, navigate, slug]);
 
   async function syncMetadata() {
     if (!entry) return;
@@ -104,7 +112,10 @@ export function LibraryEntryDetailsPage() {
               <Link className="nav-link button-small" to="/library">
                 Back to library
               </Link>
-              <Link className="nav-link button-small" to={`/games/${entry.gameId}`}>
+              <Link
+                className="nav-link button-small"
+                to={canonicalGamePath(entry.gameId, entry.gameSlug, entry.gameTitle)}
+              >
                 View game page
               </Link>
               <button onClick={() => setEditing((current) => !current)} disabled={deleting}>
