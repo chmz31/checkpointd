@@ -67,12 +67,12 @@ export default function App() {
         <Route
           element={token ? <AppShell user={user} onLogout={logout} /> : <PublicShell />}
         >
-          <Route path="/games/:gameId/:slug/reviews" element={<GameReviewsPage />} />
-          <Route path="/games/:gameId/reviews" element={<GameReviewsPage />} />
+          <Route path="/games/:gameId/:slug/reviews" element={<GameReviewsPage currentUser={user} />} />
+          <Route path="/games/:gameId/reviews" element={<GameReviewsPage currentUser={user} />} />
           <Route path="/u/:username" element={<PublicProfilePage currentUser={user} />} />
-          <Route path="/u/:username/reviews" element={<UserReviewsPage />} />
-          <Route path="/u/:username/games/:gameId/:slug" element={<UserGameReviewPage />} />
-          <Route path="/u/:username/games/:gameId" element={<UserGameReviewPage />} />
+          <Route path="/u/:username/reviews" element={<UserReviewsPage currentUser={user} />} />
+          <Route path="/u/:username/games/:gameId/:slug" element={<UserGameReviewPage currentUser={user} />} />
+          <Route path="/u/:username/games/:gameId" element={<UserGameReviewPage currentUser={user} />} />
         </Route>
         <Route
           element={

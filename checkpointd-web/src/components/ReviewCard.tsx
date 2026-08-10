@@ -5,9 +5,18 @@ import { gamePath, userGameReviewPath, userProfilePath } from '../routePaths';
 import type { Review } from '../types';
 import { CoverImage } from './CoverImage';
 
-export function ReviewCard({ review, showGame = true }: { review: Review; showGame?: boolean }) {
+export function ReviewCard({
+  review,
+  showGame = true,
+  currentUsername = null,
+}: {
+  review: Review;
+  showGame?: boolean;
+  currentUsername?: string | null;
+}) {
   const [revealed, setRevealed] = useState(!review.containsSpoilers);
   const authorName = review.displayName || review.username;
+  const isOwner = currentUsername != null && currentUsername === review.username;
 
   return (
     <article className="review-card">
@@ -25,6 +34,7 @@ export function ReviewCard({ review, showGame = true }: { review: Review; showGa
               {' '}· {formatDate(review.updatedAt)}
             </p>
           </div>
+          {isOwner && <span className="status-badge">Your review</span>}
           {review.rating && <span className="rating-badge">{review.rating}/10</span>}
         </div>
         {review.containsSpoilers && !revealed ? (
