@@ -18,6 +18,8 @@ import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.review.entity.Review;
 import com.chmz31.checkpointd.review.model.ReviewVisibility;
+import com.chmz31.checkpointd.list.repository.GameListItemRepository;
+import com.chmz31.checkpointd.list.repository.GameListRepository;
 import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
@@ -66,6 +68,12 @@ class ProfileControllerTests {
 
 	@MockitoBean
 	private ReviewRepository reviewRepository;
+
+	@MockitoBean
+	private GameListRepository gameListRepository;
+
+	@MockitoBean
+	private GameListItemRepository gameListItemRepository;
 
 	@Test
 	void publicProfileReturnsWithoutAuthentication() throws Exception {

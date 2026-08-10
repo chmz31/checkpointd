@@ -75,6 +75,40 @@ export type UpdateProfileInput = {
   profileVisibility?: ProfileVisibility;
 };
 
+export type ListVisibility = 'PUBLIC' | 'PRIVATE';
+
+export type GameList = {
+  id: string;
+  username: string;
+  displayName?: string | null;
+  name: string;
+  description?: string | null;
+  visibility: ListVisibility;
+  itemCount: number;
+  createdAt: string;
+  updatedAt: string;
+  owner: boolean;
+};
+
+export type GameListItem = {
+  id: string;
+  gameId: string;
+  gameSlug?: string | null;
+  gameTitle: string;
+  gameCoverUrl?: string | null;
+  addedAt: string;
+};
+
+export type GameListDetail = GameList & {
+  items: GameListItem[];
+};
+
+export type GameListRequest = {
+  name: string;
+  description?: string | null;
+  visibility?: ListVisibility;
+};
+
 export type ReviewVisibility = 'PUBLIC' | 'PRIVATE';
 
 export type Review = {

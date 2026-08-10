@@ -3,6 +3,9 @@ import type {
   CurrentUser,
   ExternalGameSearchResult,
   Game,
+  GameList,
+  GameListDetail,
+  GameListRequest,
   LibraryEntry,
   LibraryEntryUpdateInput,
   LibrarySortOption,
@@ -132,6 +135,10 @@ export const api = {
     return apiRequest<Game>(`/api/v1/games/${gameId}`);
   },
 
+  searchLocalGames(query: string) {
+    return apiRequest<Game[]>(`/api/v1/games?q=${encodeURIComponent(query)}`);
+  },
+
   addLibraryEntry(input: {
     gameId: string;
     status: LibraryStatus;
@@ -221,6 +228,57 @@ export const api = {
 
   deleteMyGameReview(gameId: string) {
     return apiRequest<void>(`/api/v1/reviews/me/games/${gameId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  createList(input: GameListRequest) {
+    return apiRequest<GameList>('/api/v1/lists', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  getMyLists(page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<GameList>>(`/api/v1/lists/me?page=${page}&size=${size}`);
+  },
+
+  getUserLists(username: string, page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<GameList>>(
+      `/api/v1/lists/users/${encodeURIComponent(username)}?page=${page}&size=${size}`,
+    );
+  },
+
+  getMyList(listId: string) {
+    return apiRequest<GameListDetail>(`/api/v1/lists/me/${listId}`);
+  },
+
+  getPublicList(username: string, listId: string) {
+    return apiRequest<GameListDetail>(`/api/v1/lists/users/${encodeURIComponent(username)}/${listId}`);
+  },
+
+  updateList(listId: string, input: GameListRequest) {
+    return apiRequest<GameList>(`/api/v1/lists/me/${listId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
+  },
+
+  deleteList(listId: string) {
+    return apiRequest<void>(`/api/v1/lists/me/${listId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  addListItem(listId: string, gameId: string) {
+    return apiRequest<GameListDetail>(`/api/v1/lists/me/${listId}/items`, {
+      method: 'POST',
+      body: JSON.stringify({ gameId }),
+    });
+  },
+
+  removeListItem(listId: string, gameId: string) {
+    return apiRequest<GameListDetail>(`/api/v1/lists/me/${listId}/items/${gameId}`, {
       method: 'DELETE',
     });
   },
