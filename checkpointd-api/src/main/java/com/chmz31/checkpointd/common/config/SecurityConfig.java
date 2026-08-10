@@ -63,7 +63,7 @@ public class SecurityConfig {
 			@Value("${checkpointd.cors.allowed-origins:}") String allowedOrigins) {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOrigins(parseAllowedOrigins(allowedOrigins));
-		configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 		configuration.setAllowCredentials(false);
 
