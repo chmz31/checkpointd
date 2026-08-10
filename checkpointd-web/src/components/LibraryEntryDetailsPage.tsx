@@ -183,7 +183,6 @@ export function LibraryEntryDetailsPage() {
 
           <div className="detail-facts">
             <DetailFact label="Status" value={entry.status} />
-            <DetailFact label="Rating" value={entry.rating ? `${entry.rating}/10` : 'Unrated'} />
             <DetailFact label="Started" value={formatDate(entry.startedAt)} />
             <DetailFact label="Completed" value={formatDate(entry.completedAt)} />
             <DetailFact label="Added" value={formatDate(entry.createdAt)} />

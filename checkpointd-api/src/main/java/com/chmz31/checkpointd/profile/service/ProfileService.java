@@ -71,8 +71,10 @@ public class ProfileService {
 		var stats = new PublicProfileStatsResponse(
 				libraryEntryRepository.countByUserId(userId),
 				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.COMPLETED),
-				libraryEntryRepository.countByUserIdAndRatingIsNotNull(userId),
-				libraryEntryRepository.averageRatingByUserId(userId),
+				reviewRepository.countByUserUsernameAndUserProfileVisibilityAndVisibilityAndRatingIsNotNull(
+						username, ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC),
+				reviewRepository.averageRatingByUsernameAndVisibility(
+						username, ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC),
 				reviewCount);
 		var recentGames = libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(userId).stream()
 				.map(PublicProfileGameResponse::from)

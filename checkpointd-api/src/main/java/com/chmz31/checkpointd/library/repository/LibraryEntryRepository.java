@@ -20,11 +20,6 @@ public interface LibraryEntryRepository extends JpaRepository<LibraryEntry, UUID
 
 	long countByUserIdAndStatus(UUID userId, LibraryStatus status);
 
-	long countByUserIdAndRatingIsNotNull(UUID userId);
-
-	@Query("select avg(entry.rating) from LibraryEntry entry where entry.user.id = :userId and entry.rating is not null")
-	Double averageRatingByUserId(@Param("userId") UUID userId);
-
 	@EntityGraph(attributePaths = {"game"})
 	Optional<LibraryEntry> findByIdAndUserId(UUID id, UUID userId);
 

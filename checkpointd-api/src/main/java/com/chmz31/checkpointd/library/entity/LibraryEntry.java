@@ -43,8 +43,6 @@ public class LibraryEntry {
 	@Column(nullable = false, length = 50)
 	private LibraryStatus status;
 
-	private Integer rating;
-
 	@Column(columnDefinition = "TEXT")
 	private String notes;
 
@@ -107,14 +105,6 @@ public class LibraryEntry {
 
 	public void setStatus(LibraryStatus status) {
 		this.status = status;
-	}
-
-	public Integer getRating() {
-		return rating;
-	}
-
-	public void setRating(Integer rating) {
-		this.rating = rating;
 	}
 
 	public String getNotes() {

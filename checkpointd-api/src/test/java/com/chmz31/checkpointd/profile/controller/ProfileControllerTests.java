@@ -73,8 +73,10 @@ class ProfileControllerTests {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user));
 		when(libraryEntryRepository.countByUserId(USER_ID)).thenReturn(3L);
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.COMPLETED)).thenReturn(1L);
-		when(libraryEntryRepository.countByUserIdAndRatingIsNotNull(USER_ID)).thenReturn(2L);
-		when(libraryEntryRepository.averageRatingByUserId(USER_ID)).thenReturn(8.5);
+		when(reviewRepository.countByUserUsernameAndUserProfileVisibilityAndVisibilityAndRatingIsNotNull(
+				"playerone", ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC)).thenReturn(2L);
+		when(reviewRepository.averageRatingByUsernameAndVisibility(
+				"playerone", ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC)).thenReturn(8.5);
 		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of(entry()));
 		when(reviewRepository.countByUserUsernameAndUserProfileVisibilityAndVisibility(
 				"playerone", ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC)).thenReturn(2L);
@@ -225,7 +227,6 @@ class ProfileControllerTests {
 
 	private LibraryEntry entry() {
 		LibraryEntry entry = new LibraryEntry(user(ProfileVisibility.PUBLIC), game(), LibraryStatus.COMPLETED);
-		entry.setRating(9);
 		entry.setNotes("Private note");
 		ReflectionTestUtils.setField(entry, "id", ENTRY_ID);
 		ReflectionTestUtils.setField(entry, "updatedAt", Instant.parse("2026-01-03T00:00:00Z"));

@@ -1,5 +1,6 @@
 package com.chmz31.checkpointd.library.service;
 
+import com.chmz31.checkpointd.common.exception.BadRequestException;
 import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
@@ -15,8 +16,10 @@ import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibrarySortOption;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.repository.UserRepository;
+import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -35,18 +38,21 @@ public class LibraryService {
 	private final UserRepository userRepository;
 	private final ExternalGameImportService externalGameImportService;
 	private final MetadataRefreshService metadataRefreshService;
+	private final ReviewRepository reviewRepository;
 
 	public LibraryService(
 			LibraryEntryRepository libraryEntryRepository,
 			GameRepository gameRepository,
 			UserRepository userRepository,
 			ExternalGameImportService externalGameImportService,
-			MetadataRefreshService metadataRefreshService) {
+			MetadataRefreshService metadataRefreshService,
+			ReviewRepository reviewRepository) {
 		this.libraryEntryRepository = libraryEntryRepository;
 		this.gameRepository = gameRepository;
 		this.userRepository = userRepository;
 		this.externalGameImportService = externalGameImportService;
 		this.metadataRefreshService = metadataRefreshService;
+		this.reviewRepository = reviewRepository;
 	}
 
 	@Transactional
@@ -58,9 +64,9 @@ public class LibraryService {
 		if (libraryEntryRepository.existsByUserIdAndGameId(userId, request.gameId())) {
 			throw new DuplicateResourceException("Game is already in library");
 		}
+		validateDateOrder(request.startedAt(), request.completedAt());
 
 		LibraryEntry entry = new LibraryEntry(user, game, request.status());
-		entry.setRating(request.rating());
 		entry.setNotes(request.notes());
 		entry.setStartedAt(request.startedAt());
 		entry.setCompletedAt(request.completedAt());
@@ -134,18 +140,18 @@ public class LibraryService {
 				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.COMPLETED),
 				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.DROPPED),
 				libraryEntryRepository.countByUserIdAndStatus(userId, LibraryStatus.PAUSED),
-				libraryEntryRepository.countByUserIdAndRatingIsNotNull(userId),
-				libraryEntryRepository.averageRatingByUserId(userId));
+				reviewRepository.countByUserIdAndRatingIsNotNull(userId),
+				reviewRepository.averageRatingByUserId(userId));
 	}
 
 	@Transactional
 	public LibraryEntry update(UUID userId, UUID entryId, UpdateLibraryEntryRequest request) {
 		LibraryEntry entry = getUserEntry(userId, entryId);
+		validateDateOrder(request.startedAt(), request.completedAt());
 
 		if (request.status() != null) {
 			entry.setStatus(request.status());
 		}
-		entry.setRating(request.rating());
 		entry.setNotes(request.notes());
 		entry.setStartedAt(request.startedAt());
 		entry.setCompletedAt(request.completedAt());
@@ -184,5 +190,11 @@ public class LibraryService {
 	private LibraryEntry getUserEntry(UUID userId, UUID entryId) {
 		return libraryEntryRepository.findByIdAndUserId(entryId, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("Library entry not found"));
+	}
+
+	private void validateDateOrder(LocalDate startedAt, LocalDate completedAt) {
+		if (startedAt != null && completedAt != null && completedAt.isBefore(startedAt)) {
+			throw new BadRequestException("completedAt cannot be before startedAt");
+		}
 	}
 }

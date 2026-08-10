@@ -11,8 +11,6 @@ export type LibrarySortOption =
   | 'ADDED_DESC'
   | 'TITLE_ASC'
   | 'TITLE_DESC'
-  | 'RATING_DESC'
-  | 'RATING_ASC'
   | 'STATUS_ASC';
 
 export type PaginatedResponse<T> = {
@@ -55,7 +53,6 @@ export type PublicProfileGame = {
   gameTitle: string;
   gameCoverUrl?: string | null;
   status: LibraryStatus;
-  rating?: number | null;
   updatedAt: string;
   genres: string[];
   platforms: string[];
@@ -193,7 +190,6 @@ export type LibraryEntry = {
   gameMetadataSyncError?: string | null;
   gameMetadataStale: boolean;
   status: LibraryStatus;
-  rating?: number | null;
   notes?: string | null;
   startedAt?: string | null;
   completedAt?: string | null;
@@ -203,7 +199,6 @@ export type LibraryEntry = {
 
 export type LibraryEntryUpdateInput = {
   status?: LibraryStatus;
-  rating?: number | null;
   notes?: string | null;
   startedAt?: string | null;
   completedAt?: string | null;
