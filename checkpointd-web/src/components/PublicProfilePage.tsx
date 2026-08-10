@@ -6,6 +6,7 @@ import type { CurrentUser, ProfileVisibility, PublicProfile } from '../types';
 import { CoverImage } from './CoverImage';
 import { ChipGroup } from './ChipGroup';
 import { DetailFact } from './DetailFact';
+import { ReviewCard } from './ReviewCard';
 import { formatDate } from '../dateUtils';
 
 export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | null }) {
@@ -114,6 +115,7 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
           label="Average"
           value={profile.stats.averageRating == null ? 'Not set' : profile.stats.averageRating.toFixed(1)}
         />
+        <DetailFact label="Reviews" value={String(profile.stats.reviewCount)} />
         <DetailFact label="Joined" value={formatDate(profile.joinedAt)} />
         {isOwnProfile && <DetailFact label="Visibility" value={profile.profileVisibility} />}
       </div>
@@ -145,6 +147,27 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
                   <ChipGroup label="Metadata" values={[...game.genres, ...game.platforms].slice(0, 4)} />
                 </div>
               </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="detail-section">
+        <div className="section-heading">
+          <h2>Recent reviews</h2>
+          <Link className="nav-link" to={userReviewsPath(profile.username)}>
+            View all
+          </Link>
+        </div>
+        {profile.recentReviews.length === 0 ? (
+          <div className="empty-state catalog-empty">
+            <h3>No reviews yet</h3>
+            <p>This profile has not published any public reviews.</p>
+          </div>
+        ) : (
+          <div className="review-list compact-review-list">
+            {profile.recentReviews.map((review) => (
+              <ReviewCard key={review.id} review={review} />
             ))}
           </div>
         )}

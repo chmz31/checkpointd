@@ -45,6 +45,7 @@ export type PublicProfileStats = {
   completedGames: number;
   ratedGames: number;
   averageRating: number | null;
+  reviewCount: number;
 };
 
 export type PublicProfileGame = {
@@ -68,6 +69,7 @@ export type PublicProfile = {
   joinedAt?: string | null;
   stats: PublicProfileStats;
   recentGames: PublicProfileGame[];
+  recentReviews: Review[];
 };
 
 export type UpdateProfileInput = {

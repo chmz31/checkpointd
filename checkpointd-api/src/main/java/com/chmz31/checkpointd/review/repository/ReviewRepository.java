@@ -38,4 +38,9 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 			ProfileVisibility profileVisibility,
 			ReviewVisibility visibility,
 			Pageable pageable);
+
+	long countByUserUsernameAndUserProfileVisibilityAndVisibility(
+			String username,
+			ProfileVisibility profileVisibility,
+			ReviewVisibility visibility);
 }
