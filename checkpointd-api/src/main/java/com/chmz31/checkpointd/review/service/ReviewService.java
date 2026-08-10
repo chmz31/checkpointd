@@ -1,8 +1,12 @@
 package com.chmz31.checkpointd.review.service;
 
+import com.chmz31.checkpointd.common.exception.BadRequestException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.library.entity.LibraryEntry;
+import com.chmz31.checkpointd.library.model.LibraryStatus;
+import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.review.dto.ReviewRequest;
 import com.chmz31.checkpointd.review.dto.ReviewResponse;
 import com.chmz31.checkpointd.review.entity.Review;
@@ -11,6 +15,8 @@ import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import com.chmz31.checkpointd.user.repository.UserRepository;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,15 +28,23 @@ public class ReviewService {
 
 	private static final int DEFAULT_PAGE_SIZE = 10;
 	private static final int MAX_PAGE_SIZE = 50;
+	private static final Set<LibraryStatus> REVIEWABLE_STATUSES = EnumSet.of(
+			LibraryStatus.PLAYING, LibraryStatus.COMPLETED, LibraryStatus.DROPPED, LibraryStatus.PAUSED);
 
 	private final ReviewRepository reviewRepository;
 	private final UserRepository userRepository;
 	private final GameRepository gameRepository;
+	private final LibraryEntryRepository libraryEntryRepository;
 
-	public ReviewService(ReviewRepository reviewRepository, UserRepository userRepository, GameRepository gameRepository) {
+	public ReviewService(
+			ReviewRepository reviewRepository,
+			UserRepository userRepository,
+			GameRepository gameRepository,
+			LibraryEntryRepository libraryEntryRepository) {
 		this.reviewRepository = reviewRepository;
 		this.userRepository = userRepository;
 		this.gameRepository = gameRepository;
+		this.libraryEntryRepository = libraryEntryRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -81,6 +95,7 @@ public class ReviewService {
 
 	@Transactional
 	public ReviewResponse saveMyGameReview(UUID userId, UUID gameId, ReviewRequest request) {
+		requireReviewEligibility(userId, gameId);
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 		Game game = gameRepository.findById(gameId)
@@ -101,6 +116,14 @@ public class ReviewService {
 		Review review = reviewRepository.findByUserIdAndGameId(userId, gameId)
 				.orElseThrow(() -> new ResourceNotFoundException("Review not found"));
 		reviewRepository.delete(review);
+	}
+
+	private void requireReviewEligibility(UUID userId, UUID gameId) {
+		LibraryEntry entry = libraryEntryRepository.findByUserIdAndGameId(userId, gameId)
+				.orElseThrow(() -> new BadRequestException("Add this game to your library before reviewing it"));
+		if (!REVIEWABLE_STATUSES.contains(entry.getStatus())) {
+			throw new BadRequestException("You can only review games you have started playing");
+		}
 	}
 
 	private User publicUser(String username) {

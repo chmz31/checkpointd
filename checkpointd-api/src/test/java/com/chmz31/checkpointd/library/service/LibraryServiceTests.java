@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.chmz31.checkpointd.common.exception.BadRequestException;
 import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
@@ -22,6 +23,7 @@ import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibrarySortOption;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
@@ -63,6 +65,9 @@ class LibraryServiceTests {
 	@Mock
 	private MetadataRefreshService metadataRefreshService;
 
+	@Mock
+	private ReviewRepository reviewRepository;
+
 	@InjectMocks
 	private LibraryService libraryService;
 
@@ -71,7 +76,7 @@ class LibraryServiceTests {
 		User user = user();
 		Game game = game();
 		AddLibraryEntryRequest request = new AddLibraryEntryRequest(
-				GAME_ID, LibraryStatus.PLAYING, 9, "Great", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-02-01"));
+				GAME_ID, LibraryStatus.PLAYING, "Great", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-02-01"));
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game));
@@ -88,7 +93,6 @@ class LibraryServiceTests {
 		assertThat(saved.getUser()).isSameAs(user);
 		assertThat(saved.getGame()).isSameAs(game);
 		assertThat(saved.getStatus()).isEqualTo(LibraryStatus.PLAYING);
-		assertThat(saved.getRating()).isEqualTo(9);
 		assertThat(saved.getNotes()).isEqualTo("Great");
 		assertThat(saved.getStartedAt()).isEqualTo(LocalDate.parse("2026-01-01"));
 		assertThat(saved.getCompletedAt()).isEqualTo(LocalDate.parse("2026-02-01"));
@@ -96,7 +100,7 @@ class LibraryServiceTests {
 
 	@Test
 	void addRejectsDuplicateUserGameEntry() {
-		AddLibraryEntryRequest request = new AddLibraryEntryRequest(GAME_ID, LibraryStatus.PLAYING, null, null, null, null);
+		AddLibraryEntryRequest request = new AddLibraryEntryRequest(GAME_ID, LibraryStatus.PLAYING, null, null, null);
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game()));
@@ -111,7 +115,7 @@ class LibraryServiceTests {
 
 	@Test
 	void addRejectsMissingGame() {
-		AddLibraryEntryRequest request = new AddLibraryEntryRequest(GAME_ID, LibraryStatus.PLAYING, null, null, null, null);
+		AddLibraryEntryRequest request = new AddLibraryEntryRequest(GAME_ID, LibraryStatus.PLAYING, null, null, null);
 
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.empty());
@@ -229,20 +233,6 @@ class LibraryServiceTests {
 	}
 
 	@Test
-	void listSortsByRatingDesc() {
-		Page<LibraryEntry> entries = new PageImpl<>(List.of(entry()));
-		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-
-		when(libraryEntryRepository.findUserLibrary(eq(USER_ID), isNull(), any(Pageable.class)))
-				.thenReturn(entries);
-
-		libraryService.list(USER_ID, null, null, 0, 24, LibrarySortOption.RATING_DESC);
-
-		verify(libraryEntryRepository).findUserLibrary(eq(USER_ID), isNull(), pageableCaptor.capture());
-		assertThat(pageableCaptor.getValue().getSort().getOrderFor("rating").isDescending()).isTrue();
-	}
-
-	@Test
 	void getReturnsCurrentUsersEntry() {
 		LibraryEntry entry = entry();
 
@@ -313,8 +303,8 @@ class LibraryServiceTests {
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.COMPLETED)).thenReturn(1L);
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.DROPPED)).thenReturn(1L);
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.PAUSED)).thenReturn(1L);
-		when(libraryEntryRepository.countByUserIdAndRatingIsNotNull(USER_ID)).thenReturn(3L);
-		when(libraryEntryRepository.averageRatingByUserId(USER_ID)).thenReturn(8.5);
+		when(reviewRepository.countByUserIdAndRatingIsNotNull(USER_ID)).thenReturn(3L);
+		when(reviewRepository.averageRatingByUserId(USER_ID)).thenReturn(8.5);
 
 		LibraryStatsResponse stats = libraryService.stats(USER_ID);
 
@@ -333,7 +323,7 @@ class LibraryServiceTests {
 	void updateCurrentUsersEntry() {
 		LibraryEntry entry = entry();
 		UpdateLibraryEntryRequest request = new UpdateLibraryEntryRequest(
-				LibraryStatus.COMPLETED, 10, "Done", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-02-01"));
+				LibraryStatus.COMPLETED, "Done", LocalDate.parse("2026-01-01"), LocalDate.parse("2026-02-01"));
 
 		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
 		when(libraryEntryRepository.save(entry)).thenReturn(entry);
@@ -342,7 +332,6 @@ class LibraryServiceTests {
 
 		assertThat(updated).isSameAs(entry);
 		assertThat(entry.getStatus()).isEqualTo(LibraryStatus.COMPLETED);
-		assertThat(entry.getRating()).isEqualTo(10);
 		assertThat(entry.getNotes()).isEqualTo("Done");
 		assertThat(entry.getStartedAt()).isEqualTo(LocalDate.parse("2026-01-01"));
 		assertThat(entry.getCompletedAt()).isEqualTo(LocalDate.parse("2026-02-01"));
@@ -351,11 +340,10 @@ class LibraryServiceTests {
 	@Test
 	void updateClearsNullableTrackingFields() {
 		LibraryEntry entry = entry();
-		entry.setRating(8);
 		entry.setNotes("Old notes");
 		entry.setStartedAt(LocalDate.parse("2026-01-01"));
 		entry.setCompletedAt(LocalDate.parse("2026-02-01"));
-		UpdateLibraryEntryRequest request = new UpdateLibraryEntryRequest(LibraryStatus.PLAYING, null, null, null, null);
+		UpdateLibraryEntryRequest request = new UpdateLibraryEntryRequest(LibraryStatus.PLAYING, null, null, null);
 
 		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
 		when(libraryEntryRepository.save(entry)).thenReturn(entry);
@@ -364,10 +352,40 @@ class LibraryServiceTests {
 
 		assertThat(updated).isSameAs(entry);
 		assertThat(entry.getStatus()).isEqualTo(LibraryStatus.PLAYING);
-		assertThat(entry.getRating()).isNull();
 		assertThat(entry.getNotes()).isNull();
 		assertThat(entry.getStartedAt()).isNull();
 		assertThat(entry.getCompletedAt()).isNull();
+	}
+
+	@Test
+	void addRejectsCompletedAtBeforeStartedAt() {
+		AddLibraryEntryRequest request = new AddLibraryEntryRequest(
+				GAME_ID, LibraryStatus.PLAYING, null, LocalDate.parse("2026-02-01"), LocalDate.parse("2026-01-01"));
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game()));
+		when(libraryEntryRepository.existsByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(false);
+
+		assertThatThrownBy(() -> libraryService.add(USER_ID, request))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessage("completedAt cannot be before startedAt");
+
+		verify(libraryEntryRepository, never()).save(any(LibraryEntry.class));
+	}
+
+	@Test
+	void updateRejectsCompletedAtBeforeStartedAt() {
+		LibraryEntry entry = entry();
+		UpdateLibraryEntryRequest request = new UpdateLibraryEntryRequest(
+				LibraryStatus.COMPLETED, null, LocalDate.parse("2026-02-01"), LocalDate.parse("2026-01-01"));
+
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry));
+
+		assertThatThrownBy(() -> libraryService.update(USER_ID, ENTRY_ID, request))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessage("completedAt cannot be before startedAt");
+
+		verify(libraryEntryRepository, never()).save(any(LibraryEntry.class));
 	}
 
 	@Test

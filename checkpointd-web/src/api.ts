@@ -135,7 +135,6 @@ export const api = {
   addLibraryEntry(input: {
     gameId: string;
     status: LibraryStatus;
-    rating?: number | null;
     notes?: string | null;
     startedAt?: string | null;
     completedAt?: string | null;

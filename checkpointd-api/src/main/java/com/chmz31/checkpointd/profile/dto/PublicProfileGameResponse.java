@@ -13,7 +13,6 @@ public record PublicProfileGameResponse(
 		String gameTitle,
 		String gameCoverUrl,
 		LibraryStatus status,
-		Integer rating,
 		Instant updatedAt,
 		List<String> genres,
 		List<String> platforms) {
@@ -26,7 +25,6 @@ public record PublicProfileGameResponse(
 				entry.getGame().getTitle(),
 				entry.getGame().getCoverUrl(),
 				entry.getStatus(),
-				entry.getRating(),
 				entry.getUpdatedAt(),
 				List.copyOf(entry.getGame().getGenres()),
 				List.copyOf(entry.getGame().getPlatforms()));

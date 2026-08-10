@@ -142,7 +142,6 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
                   <h3>{game.gameTitle}</h3>
                   <p className="status-line">
                     <span className="status-badge">{game.status}</span>
-                    {game.rating && <span className="rating-badge">{game.rating}/10</span>}
                   </p>
                   <ChipGroup label="Metadata" values={[...game.genres, ...game.platforms].slice(0, 4)} />
                 </div>

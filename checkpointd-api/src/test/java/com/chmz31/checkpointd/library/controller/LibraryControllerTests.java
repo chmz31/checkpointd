@@ -4,6 +4,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -98,7 +100,6 @@ class LibraryControllerTests {
 								{
 								  "gameId": "00000000-0000-0000-0000-000000000101",
 								  "status": "PLAYING",
-								  "rating": 9,
 								  "notes": "Great",
 								  "startedAt": "2026-01-01",
 								  "completedAt": "2026-02-01"
@@ -127,7 +128,6 @@ class LibraryControllerTests {
 				.andExpect(jsonPath("$.gameArtworkUrls[0]").value("https://img.example/art.jpg"))
 				.andExpect(jsonPath("$.gameBackdropUrl").value("https://img.example/art.jpg"))
 				.andExpect(jsonPath("$.status").value("PLAYING"))
-				.andExpect(jsonPath("$.rating").value(9))
 				.andExpect(jsonPath("$.notes").value("Great"))
 				.andExpect(jsonPath("$.startedAt").value("2026-01-01"))
 				.andExpect(jsonPath("$.completedAt").value("2026-02-01"));
@@ -173,8 +173,7 @@ class LibraryControllerTests {
 						.contentType("application/json")
 						.content("""
 								{
-								  "status": "PLAYING",
-								  "rating": 11
+								  "status": "PLAYING"
 								}
 								"""))
 				.andExpect(status().isBadRequest())
@@ -183,7 +182,11 @@ class LibraryControllerTests {
 	}
 
 	@Test
-	void ratingBelowOneReturnsBadRequest() throws Exception {
+	void createRejectsCompletedAtBeforeStartedAt() throws Exception {
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game()));
+		when(libraryEntryRepository.existsByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(false);
+
 		mockMvc.perform(post("/api/v1/library")
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
 						.with(csrf())
@@ -192,12 +195,14 @@ class LibraryControllerTests {
 								{
 								  "gameId": "00000000-0000-0000-0000-000000000101",
 								  "status": "PLAYING",
-								  "rating": 0
+								  "startedAt": "2026-02-01",
+								  "completedAt": "2026-01-01"
 								}
 								"""))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.status").value(400))
-				.andExpect(jsonPath("$.message").value("Validation failed"));
+				.andExpect(jsonPath("$.message").value("completedAt cannot be before startedAt"));
+
+		verify(libraryEntryRepository, never()).save(any(LibraryEntry.class));
 	}
 
 	@Test
@@ -387,8 +392,8 @@ class LibraryControllerTests {
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.COMPLETED)).thenReturn(2L);
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.DROPPED)).thenReturn(0L);
 		when(libraryEntryRepository.countByUserIdAndStatus(USER_ID, LibraryStatus.PAUSED)).thenReturn(0L);
-		when(libraryEntryRepository.countByUserIdAndRatingIsNotNull(USER_ID)).thenReturn(2L);
-		when(libraryEntryRepository.averageRatingByUserId(USER_ID)).thenReturn(8.5);
+		when(reviewRepository.countByUserIdAndRatingIsNotNull(USER_ID)).thenReturn(2L);
+		when(reviewRepository.averageRatingByUserId(USER_ID)).thenReturn(8.5);
 
 		mockMvc.perform(get("/api/v1/library/stats")
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
@@ -418,14 +423,12 @@ class LibraryControllerTests {
 						.content("""
 								{
 								  "status": "COMPLETED",
-								  "rating": 10,
 								  "startedAt": "2026-01-01",
 								  "completedAt": "2026-02-01"
 								}
 								"""))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("COMPLETED"))
-				.andExpect(jsonPath("$.rating").value(10))
 				.andExpect(jsonPath("$.startedAt").value("2026-01-01"))
 				.andExpect(jsonPath("$.completedAt").value("2026-02-01"));
 	}
@@ -433,7 +436,6 @@ class LibraryControllerTests {
 	@Test
 	void updateClearsNullableTrackingFields() throws Exception {
 		LibraryEntry entry = entry();
-		entry.setRating(9);
 		entry.setNotes("Great");
 		entry.setStartedAt(LocalDate.parse("2026-01-01"));
 		entry.setCompletedAt(LocalDate.parse("2026-02-01"));
@@ -448,7 +450,6 @@ class LibraryControllerTests {
 						.content("""
 								{
 								  "status": "PLAYING",
-								  "rating": null,
 								  "notes": null,
 								  "startedAt": null,
 								  "completedAt": null
@@ -456,14 +457,15 @@ class LibraryControllerTests {
 								"""))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("PLAYING"))
-				.andExpect(jsonPath("$.rating").doesNotExist())
 				.andExpect(jsonPath("$.notes").doesNotExist())
 				.andExpect(jsonPath("$.startedAt").doesNotExist())
 				.andExpect(jsonPath("$.completedAt").doesNotExist());
 	}
 
 	@Test
-	void updateRatingAboveTenReturnsBadRequest() throws Exception {
+	void updateRejectsCompletedAtBeforeStartedAt() throws Exception {
+		when(libraryEntryRepository.findByIdAndUserId(ENTRY_ID, USER_ID)).thenReturn(Optional.of(entry()));
+
 		mockMvc.perform(patch("/api/v1/library/{entryId}", ENTRY_ID)
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
 						.with(csrf())
@@ -471,12 +473,14 @@ class LibraryControllerTests {
 						.content("""
 								{
 								  "status": "PLAYING",
-								  "rating": 11
+								  "startedAt": "2026-02-01",
+								  "completedAt": "2026-01-01"
 								}
 								"""))
 				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.status").value(400))
-				.andExpect(jsonPath("$.message").value("Validation failed"));
+				.andExpect(jsonPath("$.message").value("completedAt cannot be before startedAt"));
+
+		verify(libraryEntryRepository, never()).save(any(LibraryEntry.class));
 	}
 
 	@Test

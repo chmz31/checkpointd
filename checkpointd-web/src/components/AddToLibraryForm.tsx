@@ -1,16 +1,14 @@
 import { FormEvent, useState } from 'react';
 import { libraryStatuses } from '../constants';
 import {
+  dateOrderValidationMessage,
   optionalDate,
   optionalNotes,
-  optionalRating,
-  ratingValidationMessage,
 } from '../formHelpers';
 import type { LibraryStatus } from '../types';
 
 export type AddToLibraryFormValues = {
   status: LibraryStatus;
-  rating: number | null;
   notes: string | null;
   startedAt: string | null;
   completedAt: string | null;
@@ -36,11 +34,10 @@ export function AddToLibraryForm({
   onChange?: () => void;
 }) {
   const [status, setStatus] = useState<LibraryStatus>('BACKLOG');
-  const [rating, setRating] = useState('');
   const [notes, setNotes] = useState('');
   const [startedAt, setStartedAt] = useState('');
   const [completedAt, setCompletedAt] = useState('');
-  const ratingError = ratingValidationMessage(rating);
+  const dateError = dateOrderValidationMessage(startedAt, completedAt);
 
   function clearFeedback() {
     onChange?.();
@@ -48,13 +45,12 @@ export function AddToLibraryForm({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (ratingError) {
+    if (dateError) {
       return;
     }
 
     await onSubmit({
       status,
-      rating: optionalRating(rating),
       notes: optionalNotes(notes),
       startedAt: optionalDate(startedAt),
       completedAt: optionalDate(completedAt),
@@ -78,21 +74,6 @@ export function AddToLibraryForm({
             </option>
           ))}
         </select>
-      </label>
-      <label>
-        Rating
-        <input
-          value={rating}
-          onChange={(event) => {
-            setRating(event.target.value);
-            clearFeedback();
-          }}
-          min={1}
-          max={10}
-          type="number"
-          placeholder="1-10"
-          step={1}
-        />
       </label>
       <label>
         Started
@@ -128,9 +109,9 @@ export function AddToLibraryForm({
         />
       </label>
       {message && <p className="success compact-message">{message}</p>}
-      {(ratingError || error) && <p className="error compact-message">{ratingError || error}</p>}
+      {(dateError || error) && <p className="error compact-message">{dateError || error}</p>}
       <div className="inline-actions direct-add-actions">
-        <button type="submit" disabled={submitting || Boolean(ratingError)}>
+        <button type="submit" disabled={submitting || Boolean(dateError)}>
           {submitting ? submittingLabel : submitLabel}
         </button>
       </div>

@@ -8,9 +8,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.chmz31.checkpointd.common.exception.BadRequestException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.library.entity.LibraryEntry;
+import com.chmz31.checkpointd.library.model.LibraryStatus;
+import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.review.dto.ReviewRequest;
 import com.chmz31.checkpointd.review.dto.ReviewResponse;
 import com.chmz31.checkpointd.review.entity.Review;
@@ -50,6 +54,9 @@ class ReviewServiceTests {
 
 	@Mock
 	private GameRepository gameRepository;
+
+	@Mock
+	private LibraryEntryRepository libraryEntryRepository;
 
 	@InjectMocks
 	private ReviewService reviewService;
@@ -208,6 +215,7 @@ class ReviewServiceTests {
 		Game game = game();
 		ReviewRequest request = new ReviewRequest(9, "  Sharp and replayable.  ", true, ReviewVisibility.PUBLIC);
 
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(eligibleEntry()));
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game));
 		when(reviewRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
@@ -233,6 +241,7 @@ class ReviewServiceTests {
 		Review existing = review(ReviewVisibility.PRIVATE, ProfileVisibility.PUBLIC);
 		ReviewRequest request = new ReviewRequest(4, "Updated opinion.", false, ReviewVisibility.PUBLIC);
 
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(eligibleEntry()));
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game()));
 		when(reviewRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(existing));
@@ -254,6 +263,7 @@ class ReviewServiceTests {
 	void saveMyGameReviewDefaultsVisibilityToPublicWhenNull() {
 		ReviewRequest request = new ReviewRequest(null, "No visibility specified.", null, null);
 
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(eligibleEntry()));
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game()));
 		when(reviewRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
@@ -269,6 +279,7 @@ class ReviewServiceTests {
 	void saveMyGameReviewRejectsMissingUser() {
 		ReviewRequest request = new ReviewRequest(null, "Body", null, null);
 
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(eligibleEntry()));
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> reviewService.saveMyGameReview(USER_ID, GAME_ID, request))
@@ -282,6 +293,7 @@ class ReviewServiceTests {
 	void saveMyGameReviewRejectsMissingGame() {
 		ReviewRequest request = new ReviewRequest(null, "Body", null, null);
 
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(eligibleEntry()));
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.empty());
 
@@ -290,6 +302,64 @@ class ReviewServiceTests {
 				.hasMessage("Game not found");
 
 		verify(reviewRepository, never()).save(any(Review.class));
+	}
+
+	@Test
+	void saveMyGameReviewRejectsGameNotInLibrary() {
+		ReviewRequest request = new ReviewRequest(null, "Body", null, null);
+
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> reviewService.saveMyGameReview(USER_ID, GAME_ID, request))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessage("Add this game to your library before reviewing it");
+
+		verify(reviewRepository, never()).save(any(Review.class));
+	}
+
+	@Test
+	void saveMyGameReviewRejectsWishlistStatus() {
+		ReviewRequest request = new ReviewRequest(null, "Body", null, null);
+
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID))
+				.thenReturn(Optional.of(libraryEntry(LibraryStatus.WISHLIST)));
+
+		assertThatThrownBy(() -> reviewService.saveMyGameReview(USER_ID, GAME_ID, request))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessage("You can only review games you have started playing");
+
+		verify(reviewRepository, never()).save(any(Review.class));
+	}
+
+	@Test
+	void saveMyGameReviewRejectsBacklogStatus() {
+		ReviewRequest request = new ReviewRequest(null, "Body", null, null);
+
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID))
+				.thenReturn(Optional.of(libraryEntry(LibraryStatus.BACKLOG)));
+
+		assertThatThrownBy(() -> reviewService.saveMyGameReview(USER_ID, GAME_ID, request))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessage("You can only review games you have started playing");
+
+		verify(reviewRepository, never()).save(any(Review.class));
+	}
+
+	@Test
+	void saveMyGameReviewAllowsCompletedDroppedAndPausedStatuses() {
+		ReviewRequest request = new ReviewRequest(null, "Body", null, null);
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
+		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game()));
+		when(reviewRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
+		when(reviewRepository.save(any(Review.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		for (LibraryStatus status : new LibraryStatus[] {LibraryStatus.COMPLETED, LibraryStatus.DROPPED, LibraryStatus.PAUSED}) {
+			when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID))
+					.thenReturn(Optional.of(libraryEntry(status)));
+
+			assertThat(reviewService.saveMyGameReview(USER_ID, GAME_ID, request)).isNotNull();
+		}
 	}
 
 	@Test
@@ -330,6 +400,14 @@ class ReviewServiceTests {
 		ReflectionTestUtils.setField(game, "id", GAME_ID);
 
 		return game;
+	}
+
+	private LibraryEntry eligibleEntry() {
+		return libraryEntry(LibraryStatus.PLAYING);
+	}
+
+	private LibraryEntry libraryEntry(LibraryStatus status) {
+		return new LibraryEntry(user(ProfileVisibility.PUBLIC), game(), status);
 	}
 
 	private Review review(ReviewVisibility visibility, ProfileVisibility profileVisibility) {

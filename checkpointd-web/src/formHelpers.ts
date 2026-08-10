@@ -11,21 +11,10 @@ export function optionalNotes(value: string) {
   return trimmed || null;
 }
 
-export function optionalRating(value: string) {
-  return value.trim() ? Number(value) : null;
-}
-
-export function ratingValidationMessage(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
+export function dateOrderValidationMessage(startedAt: string, completedAt: string) {
+  if (!startedAt || !completedAt) {
     return null;
   }
 
-  const rating = Number(trimmed);
-  if (!Number.isInteger(rating) || rating < 1 || rating > 10) {
-    return 'Rating must be a whole number from 1 to 10.';
-  }
-
-  return null;
+  return completedAt < startedAt ? 'Completed date cannot be before started date.' : null;
 }

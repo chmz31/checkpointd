@@ -55,7 +55,6 @@ export function LibraryEntryCard({
           <h3>{entry.gameTitle}</h3>
           <p className="status-line">
             <span className="status-badge">{entry.status}</span>
-            {entry.rating && <span className="rating-badge">{entry.rating}/10</span>}
           </p>
           <GameMetadata
             summary={entry.gameSummary}

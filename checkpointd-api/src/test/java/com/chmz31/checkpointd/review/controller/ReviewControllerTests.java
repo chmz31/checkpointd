@@ -17,6 +17,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.library.entity.LibraryEntry;
+import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.review.entity.Review;
 import com.chmz31.checkpointd.review.model.ReviewVisibility;
@@ -70,6 +72,8 @@ class ReviewControllerTests {
 
 	@Test
 	void authenticatedUserCanCreateReview() throws Exception {
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID))
+				.thenReturn(Optional.of(eligibleEntry()));
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game()));
 		when(reviewRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.empty());
@@ -102,6 +106,8 @@ class ReviewControllerTests {
 	@Test
 	void authenticatedUserCanUpdateOwnReviewThroughUpsert() throws Exception {
 		Review review = review(ReviewVisibility.PRIVATE, ProfileVisibility.PUBLIC);
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID))
+				.thenReturn(Optional.of(eligibleEntry()));
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game()));
 		when(reviewRepository.findByUserIdAndGameId(USER_ID, GAME_ID)).thenReturn(Optional.of(review));
@@ -266,6 +272,30 @@ class ReviewControllerTests {
 				.andExpect(jsonPath("$.message").value("Validation failed"));
 
 		verify(reviewRepository, never()).save(any(Review.class));
+	}
+
+	@Test
+	void wishlistedGameCannotBeReviewed() throws Exception {
+		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID))
+				.thenReturn(Optional.of(new LibraryEntry(user(ProfileVisibility.PUBLIC), game(), LibraryStatus.WISHLIST)));
+
+		mockMvc.perform(put("/api/v1/reviews/me/games/{gameId}", GAME_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf())
+						.contentType("application/json")
+						.content("""
+								{
+								  "body": "Looks great."
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("You can only review games you have started playing"));
+
+		verify(reviewRepository, never()).save(any(Review.class));
+	}
+
+	private LibraryEntry eligibleEntry() {
+		return new LibraryEntry(user(ProfileVisibility.PUBLIC), game(), LibraryStatus.PLAYING);
 	}
 
 	private User user(ProfileVisibility profileVisibility) {

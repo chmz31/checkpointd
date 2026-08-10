@@ -148,8 +148,6 @@ export function LibraryView({ refreshKey }: { refreshKey: number }) {
           >
             <option value="UPDATED_DESC">Recently updated</option>
             <option value="TITLE_ASC">Title A-Z</option>
-            <option value="RATING_DESC">Rating high-low</option>
-            <option value="RATING_ASC">Rating low-high</option>
             <option value="STATUS_ASC">Status</option>
           </select>
         </label>
