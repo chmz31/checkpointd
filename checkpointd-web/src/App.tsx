@@ -7,10 +7,13 @@ import { GameDetailsPage } from './components/GameDetailsPage';
 import { GameReviewsPage } from './components/GameReviewsPage';
 import { LibraryEntryDetailsPage } from './components/LibraryEntryDetailsPage';
 import { LibraryView } from './components/LibraryView';
+import { ListDetailPage } from './components/ListDetailPage';
+import { MyListsPage } from './components/MyListsPage';
 import { PublicProfilePage } from './components/PublicProfilePage';
 import { PublicShell } from './components/PublicShell';
 import { SearchView } from './components/SearchView';
 import { UserGameReviewPage } from './components/UserGameReviewPage';
+import { UserListsPage } from './components/UserListsPage';
 import { UserReviewsPage } from './components/UserReviewsPage';
 import type { CurrentUser } from './types';
 
@@ -73,6 +76,9 @@ export default function App() {
           <Route path="/u/:username/reviews" element={<UserReviewsPage currentUser={user} />} />
           <Route path="/u/:username/games/:gameId/:slug" element={<UserGameReviewPage currentUser={user} />} />
           <Route path="/u/:username/games/:gameId" element={<UserGameReviewPage currentUser={user} />} />
+          <Route path="/u/:username/lists" element={<UserListsPage />} />
+          <Route path="/u/:username/lists/:listId/:slug" element={<ListDetailPage currentUser={user} />} />
+          <Route path="/u/:username/lists/:listId" element={<ListDetailPage currentUser={user} />} />
         </Route>
         <Route
           element={
@@ -88,6 +94,7 @@ export default function App() {
             element={<SearchView onLibraryChange={() => setLibraryRefreshKey((key) => key + 1)} />}
           />
           <Route path="/library" element={<LibraryView refreshKey={libraryRefreshKey} />} />
+          <Route path="/lists" element={<MyListsPage />} />
           <Route path="/library/:entryId/:slug" element={<LibraryEntryDetailsPage />} />
           <Route path="/library/:entryId" element={<LibraryEntryDetailsPage />} />
           <Route path="/games/:gameId/:slug" element={<GameDetailsPage />} />

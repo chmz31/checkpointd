@@ -35,6 +35,14 @@ export function userGameReviewPath(username: string, game: GamePathInput) {
   return `/u/${encodeURIComponent(username)}/games/${game.id}/${slugSegment(game.slug || game.title || 'game')}`;
 }
 
+export function userListsPath(username: string) {
+  return `/u/${encodeURIComponent(username)}/lists`;
+}
+
+export function listPath(username: string, list: { id: string; name: string }) {
+  return `/u/${encodeURIComponent(username)}/lists/${list.id}/${slugSegment(list.name || 'list')}`;
+}
+
 export function slugify(value: string) {
   const slug = value
     .trim()

@@ -22,6 +22,8 @@ import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.review.entity.Review;
 import com.chmz31.checkpointd.review.model.ReviewVisibility;
+import com.chmz31.checkpointd.list.repository.GameListItemRepository;
+import com.chmz31.checkpointd.list.repository.GameListRepository;
 import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
@@ -57,6 +59,12 @@ class ReviewControllerTests {
 
 	@MockitoBean
 	private ReviewRepository reviewRepository;
+
+	@MockitoBean
+	private GameListRepository gameListRepository;
+
+	@MockitoBean
+	private GameListItemRepository gameListItemRepository;
 
 	@MockitoBean
 	private UserRepository userRepository;
