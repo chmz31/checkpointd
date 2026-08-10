@@ -4,11 +4,14 @@ import { api, clearStoredToken, getStoredToken, setStoredToken } from './api';
 import { AuthPanel } from './components/AuthPanel';
 import { AppShell } from './components/AppShell';
 import { GameDetailsPage } from './components/GameDetailsPage';
+import { GameReviewsPage } from './components/GameReviewsPage';
 import { LibraryEntryDetailsPage } from './components/LibraryEntryDetailsPage';
 import { LibraryView } from './components/LibraryView';
 import { PublicProfilePage } from './components/PublicProfilePage';
 import { PublicShell } from './components/PublicShell';
 import { SearchView } from './components/SearchView';
+import { UserGameReviewPage } from './components/UserGameReviewPage';
+import { UserReviewsPage } from './components/UserReviewsPage';
 import type { CurrentUser } from './types';
 
 export default function App() {
@@ -64,7 +67,12 @@ export default function App() {
         <Route
           element={token ? <AppShell user={user} onLogout={logout} /> : <PublicShell />}
         >
+          <Route path="/games/:gameId/:slug/reviews" element={<GameReviewsPage />} />
+          <Route path="/games/:gameId/reviews" element={<GameReviewsPage />} />
           <Route path="/u/:username" element={<PublicProfilePage currentUser={user} />} />
+          <Route path="/u/:username/reviews" element={<UserReviewsPage />} />
+          <Route path="/u/:username/games/:gameId/:slug" element={<UserGameReviewPage />} />
+          <Route path="/u/:username/games/:gameId" element={<UserGameReviewPage />} />
         </Route>
         <Route
           element={

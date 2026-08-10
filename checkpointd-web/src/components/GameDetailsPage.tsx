@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, isApiErrorStatus } from '../api';
 import { formatDate } from '../dateUtils';
-import { gamePath, libraryEntryPath, slugify } from '../routePaths';
-import type { Game, LibraryEntry } from '../types';
+import { gamePath, gameReviewsPath, libraryEntryPath, slugify } from '../routePaths';
+import type { Game, LibraryEntry, Review, ReviewRequest } from '../types';
 import { AddToLibraryForm, type AddToLibraryFormValues } from './AddToLibraryForm';
 import { ChipGroup } from './ChipGroup';
 import { CoverImage } from './CoverImage';
 import { DetailFact } from './DetailFact';
 import { MediaGallery } from './MediaGallery';
+import { ReviewCard } from './ReviewCard';
+import { ReviewForm } from './ReviewForm';
 
 export function GameDetailsPage() {
   const { gameId, slug } = useParams();
@@ -17,8 +19,13 @@ export function GameDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [libraryEntry, setLibraryEntry] = useState<LibraryEntry | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [myReview, setMyReview] = useState<Review | null>(null);
+  const [savingReview, setSavingReview] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [reviewMessage, setReviewMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gameId) return;
@@ -27,8 +34,12 @@ export function GameDetailsPage() {
     setLoading(true);
     setGame(null);
     setLibraryEntry(null);
+    setReviews([]);
+    setMyReview(null);
     setMessage(null);
+    setReviewMessage(null);
     setError(null);
+    setReviewError(null);
 
     async function load() {
       try {
@@ -48,6 +59,21 @@ export function GameDetailsPage() {
             setError(message || 'Could not check library status');
           }
         }
+
+        try {
+          const reviewPage = await api.getGameReviews(loadedGame.id, 0, 3);
+          setReviews(reviewPage.content);
+        } catch {
+          setReviews([]);
+        }
+
+        try {
+          setMyReview(await api.getMyGameReview(loadedGame.id));
+        } catch (caught) {
+          if (!isApiErrorStatus(caught, 404)) {
+            setReviewError(caught instanceof Error ? caught.message : 'Could not load your review');
+          }
+        }
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : 'Could not load game');
       } finally {
@@ -61,6 +87,23 @@ export function GameDetailsPage() {
   function clearAddFeedback() {
     setMessage(null);
     setError(null);
+  }
+
+  async function saveReview(request: ReviewRequest) {
+    if (!game) return;
+    setSavingReview(true);
+    setReviewMessage(null);
+    setReviewError(null);
+
+    try {
+      const saved = await api.saveMyGameReview(game.id, request);
+      setMyReview(saved);
+      setReviewMessage('Review saved.');
+    } catch (caught) {
+      setReviewError(caught instanceof Error ? caught.message : 'Could not save review');
+    } finally {
+      setSavingReview(false);
+    }
   }
 
   async function addToLibrary(values: AddToLibraryFormValues) {
@@ -244,6 +287,29 @@ export function GameDetailsPage() {
           )}
 
           <MediaGallery title={game.title} artworkUrls={game.artworkUrls} screenshotUrls={game.screenshotUrls} />
+
+          <section className="detail-section">
+            <div className="section-heading">
+              <h3>Reviews</h3>
+              <Link className="inline-link" to={gameReviewsPath(game)}>
+                View all
+              </Link>
+            </div>
+            <div className="review-list compact-review-list">
+              {reviews.map((review) => (
+                <ReviewCard key={review.id} review={review} showGame={false} />
+              ))}
+            </div>
+            {reviews.length === 0 && <p className="muted">No public reviews yet.</p>}
+          </section>
+
+          <section className="detail-section callout-section">
+            <h3>{myReview ? 'Edit your review' : 'Write a review'}</h3>
+            <p className="muted">Reviews are public opinion text. Private library notes stay on your checkpoint.</p>
+            {reviewMessage && <p className="success compact-message">{reviewMessage}</p>}
+            {reviewError && <p className="error compact-message">{reviewError}</p>}
+            <ReviewForm review={myReview} submitting={savingReview} onSubmit={saveReview} />
+          </section>
         </section>
       </div>
     </article>

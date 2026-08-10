@@ -298,6 +298,84 @@ h3 {
   min-height: 0;
 }
 
+.review-page,
+.review-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.review-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 1rem;
+  border: 1px solid rgba(139, 211, 199, 0.14);
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: rgba(9, 15, 23, 0.62);
+}
+
+.compact-review-list .review-card {
+  grid-template-columns: 1fr;
+}
+
+.review-cover-link .cover,
+.review-detail-hero .cover {
+  aspect-ratio: 3 / 4;
+  min-height: 0;
+}
+
+.review-body {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.review-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.review-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.spoiler-block {
+  border: 1px solid rgba(236, 194, 91, 0.18);
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: rgba(29, 26, 18, 0.34);
+}
+
+.review-form,
+.review-detail-hero {
+  margin-top: 0.75rem;
+}
+
+.review-detail-hero {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.checkbox-row {
+  display: flex;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
 .stat-tile {
   display: grid;
   gap: 0.2rem;

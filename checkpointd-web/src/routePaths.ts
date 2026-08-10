@@ -23,6 +23,18 @@ export function userProfilePath(username: string) {
   return `/u/${encodeURIComponent(username)}`;
 }
 
+export function gameReviewsPath(game: GamePathInput) {
+  return `${gamePath(game)}/reviews`;
+}
+
+export function userReviewsPath(username: string) {
+  return `/u/${encodeURIComponent(username)}/reviews`;
+}
+
+export function userGameReviewPath(username: string, game: GamePathInput) {
+  return `/u/${encodeURIComponent(username)}/games/${game.id}/${slugSegment(game.slug || game.title || 'game')}`;
+}
+
 export function slugify(value: string) {
   const slug = value
     .trim()

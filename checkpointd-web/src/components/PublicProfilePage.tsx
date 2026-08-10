@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, isApiErrorStatus } from '../api';
-import { gamePath } from '../routePaths';
+import { gamePath, userReviewsPath } from '../routePaths';
 import type { CurrentUser, ProfileVisibility, PublicProfile } from '../types';
 import { CoverImage } from './CoverImage';
 import { ChipGroup } from './ChipGroup';
@@ -86,9 +86,19 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
           <p className="muted">@{profile.username}</p>
         </div>
         {isOwnProfile && (
-          <button className="button-ghost" onClick={() => setEditing((current) => !current)}>
-            {editing ? 'Close' : 'Edit profile'}
-          </button>
+          <div className="inline-actions">
+            <Link className="nav-link button-small" to={userReviewsPath(profile.username)}>
+              Reviews
+            </Link>
+            <button className="button-ghost" onClick={() => setEditing((current) => !current)}>
+              {editing ? 'Close' : 'Edit profile'}
+            </button>
+          </div>
+        )}
+        {!isOwnProfile && (
+          <Link className="nav-link button-small" to={userReviewsPath(profile.username)}>
+            Reviews
+          </Link>
         )}
       </div>
 
