@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { userProfilePath } from '../routePaths';
-import type { PaginatedResponse, Review } from '../types';
+import type { CurrentUser, PaginatedResponse, Review } from '../types';
 import { ReviewCard } from './ReviewCard';
 
-export function UserReviewsPage() {
+export function UserReviewsPage({ currentUser }: { currentUser: CurrentUser | null }) {
   const { username } = useParams();
   const [reviews, setReviews] = useState<PaginatedResponse<Review> | null>(null);
   const [page, setPage] = useState(0);
@@ -48,7 +48,7 @@ export function UserReviewsPage() {
       )}
       <div className="review-list">
         {reviews?.content.map((review) => (
-          <ReviewCard key={review.id} review={review} />
+          <ReviewCard key={review.id} review={review} currentUsername={currentUser?.username ?? null} />
         ))}
       </div>
       {reviews && reviews.totalPages > 1 && (
