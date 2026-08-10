@@ -1,6 +1,8 @@
 package com.chmz31.checkpointd.profile.controller;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -14,6 +16,8 @@ import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.review.entity.Review;
+import com.chmz31.checkpointd.review.model.ReviewVisibility;
 import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
@@ -28,6 +32,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -69,6 +76,11 @@ class ProfileControllerTests {
 		when(libraryEntryRepository.countByUserIdAndRatingIsNotNull(USER_ID)).thenReturn(2L);
 		when(libraryEntryRepository.averageRatingByUserId(USER_ID)).thenReturn(8.5);
 		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of(entry()));
+		when(reviewRepository.countByUserUsernameAndUserProfileVisibilityAndVisibility(
+				"playerone", ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC)).thenReturn(2L);
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(review())));
 
 		mockMvc.perform(get("/api/v1/profiles/playerone"))
 				.andExpect(status().isOk())
@@ -80,10 +92,31 @@ class ProfileControllerTests {
 				.andExpect(jsonPath("$.stats.completedGames").value(1))
 				.andExpect(jsonPath("$.stats.ratedGames").value(2))
 				.andExpect(jsonPath("$.stats.averageRating").value(8.5))
+				.andExpect(jsonPath("$.stats.reviewCount").value(2))
 				.andExpect(jsonPath("$.recentGames", hasSize(1)))
 				.andExpect(jsonPath("$.recentGames[0].libraryEntryId").value(ENTRY_ID.toString()))
 				.andExpect(jsonPath("$.recentGames[0].gameTitle").value("Chrono Trigger"))
-				.andExpect(jsonPath("$.recentGames[0].notes").doesNotExist());
+				.andExpect(jsonPath("$.recentGames[0].notes").doesNotExist())
+				.andExpect(jsonPath("$.recentReviews", hasSize(1)))
+				.andExpect(jsonPath("$.recentReviews[0].gameTitle").value("Chrono Trigger"))
+				.andExpect(jsonPath("$.recentReviews[0].owner").value(false));
+	}
+
+	@Test
+	void publicProfileWithNoReviewsReturnsEmptyReviewData() throws Exception {
+		User user = user(ProfileVisibility.PUBLIC);
+		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user));
+		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of());
+		when(reviewRepository.countByUserUsernameAndUserProfileVisibilityAndVisibility(
+				"playerone", ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC)).thenReturn(0L);
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(Page.empty());
+
+		mockMvc.perform(get("/api/v1/profiles/playerone"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.stats.reviewCount").value(0))
+				.andExpect(jsonPath("$.recentReviews", hasSize(0)));
 	}
 
 	@Test
@@ -128,6 +161,9 @@ class ProfileControllerTests {
 		User user = user(ProfileVisibility.PRIVATE);
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of());
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(Page.empty());
 
 		mockMvc.perform(get("/api/v1/profiles/me")
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
@@ -142,6 +178,9 @@ class ProfileControllerTests {
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of());
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(Page.empty());
 
 		mockMvc.perform(patch("/api/v1/profiles/me")
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
@@ -192,5 +231,16 @@ class ProfileControllerTests {
 		ReflectionTestUtils.setField(entry, "updatedAt", Instant.parse("2026-01-03T00:00:00Z"));
 
 		return entry;
+	}
+
+	private Review review() {
+		Review review = new Review(user(ProfileVisibility.PUBLIC), game(), "A public opinion.");
+		review.setRating(8);
+		review.setVisibility(ReviewVisibility.PUBLIC);
+		ReflectionTestUtils.setField(review, "id", UUID.fromString("00000000-0000-0000-0000-000000000301"));
+		ReflectionTestUtils.setField(review, "createdAt", Instant.parse("2026-01-01T00:00:00Z"));
+		ReflectionTestUtils.setField(review, "updatedAt", Instant.parse("2026-01-02T00:00:00Z"));
+
+		return review;
 	}
 }
