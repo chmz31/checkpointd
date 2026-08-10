@@ -6,6 +6,7 @@ import com.chmz31.checkpointd.externalgames.dto.ExternalGameSearchResult;
 import com.chmz31.checkpointd.externalgames.dto.ExternalGameWebsite;
 import com.chmz31.checkpointd.externalgames.dto.ImportExternalGameRequest;
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.game.entity.GameCollections;
 import com.chmz31.checkpointd.game.entity.GameWebsite;
 import com.chmz31.checkpointd.game.model.MetadataSyncStatus;
 import com.chmz31.checkpointd.game.repository.GameRepository;
@@ -14,6 +15,7 @@ import java.util.Locale;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ExternalGameImportService {
@@ -28,6 +30,7 @@ public class ExternalGameImportService {
 		this.igdbClient = igdbClient;
 	}
 
+	@Transactional
 	public ImportedGameResult importGame(ImportExternalGameRequest request) {
 		String provider = request.provider().trim().toLowerCase(Locale.ROOT);
 		String externalId = request.externalId().trim();
@@ -36,7 +39,7 @@ public class ExternalGameImportService {
 
 		Optional<Game> existing = gameRepository.findByExternalProviderAndExternalId(provider, externalId);
 		if (existing.isPresent()) {
-			return new ImportedGameResult(existing.get(), false);
+			return new ImportedGameResult(GameCollections.hydrate(existing.get()), false);
 		}
 
 		ExternalGameSearchResult externalGame = igdbClient.fetchById(externalId);
@@ -54,8 +57,9 @@ public class ExternalGameImportService {
 			return new ImportedGameResult(gameRepository.saveAndFlush(game), true);
 		}
 		catch (DataIntegrityViolationException exception) {
-			return new ImportedGameResult(gameRepository.findByExternalProviderAndExternalId(provider, externalId)
-					.orElseThrow(() -> exception), false);
+			Game raced = gameRepository.findByExternalProviderAndExternalId(provider, externalId)
+					.orElseThrow(() -> exception);
+			return new ImportedGameResult(GameCollections.hydrate(raced), false);
 		}
 	}
 

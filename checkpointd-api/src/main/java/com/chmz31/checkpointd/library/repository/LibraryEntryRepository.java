@@ -25,18 +25,10 @@ public interface LibraryEntryRepository extends JpaRepository<LibraryEntry, UUID
 	@Query("select avg(entry.rating) from LibraryEntry entry where entry.user.id = :userId and entry.rating is not null")
 	Double averageRatingByUserId(@Param("userId") UUID userId);
 
-	@EntityGraph(attributePaths = {
-			"game", "game.genres", "game.platforms", "game.developers", "game.publishers",
-			"game.gameModes", "game.themes", "game.playerPerspectives", "game.websites",
-			"game.screenshotUrls", "game.artworkUrls"
-	})
+	@EntityGraph(attributePaths = {"game"})
 	Optional<LibraryEntry> findByIdAndUserId(UUID id, UUID userId);
 
-	@EntityGraph(attributePaths = {
-			"game", "game.genres", "game.platforms", "game.developers", "game.publishers",
-			"game.gameModes", "game.themes", "game.playerPerspectives", "game.websites",
-			"game.screenshotUrls", "game.artworkUrls"
-	})
+	@EntityGraph(attributePaths = {"game"})
 	Optional<LibraryEntry> findByUserIdAndGameId(UUID userId, UUID gameId);
 
 	@Query(
@@ -54,11 +46,7 @@ public interface LibraryEntryRepository extends JpaRepository<LibraryEntry, UUID
 					where entry.user.id = :userId
 						and (:status is null or entry.status = :status)
 					""")
-	@EntityGraph(attributePaths = {
-			"game", "game.genres", "game.platforms", "game.developers", "game.publishers",
-			"game.gameModes", "game.themes", "game.playerPerspectives", "game.websites",
-			"game.screenshotUrls", "game.artworkUrls"
-	})
+	@EntityGraph(attributePaths = {"game"})
 	Page<LibraryEntry> findUserLibrary(
 			@Param("userId") UUID userId,
 			@Param("status") LibraryStatus status,
@@ -83,11 +71,7 @@ public interface LibraryEntryRepository extends JpaRepository<LibraryEntry, UUID
 						and (lower(entry.game.title) like :pattern
 							or lower(coalesce(entry.notes, '')) like :pattern)
 					""")
-	@EntityGraph(attributePaths = {
-			"game", "game.genres", "game.platforms", "game.developers", "game.publishers",
-			"game.gameModes", "game.themes", "game.playerPerspectives", "game.websites",
-			"game.screenshotUrls", "game.artworkUrls"
-	})
+	@EntityGraph(attributePaths = {"game"})
 	Page<LibraryEntry> searchUserLibrary(
 			@Param("userId") UUID userId,
 			@Param("status") LibraryStatus status,

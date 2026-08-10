@@ -5,6 +5,7 @@ import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.game.dto.CreateGameRequest;
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.game.entity.GameCollections;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import java.util.List;
 import java.util.UUID;
@@ -52,12 +53,13 @@ public class GameService {
 	@Transactional(readOnly = true)
 	public List<Game> list(String query) {
 		String cleanQuery = cleanOptional(query);
+		List<Game> games = cleanQuery == null
+				? gameRepository.findTop20ByOrderByTitleAsc()
+				: gameRepository.findTop20ByTitleContainingIgnoreCaseOrderByTitleAsc(cleanQuery);
 
-		if (cleanQuery == null) {
-			return gameRepository.findTop20ByOrderByTitleAsc();
-		}
+		games.forEach(GameCollections::hydrate);
 
-		return gameRepository.findTop20ByTitleContainingIgnoreCaseOrderByTitleAsc(cleanQuery);
+		return games;
 	}
 
 	@Transactional(readOnly = true)
@@ -66,7 +68,7 @@ public class GameService {
 				.orElseThrow(() -> new ResourceNotFoundException("Game not found"));
 		metadataRefreshService.triggerRefreshIfStale(game);
 
-		return game;
+		return GameCollections.hydrate(game);
 	}
 
 	public boolean isMetadataStale(Game game) {

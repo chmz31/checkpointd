@@ -4,6 +4,7 @@ import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.game.entity.GameCollections;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.game.service.MetadataRefreshService;
 import com.chmz31.checkpointd.library.dto.AddLibraryEntryRequest;
@@ -64,7 +65,10 @@ public class LibraryService {
 		entry.setStartedAt(request.startedAt());
 		entry.setCompletedAt(request.completedAt());
 
-		return libraryEntryRepository.save(entry);
+		LibraryEntry saved = libraryEntryRepository.save(entry);
+		GameCollections.hydrate(saved.getGame());
+
+		return saved;
 	}
 
 	@Transactional(readOnly = true)
@@ -92,14 +96,18 @@ public class LibraryService {
 	public LibraryEntry get(UUID userId, UUID entryId) {
 		LibraryEntry entry = getUserEntry(userId, entryId);
 		metadataRefreshService.triggerRefreshIfStale(entry.getGame());
+		GameCollections.hydrate(entry.getGame());
 
 		return entry;
 	}
 
 	@Transactional(readOnly = true)
 	public LibraryEntry getByGame(UUID userId, UUID gameId) {
-		return libraryEntryRepository.findByUserIdAndGameId(userId, gameId)
+		LibraryEntry entry = libraryEntryRepository.findByUserIdAndGameId(userId, gameId)
 				.orElseThrow(() -> new ResourceNotFoundException("Library entry not found"));
+		GameCollections.hydrate(entry.getGame());
+
+		return entry;
 	}
 
 	@Transactional(readOnly = true)
@@ -142,13 +150,17 @@ public class LibraryService {
 		entry.setStartedAt(request.startedAt());
 		entry.setCompletedAt(request.completedAt());
 
-		return libraryEntryRepository.save(entry);
+		LibraryEntry saved = libraryEntryRepository.save(entry);
+		GameCollections.hydrate(saved.getGame());
+
+		return saved;
 	}
 
 	@Transactional
 	public LibraryEntry syncMetadata(UUID userId, UUID entryId) {
 		LibraryEntry entry = getUserEntry(userId, entryId);
 		externalGameImportService.syncMetadata(entry.getGame());
+		GameCollections.hydrate(entry.getGame());
 
 		return entry;
 	}

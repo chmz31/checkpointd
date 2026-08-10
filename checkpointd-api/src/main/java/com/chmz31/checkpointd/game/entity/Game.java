@@ -15,6 +15,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import org.hibernate.annotations.BatchSize;
 import com.chmz31.checkpointd.game.model.MetadataSyncStatus;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -59,59 +60,69 @@ public class Game {
 	private String summary;
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_genres", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "genre_order")
 	@Column(name = "genre", nullable = false)
 	private List<String> genres = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_platforms", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "platform_order")
 	@Column(name = "platform", nullable = false)
 	private List<String> platforms = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_developers", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "developer_order")
 	@Column(name = "developer", nullable = false)
 	private List<String> developers = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_publishers", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "publisher_order")
 	@Column(name = "publisher", nullable = false)
 	private List<String> publishers = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_modes", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "mode_order")
 	@Column(name = "mode", nullable = false)
 	private List<String> gameModes = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_themes", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "theme_order")
 	@Column(name = "theme", nullable = false)
 	private List<String> themes = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_player_perspectives", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "perspective_order")
 	@Column(name = "player_perspective", nullable = false)
 	private List<String> playerPerspectives = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_websites", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "website_order")
 	private List<GameWebsite> websites = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_screenshots", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "screenshot_order")
 	@Column(name = "screenshot_url", nullable = false, length = 2048)
 	private List<String> screenshotUrls = new ArrayList<>();
 
 	@ElementCollection
+	@BatchSize(size = 20)
 	@CollectionTable(name = "game_artworks", joinColumns = @JoinColumn(name = "game_id"))
 	@OrderColumn(name = "artwork_order")
 	@Column(name = "artwork_url", nullable = false, length = 2048)
