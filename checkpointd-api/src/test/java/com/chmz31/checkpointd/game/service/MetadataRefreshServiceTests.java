@@ -31,6 +31,9 @@ class MetadataRefreshServiceTests {
 	@Mock
 	private ExternalGameImportService externalGameImportService;
 
+	@Mock
+	private MetadataRefreshService self;
+
 	@Test
 	void staleWhenExternalGameHasNeverSynced() {
 		MetadataRefreshService service = service();
@@ -64,15 +67,68 @@ class MetadataRefreshServiceTests {
 	}
 
 	@Test
-	void triggerSkipsRecentlyRefreshingGame() {
+	void triggerDispatchesRefreshWhenClaimSucceeds() {
+		MetadataRefreshService service = service();
+		Game game = game();
+		when(self.claimRefresh(GAME_ID)).thenReturn(GAME_ID);
+
+		service.triggerRefreshIfStale(game);
+
+		verify(self).refreshGameMetadata(GAME_ID);
+	}
+
+	@Test
+	void triggerDoesNothingWhenClaimFails() {
+		MetadataRefreshService service = service();
+		Game game = game();
+		when(self.claimRefresh(GAME_ID)).thenReturn(null);
+
+		service.triggerRefreshIfStale(game);
+
+		verify(self, never()).refreshGameMetadata(any(UUID.class));
+	}
+
+	@Test
+	void claimRefreshSkipsRecentlyRefreshingGame() {
 		MetadataRefreshService service = service();
 		Game game = game();
 		game.setMetadataSyncStatus(MetadataSyncStatus.REFRESHING);
 		game.setMetadataSyncAttemptedAt(Instant.now().minusSeconds(60));
+		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game));
 
-		service.triggerRefreshIfStale(game);
+		assertThat(service.claimRefresh(GAME_ID)).isNull();
+		verify(gameRepository, never()).save(any(Game.class));
+	}
 
-		verify(gameRepository, never()).findById(any(UUID.class));
+	@Test
+	void claimRefreshSkipsNotStaleGame() {
+		MetadataRefreshService service = service();
+		Game game = game();
+		game.setMetadataSyncedAt(Instant.now().minusSeconds(2L * 24 * 60 * 60));
+		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game));
+
+		assertThat(service.claimRefresh(GAME_ID)).isNull();
+		verify(gameRepository, never()).save(any(Game.class));
+	}
+
+	@Test
+	void claimRefreshMarksGameRefreshingAndReturnsId() {
+		MetadataRefreshService service = service();
+		Game game = game();
+		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(game));
+		when(gameRepository.save(game)).thenReturn(game);
+
+		assertThat(service.claimRefresh(GAME_ID)).isEqualTo(GAME_ID);
+		assertThat(game.getMetadataSyncStatus()).isEqualTo(MetadataSyncStatus.REFRESHING);
+		assertThat(game.getMetadataSyncAttemptedAt()).isNotNull();
+	}
+
+	@Test
+	void claimRefreshReturnsNullWhenGameMissing() {
+		MetadataRefreshService service = service();
+		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.empty());
+
+		assertThat(service.claimRefresh(GAME_ID)).isNull();
 	}
 
 	@Test
@@ -92,7 +148,7 @@ class MetadataRefreshServiceTests {
 	}
 
 	private MetadataRefreshService service() {
-		return new MetadataRefreshService(gameRepository, externalGameImportService, 30);
+		return new MetadataRefreshService(gameRepository, externalGameImportService, 30, self);
 	}
 
 	private Game game() {
