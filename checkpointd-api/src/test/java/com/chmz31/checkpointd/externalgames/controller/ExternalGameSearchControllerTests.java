@@ -12,6 +12,7 @@ import com.chmz31.checkpointd.externalgames.dto.ExternalGameSearchResult;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameSearchService;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -42,6 +43,9 @@ class ExternalGameSearchControllerTests {
 
 	@MockitoBean
 	private LibraryEntryRepository libraryEntryRepository;
+
+	@MockitoBean
+	private ReviewRepository reviewRepository;
 
 	@Test
 	void authenticatedSearchReturnsResults() throws Exception {

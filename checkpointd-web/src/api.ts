@@ -10,6 +10,8 @@ import type {
   LibraryStatus,
   PaginatedResponse,
   PublicProfile,
+  Review,
+  ReviewRequest,
   UpdateProfileInput,
 } from './types';
 
@@ -189,6 +191,39 @@ export const api = {
 
   getLibraryStats() {
     return apiRequest<LibraryStats>('/api/v1/library/stats');
+  },
+
+  getGameReviews(gameId: string, page = 0, size = 10) {
+    return apiRequest<PaginatedResponse<Review>>(
+      `/api/v1/reviews/games/${gameId}?page=${page}&size=${size}`,
+    );
+  },
+
+  getUserReviews(username: string, page = 0, size = 10) {
+    return apiRequest<PaginatedResponse<Review>>(
+      `/api/v1/reviews/users/${encodeURIComponent(username)}?page=${page}&size=${size}`,
+    );
+  },
+
+  getPublicUserGameReview(username: string, gameId: string) {
+    return apiRequest<Review>(`/api/v1/reviews/users/${encodeURIComponent(username)}/games/${gameId}`);
+  },
+
+  getMyGameReview(gameId: string) {
+    return apiRequest<Review>(`/api/v1/reviews/me/games/${gameId}`);
+  },
+
+  saveMyGameReview(gameId: string, input: ReviewRequest) {
+    return apiRequest<Review>(`/api/v1/reviews/me/games/${gameId}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  },
+
+  deleteMyGameReview(gameId: string) {
+    return apiRequest<void>(`/api/v1/reviews/me/games/${gameId}`, {
+      method: 'DELETE',
+    });
   },
 
   updateLibraryEntry(entryId: string, input: LibraryEntryUpdateInput) {

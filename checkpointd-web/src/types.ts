@@ -76,6 +76,32 @@ export type UpdateProfileInput = {
   profileVisibility?: ProfileVisibility;
 };
 
+export type ReviewVisibility = 'PUBLIC' | 'PRIVATE';
+
+export type Review = {
+  id: string;
+  username: string;
+  displayName?: string | null;
+  gameId: string;
+  gameSlug?: string | null;
+  gameTitle: string;
+  gameCoverUrl?: string | null;
+  rating?: number | null;
+  body: string;
+  containsSpoilers: boolean;
+  visibility: ReviewVisibility;
+  createdAt: string;
+  updatedAt: string;
+  owner: boolean;
+};
+
+export type ReviewRequest = {
+  rating?: number | null;
+  body: string;
+  containsSpoilers?: boolean;
+  visibility?: ReviewVisibility;
+};
+
 export type ExternalGameSearchResult = {
   provider: string;
   externalId: string;

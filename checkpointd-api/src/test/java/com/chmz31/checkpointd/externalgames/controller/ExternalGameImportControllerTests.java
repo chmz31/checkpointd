@@ -16,6 +16,7 @@ import com.chmz31.checkpointd.externalgames.service.ImportedGameResult;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -49,6 +50,9 @@ class ExternalGameImportControllerTests {
 
 	@MockitoBean
 	private LibraryEntryRepository libraryEntryRepository;
+
+	@MockitoBean
+	private ReviewRepository reviewRepository;
 
 	@Test
 	void authenticatedImportCreatedReturnsCreated() throws Exception {

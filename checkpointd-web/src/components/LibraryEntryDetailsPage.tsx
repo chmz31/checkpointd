@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { api } from '../api';
+import { api, isApiErrorStatus } from '../api';
 import { formatDate } from '../dateUtils';
 import { canonicalGamePath, libraryEntryPath, slugify } from '../routePaths';
-import type { LibraryEntry } from '../types';
+import type { LibraryEntry, Review, ReviewRequest } from '../types';
 import { CoverImage } from './CoverImage';
 import { DetailFact } from './DetailFact';
 import { LibraryEntryEditForm } from './LibraryEntryEditForm';
+import { ReviewForm } from './ReviewForm';
 
 export function LibraryEntryDetailsPage() {
   const { entryId, slug } = useParams();
@@ -16,28 +17,48 @@ export function LibraryEntryDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [review, setReview] = useState<Review | null>(null);
+  const [savingReview, setSavingReview] = useState(false);
+  const [deletingReview, setDeletingReview] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reviewMessage, setReviewMessage] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!entryId) return;
 
     setLoading(true);
     setError(null);
-    api
-      .getLibraryEntry(entryId)
-      .then((loadedEntry) => {
+    setReview(null);
+    setReviewMessage(null);
+    setReviewError(null);
+
+    async function loadEntry() {
+      try {
+        const loadedEntry = await api.getLibraryEntry(entryId!);
         setEntry(loadedEntry);
         const canonicalPath = libraryEntryPath(loadedEntry);
         const canonicalSlug = slugify(loadedEntry.gameSlug || loadedEntry.gameTitle || 'game');
         if (slug !== canonicalSlug) {
           navigate(canonicalPath, { replace: true });
         }
-      })
-      .catch((caught) => {
+
+        try {
+          setReview(await api.getMyGameReview(loadedEntry.gameId));
+        } catch (caught) {
+          if (!isApiErrorStatus(caught, 404)) {
+            setReviewError(caught instanceof Error ? caught.message : 'Could not load your review');
+          }
+        }
+      } catch (caught) {
         setError(caught instanceof Error ? caught.message : 'Could not load library entry');
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadEntry();
   }, [entryId, navigate, slug]);
 
   async function syncMetadata() {
@@ -78,6 +99,39 @@ export function LibraryEntryDetailsPage() {
     setEntry(updatedEntry);
     setEditing(false);
     setMessage('Saved.');
+  }
+
+  async function saveReview(request: ReviewRequest) {
+    if (!entry) return;
+    setSavingReview(true);
+    setReviewMessage(null);
+    setReviewError(null);
+
+    try {
+      setReview(await api.saveMyGameReview(entry.gameId, request));
+      setReviewMessage('Review saved.');
+    } catch (caught) {
+      setReviewError(caught instanceof Error ? caught.message : 'Could not save review');
+    } finally {
+      setSavingReview(false);
+    }
+  }
+
+  async function deleteReview() {
+    if (!entry) return;
+    setDeletingReview(true);
+    setReviewMessage(null);
+    setReviewError(null);
+
+    try {
+      await api.deleteMyGameReview(entry.gameId);
+      setReview(null);
+      setReviewMessage('Review deleted.');
+    } catch (caught) {
+      setReviewError(caught instanceof Error ? caught.message : 'Could not delete review');
+    } finally {
+      setDeletingReview(false);
+    }
   }
 
   if (loading) {
@@ -151,6 +205,23 @@ export function LibraryEntryDetailsPage() {
               <p>{entry.notes}</p>
             </section>
           )}
+
+          <section className="detail-section callout-section">
+            <div className="section-heading">
+              <div>
+                <h3>Your public review</h3>
+                <p className="muted">This is separate from private library notes.</p>
+              </div>
+              {review && (
+                <button className="button-danger button-small" onClick={deleteReview} disabled={deletingReview}>
+                  {deletingReview ? 'Deleting...' : 'Delete review'}
+                </button>
+              )}
+            </div>
+            {reviewMessage && <p className="success compact-message">{reviewMessage}</p>}
+            {reviewError && <p className="error compact-message">{reviewError}</p>}
+            <ReviewForm review={review} submitting={savingReview} onSubmit={saveReview} />
+          </section>
 
           {entry.gameMetadataSyncAvailable && entry.gameMetadataSyncStatus !== 'FAILED' && (
             <section className="detail-section secondary-actions-section">
