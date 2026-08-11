@@ -39,7 +39,7 @@ export function ListForm({
   }
 
   return (
-    <form className="edit-form list-form" onSubmit={submit}>
+    <form className="edit-form" onSubmit={submit}>
       <label>
         Name
         <input

@@ -141,7 +141,10 @@ export function LibraryEntryDetailsPage() {
   if (!entry) {
     return (
       <section className="panel">
-        <p className="error">{error || 'Library entry not found'}</p>
+        <div className="empty-state catalog-empty">
+          <h3>Library entry not found</h3>
+          <p>{error || 'This entry does not exist or could not be loaded.'}</p>
+        </div>
         <Link className="nav-link" to="/library">
           Back to library
         </Link>
