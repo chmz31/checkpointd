@@ -11,6 +11,7 @@ import { LibraryEntryDetailsPage } from './components/LibraryEntryDetailsPage';
 import { LibraryView } from './components/LibraryView';
 import { ListDetailPage } from './components/ListDetailPage';
 import { MyListsPage } from './components/MyListsPage';
+import { PopularListsPage } from './components/PopularListsPage';
 import { PublicProfilePage } from './components/PublicProfilePage';
 import { PublicShell } from './components/PublicShell';
 import { SearchView } from './components/SearchView';
@@ -99,6 +100,7 @@ export default function App() {
           />
           <Route path="/library" element={<LibraryView refreshKey={libraryRefreshKey} />} />
           <Route path="/lists" element={<MyListsPage />} />
+          <Route path="/lists/popular" element={<PopularListsPage />} />
           <Route path="/library/:entryId/:slug" element={<LibraryEntryDetailsPage />} />
           <Route path="/library/:entryId" element={<LibraryEntryDetailsPage />} />
           <Route path="/games/:gameId/:slug" element={<GameDetailsPage />} />

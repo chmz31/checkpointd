@@ -82,6 +82,15 @@ public class GameListController {
 		return gameListService.removeItem(currentUserId(jwt), listId, gameId);
 	}
 
+	@GetMapping("/popular")
+	PaginatedResponse<GameListResponse> popularLists(
+			@AuthenticationPrincipal Jwt jwt,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size) {
+		var lists = gameListService.getPopularLists(currentUserId(jwt), page, size);
+		return PaginatedResponse.from(lists, lists.getContent());
+	}
+
 	@GetMapping("/users/{username}")
 	PaginatedResponse<GameListResponse> userLists(
 			@AuthenticationPrincipal Jwt jwt,

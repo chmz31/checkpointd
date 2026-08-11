@@ -19,8 +19,13 @@ import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +80,24 @@ public class GameListService {
 		return gameListRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
 				user.getUsername(), ProfileVisibility.PUBLIC, ListVisibility.PUBLIC, pageRequest(page, size))
 				.map(list -> toResponse(list, currentUserId, false));
+	}
+
+	@Transactional(readOnly = true)
+	public Page<GameListResponse> getPopularLists(UUID currentUserId, int page, int size) {
+		Page<UUID> popularIds = listLikeRepository.findPopularListIds(
+				ListVisibility.PUBLIC, ProfileVisibility.PUBLIC, pageRequest(page, size));
+
+		Map<UUID, GameList> listsById = gameListRepository.findAllById(popularIds.getContent()).stream()
+				.collect(Collectors.toMap(GameList::getId, Function.identity()));
+
+		List<GameListResponse> content = popularIds.getContent().stream()
+				.map(listsById::get)
+				.filter(Objects::nonNull)
+				.map(list -> toResponse(
+						list, currentUserId, currentUserId != null && list.getUser().getId().equals(currentUserId)))
+				.toList();
+
+		return new PageImpl<>(content, popularIds.getPageable(), popularIds.getTotalElements());
 	}
 
 	@Transactional(readOnly = true)
