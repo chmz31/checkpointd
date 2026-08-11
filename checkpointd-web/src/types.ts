@@ -129,6 +129,42 @@ export type LikeStatus = {
   likeCount: number;
 };
 
+export type Comment = {
+  id: string;
+  username: string;
+  displayName?: string | null;
+  body: string;
+  createdAt: string;
+  owner: boolean;
+};
+
+export type CommentRequest = {
+  body: string;
+};
+
+export type ReportedListComment = {
+  id: string;
+  username: string;
+  displayName?: string | null;
+  body: string;
+  createdAt: string;
+  reportCount: number;
+  listId: string;
+  listName: string;
+};
+
+export type ReportedReviewComment = {
+  id: string;
+  username: string;
+  displayName?: string | null;
+  body: string;
+  createdAt: string;
+  reportCount: number;
+  reviewId: string;
+  gameId: string;
+  gameTitle: string;
+};
+
 export type ReviewVisibility = 'PUBLIC' | 'PRIVATE';
 
 export type Review = {

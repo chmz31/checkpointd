@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { gamePath, userProfilePath } from '../routePaths';
 import type { CurrentUser, Game, GameListDetail, GameListRequest } from '../types';
+import { CommentSection } from './CommentSection';
 import { CoverImage } from './CoverImage';
 import { LikeButton } from './LikeButton';
 import { ListForm } from './ListForm';
@@ -205,6 +206,8 @@ export function ListDetailPage({ currentUser }: { currentUser: CurrentUser | nul
           ))}
         </div>
       )}
+
+      <CommentSection targetType="list" targetId={list.id} currentUser={currentUser} />
     </section>
   );
 }
