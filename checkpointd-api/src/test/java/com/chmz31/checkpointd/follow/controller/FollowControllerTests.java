@@ -16,6 +16,10 @@ import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.follow.entity.Follow;
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.comment.repository.ListCommentReportRepository;
+import com.chmz31.checkpointd.comment.repository.ListCommentRepository;
+import com.chmz31.checkpointd.comment.repository.ReviewCommentReportRepository;
+import com.chmz31.checkpointd.comment.repository.ReviewCommentRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.like.repository.ListLikeRepository;
 import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
@@ -80,6 +84,18 @@ class FollowControllerTests {
 
 	@MockitoBean
 	private ReviewLikeRepository reviewLikeRepository;
+
+	@MockitoBean
+	private ListCommentRepository listCommentRepository;
+
+	@MockitoBean
+	private ReviewCommentRepository reviewCommentRepository;
+
+	@MockitoBean
+	private ListCommentReportRepository listCommentReportRepository;
+
+	@MockitoBean
+	private ReviewCommentReportRepository reviewCommentReportRepository;
 
 	@Test
 	void followRequiresAuthentication() throws Exception {

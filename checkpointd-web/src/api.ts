@@ -1,5 +1,7 @@
 import type {
   AuthResponse,
+  Comment,
+  CommentRequest,
   CurrentUser,
   ExternalGameSearchResult,
   FollowStatus,
@@ -15,6 +17,8 @@ import type {
   LikeStatus,
   PaginatedResponse,
   PublicProfile,
+  ReportedListComment,
+  ReportedReviewComment,
   Review,
   ReviewRequest,
   UpdateProfileInput,
@@ -348,6 +352,66 @@ export const api = {
 
   getReviewLikeStatus(reviewId: string) {
     return apiRequest<LikeStatus>(`/api/v1/likes/reviews/${reviewId}/status`);
+  },
+
+  getListComments(listId: string, page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<Comment>>(`/api/v1/comments/lists/${listId}?page=${page}&size=${size}`);
+  },
+
+  addListComment(listId: string, input: CommentRequest) {
+    return apiRequest<Comment>(`/api/v1/comments/lists/${listId}`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  deleteListComment(listId: string, commentId: string) {
+    return apiRequest<void>(`/api/v1/comments/lists/${listId}/${commentId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  reportListComment(listId: string, commentId: string, reason?: string) {
+    return apiRequest<void>(`/api/v1/comments/lists/${listId}/${commentId}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  getReviewComments(reviewId: string, page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<Comment>>(`/api/v1/comments/reviews/${reviewId}?page=${page}&size=${size}`);
+  },
+
+  addReviewComment(reviewId: string, input: CommentRequest) {
+    return apiRequest<Comment>(`/api/v1/comments/reviews/${reviewId}`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  deleteReviewComment(reviewId: string, commentId: string) {
+    return apiRequest<void>(`/api/v1/comments/reviews/${reviewId}/${commentId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  reportReviewComment(reviewId: string, commentId: string, reason?: string) {
+    return apiRequest<void>(`/api/v1/comments/reviews/${reviewId}/${commentId}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  getReportedListComments(page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<ReportedListComment>>(
+      `/api/v1/admin/comments/lists/reported?page=${page}&size=${size}`,
+    );
+  },
+
+  getReportedReviewComments(page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<ReportedReviewComment>>(
+      `/api/v1/admin/comments/reviews/reported?page=${page}&size=${size}`,
+    );
   },
 
   updateLibraryEntry(entryId: string, input: LibraryEntryUpdateInput) {
