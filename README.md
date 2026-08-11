@@ -49,6 +49,11 @@ Integrations and automation:
 - GitHub Actions backend CI
 - GitHub Actions frontend CI
 
+Production:
+
+- Docker Compose (Postgres, API, and Caddy as reverse proxy + static file server)
+- Caddy for automatic HTTPS via Let's Encrypt
+
 ## Monorepo Structure
 
 ```text
@@ -56,8 +61,10 @@ checkpointd/
   checkpointd-api/      Spring Boot backend API
   checkpointd-web/      React + TypeScript + Vite frontend
   docs/                 Architecture notes and decisions
+  deploy/               Production deploy script
   .github/workflows/    Backend and frontend CI workflows
   docker-compose.yml    Local PostgreSQL
+  docker-compose.prod.yml   Production stack (Postgres, API, Caddy)
 ```
 
 ## Local Development Requirements
@@ -220,6 +227,36 @@ Library entry responses include the tracked entry fields plus selected game meta
 
 - `API CI` runs backend tests for `checkpointd-api`.
 - `Web CI` installs frontend dependencies with `npm ci` and builds `checkpointd-web`.
+
+## Production Deployment
+
+checkpointd runs in production as three Docker containers defined in `docker-compose.prod.yml`: Postgres, the Spring Boot API, and a Caddy container that serves the built frontend and reverse-proxies `/api/*` to the API — same origin, so no CORS is needed in the browser and only one TLS certificate is required. Caddy obtains and renews that certificate automatically from Let's Encrypt; there is no separate nginx/certbot setup. `db` and `api` are not reachable from outside the VPS — only Caddy publishes ports 80/443.
+
+### One-time VPS setup
+
+1. Point the domain's DNS `A` record at the VPS's public IP.
+2. Install Docker Engine and the Compose plugin.
+3. If the VPS has limited RAM, add a swapfile (at least 2GB) — building the Maven jar and the Vite bundle on the VPS is the main memory pressure point.
+4. Restrict the firewall to SSH, HTTP, and HTTPS, e.g. with `ufw`:
+   ```bash
+   sudo ufw allow 22
+   sudo ufw allow 80
+   sudo ufw allow 443
+   sudo ufw enable
+   ```
+5. Clone the repository, e.g. to `/opt/checkpointd`.
+6. Copy `.env.prod.example` to `.env.prod` and fill in real values — a freshly generated `JWT_SECRET` (never reuse the local dev secret), real IGDB credentials, and Postgres credentials.
+7. Run `deploy/deploy.sh`. On first boot, Caddy requests its certificate once DNS resolves and ports 80/443 are reachable.
+
+### Redeploying
+
+From the repo checkout on the VPS:
+
+```bash
+deploy/deploy.sh
+```
+
+This pulls `main`, rebuilds the images, restarts the stack with `docker compose up -d`, and prunes old images. Flyway migrations run automatically on API startup, same as local development — no manual migration step.
 
 ## Security Notes
 
