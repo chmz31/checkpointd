@@ -277,7 +277,7 @@ This pulls `main`, rebuilds the images, restarts the stack with `docker compose 
 - Social features
 - Crossplay data
 - Recommendations
-- Deployment
+- [x] Deployment — live at [checkpointd.fun](https://checkpointd.fun)
 
 ## Philosophy
 
