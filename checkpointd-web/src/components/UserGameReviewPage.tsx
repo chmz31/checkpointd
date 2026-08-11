@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { gamePath, userProfilePath } from '../routePaths';
 import type { CurrentUser, Review, ReviewRequest } from '../types';
+import { CommentSection } from './CommentSection';
 import { CoverImage } from './CoverImage';
 import { ReviewCard } from './ReviewCard';
 import { ReviewForm } from './ReviewForm';
@@ -126,6 +127,8 @@ export function UserGameReviewPage({ currentUser }: { currentUser: CurrentUser |
         </>
       )}
       {error && <p className="error compact-message">{error}</p>}
+
+      <CommentSection targetType="review" targetId={review.id} currentUser={currentUser} />
     </section>
   );
 }

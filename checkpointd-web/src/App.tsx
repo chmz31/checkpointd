@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { api, clearStoredToken, getStoredToken, setStoredToken } from './api';
+import { AdminReportedCommentsPage } from './components/AdminReportedCommentsPage';
 import { AuthPanel } from './components/AuthPanel';
 import { AppShell } from './components/AppShell';
 import { FollowListPage } from './components/FollowListPage';
@@ -102,6 +103,18 @@ export default function App() {
           <Route path="/library/:entryId" element={<LibraryEntryDetailsPage />} />
           <Route path="/games/:gameId/:slug" element={<GameDetailsPage />} />
           <Route path="/games/:gameId" element={<GameDetailsPage />} />
+          <Route
+            path="/admin/comments"
+            element={
+              !user ? (
+                <p className="muted">Loading...</p>
+              ) : user.role === 'ADMIN' ? (
+                <AdminReportedCommentsPage />
+              ) : (
+                <Navigate to="/library" replace />
+              )
+            }
+          />
         </Route>
         <Route path="*" element={<Navigate to={token ? '/library' : '/'} replace />} />
       </Routes>

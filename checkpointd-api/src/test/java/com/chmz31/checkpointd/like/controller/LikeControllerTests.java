@@ -13,6 +13,10 @@ import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.comment.repository.ListCommentReportRepository;
+import com.chmz31.checkpointd.comment.repository.ListCommentRepository;
+import com.chmz31.checkpointd.comment.repository.ReviewCommentReportRepository;
+import com.chmz31.checkpointd.comment.repository.ReviewCommentRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.like.entity.ListLike;
 import com.chmz31.checkpointd.like.entity.ReviewLike;
@@ -59,6 +63,18 @@ class LikeControllerTests {
 
 	@MockitoBean
 	private ReviewLikeRepository reviewLikeRepository;
+
+	@MockitoBean
+	private ListCommentRepository listCommentRepository;
+
+	@MockitoBean
+	private ReviewCommentRepository reviewCommentRepository;
+
+	@MockitoBean
+	private ListCommentReportRepository listCommentReportRepository;
+
+	@MockitoBean
+	private ReviewCommentReportRepository reviewCommentReportRepository;
 
 	@MockitoBean
 	private UserRepository userRepository;
