@@ -31,6 +31,10 @@ public class ReviewComment {
 	@JoinColumn(name = "review_id", nullable = false)
 	private Review review;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "parent_id")
+	private ReviewComment parent;
+
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String body;
 
@@ -41,8 +45,13 @@ public class ReviewComment {
 	}
 
 	public ReviewComment(User user, Review review, String body) {
+		this(user, review, null, body);
+	}
+
+	public ReviewComment(User user, Review review, ReviewComment parent, String body) {
 		this.user = user;
 		this.review = review;
+		this.parent = parent;
 		this.body = body;
 	}
 
@@ -61,6 +70,10 @@ public class ReviewComment {
 
 	public Review getReview() {
 		return review;
+	}
+
+	public ReviewComment getParent() {
+		return parent;
 	}
 
 	public String getBody() {

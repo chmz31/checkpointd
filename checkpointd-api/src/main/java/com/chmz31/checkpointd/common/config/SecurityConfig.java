@@ -56,6 +56,8 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/api/v1/likes/reviews/*/status").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/comments/lists/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/comments/reviews/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/v1/likes/list-comments/*/status").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/v1/likes/review-comments/*/status").permitAll()
 						.requestMatchers("/api/v1/*").authenticated()
 						.requestMatchers("/api/v1/**").authenticated()
 						.anyRequest().denyAll())

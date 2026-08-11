@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '../api';
 import { formatDate } from '../dateUtils';
-import type { Comment, CurrentUser, PaginatedResponse } from '../types';
+import type { Comment, CurrentUser, LikeStatus, PaginatedResponse } from '../types';
+import { LikeButton } from './LikeButton';
 
 export function CommentSection({
   targetType,
@@ -46,6 +47,24 @@ export function CommentSection({
     loadComments(nextPage);
   }
 
+  function updateComment(commentId: string, updater: (comment: Comment) => Comment) {
+    setComments((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        content: current.content.map((comment) => {
+          if (comment.id === commentId) {
+            return updater(comment);
+          }
+          if (comment.replies.some((reply) => reply.id === commentId)) {
+            return { ...comment, replies: comment.replies.map((reply) => (reply.id === commentId ? updater(reply) : reply)) };
+          }
+          return comment;
+        }),
+      };
+    });
+  }
+
   async function submitComment(event: FormEvent) {
     event.preventDefault();
     const trimmed = body.trim();
@@ -70,6 +89,18 @@ export function CommentSection({
     }
   }
 
+  async function submitReply(parentId: string, replyBody: string) {
+    const created =
+      targetType === 'list'
+        ? await api.addListComment(targetId, { body: replyBody, parentId })
+        : await api.addReviewComment(targetId, { body: replyBody, parentId });
+    setComments((current) =>
+      current
+        ? { ...current, content: current.content.map((comment) => (comment.id === parentId ? { ...comment, replies: [...comment.replies, created] } : comment)) }
+        : current,
+    );
+  }
+
   async function deleteComment(commentId: string) {
     setError(null);
 
@@ -79,15 +110,25 @@ export function CommentSection({
       } else {
         await api.deleteReviewComment(targetId, commentId);
       }
-      setComments((current) =>
-        current
-          ? {
-              ...current,
-              content: current.content.filter((comment) => comment.id !== commentId),
-              totalElements: Math.max(current.totalElements - 1, 0),
-            }
-          : current,
-      );
+      setComments((current) => {
+        if (!current) return current;
+        const isTopLevel = current.content.some((comment) => comment.id === commentId);
+        if (isTopLevel) {
+          return {
+            ...current,
+            content: current.content.filter((comment) => comment.id !== commentId),
+            totalElements: Math.max(current.totalElements - 1, 0),
+          };
+        }
+        return {
+          ...current,
+          content: current.content.map((comment) => ({
+            ...comment,
+            replies: comment.replies.filter((reply) => reply.id !== commentId),
+          })),
+          totalElements: Math.max(current.totalElements - 1, 0),
+        };
+      });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not delete comment');
     }
@@ -116,28 +157,21 @@ export function CommentSection({
       {!loading && comments?.content.length === 0 && <p className="muted">No comments yet.</p>}
 
       {comments?.content.map((comment) => (
-        <div key={comment.id} className="comment-item">
-          <p className="muted">
-            <strong>{comment.displayName || comment.username}</strong> · {formatDate(comment.createdAt)}
-          </p>
-          <p className="review-text">{comment.body}</p>
-          <div className="inline-actions">
-            {(comment.owner || isAdmin) && (
-              <button className="button-ghost button-small" onClick={() => deleteComment(comment.id)}>
-                Delete
-              </button>
-            )}
-            {currentUser && !comment.owner && (
-              <button
-                className="button-ghost button-small"
-                onClick={() => reportComment(comment.id)}
-                disabled={reportedIds.has(comment.id)}
-              >
-                {reportedIds.has(comment.id) ? 'Reported' : 'Report'}
-              </button>
-            )}
-          </div>
-        </div>
+        <CommentItem
+          key={comment.id}
+          comment={comment}
+          targetType={targetType}
+          currentUser={currentUser}
+          isAdmin={isAdmin}
+          isReply={false}
+          reportedIds={reportedIds}
+          onDelete={deleteComment}
+          onReport={reportComment}
+          onLikeChange={(commentId, status) =>
+            updateComment(commentId, (current) => ({ ...current, liked: status.liked, likeCount: status.likeCount }))
+          }
+          onReply={submitReply}
+        />
       ))}
 
       {comments && comments.totalPages > 1 && (
@@ -168,5 +202,122 @@ export function CommentSection({
         </form>
       )}
     </section>
+  );
+}
+
+function CommentItem({
+  comment,
+  targetType,
+  currentUser,
+  isAdmin,
+  isReply,
+  reportedIds,
+  onDelete,
+  onReport,
+  onLikeChange,
+  onReply,
+}: {
+  comment: Comment;
+  targetType: 'list' | 'review';
+  currentUser: CurrentUser | null;
+  isAdmin: boolean;
+  isReply: boolean;
+  reportedIds: Set<string>;
+  onDelete: (commentId: string) => void;
+  onReport: (commentId: string) => void;
+  onLikeChange: (commentId: string, status: LikeStatus) => void;
+  onReply: (parentId: string, body: string) => Promise<void>;
+}) {
+  const [replying, setReplying] = useState(false);
+  const [replyBody, setReplyBody] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
+  const [replyError, setReplyError] = useState<string | null>(null);
+  const reported = reportedIds.has(comment.id);
+
+  async function submitReply(event: FormEvent) {
+    event.preventDefault();
+    const trimmed = replyBody.trim();
+    if (!trimmed) return;
+
+    setSubmittingReply(true);
+    setReplyError(null);
+
+    try {
+      await onReply(comment.id, trimmed);
+      setReplyBody('');
+      setReplying(false);
+    } catch (caught) {
+      setReplyError(caught instanceof Error ? caught.message : 'Could not post reply');
+    } finally {
+      setSubmittingReply(false);
+    }
+  }
+
+  return (
+    <div className={isReply ? 'comment-item comment-reply' : 'comment-item'}>
+      <p className="muted">
+        <strong>{comment.displayName || comment.username}</strong> · {formatDate(comment.createdAt)}
+      </p>
+      <p className="review-text">{comment.body}</p>
+      <div className="inline-actions">
+        <LikeButton
+          liked={comment.liked}
+          likeCount={comment.likeCount}
+          onLike={() => (targetType === 'list' ? api.likeListComment(comment.id) : api.likeReviewComment(comment.id))}
+          onUnlike={() => (targetType === 'list' ? api.unlikeListComment(comment.id) : api.unlikeReviewComment(comment.id))}
+          onChange={(status) => onLikeChange(comment.id, status)}
+        />
+        {(comment.owner || isAdmin) && (
+          <button className="button-ghost button-small" onClick={() => onDelete(comment.id)}>
+            Delete
+          </button>
+        )}
+        {currentUser && !comment.owner && (
+          <button className="button-ghost button-small" onClick={() => onReport(comment.id)} disabled={reported}>
+            {reported ? 'Reported' : 'Report'}
+          </button>
+        )}
+        {!isReply && currentUser && (
+          <button className="button-ghost button-small" onClick={() => setReplying((current) => !current)}>
+            {replying ? 'Cancel' : 'Reply'}
+          </button>
+        )}
+      </div>
+
+      {replying && (
+        <form className="comment-form" onSubmit={submitReply}>
+          <textarea
+            value={replyBody}
+            onChange={(event) => setReplyBody(event.target.value)}
+            placeholder="Write a reply..."
+            maxLength={2000}
+          />
+          <button type="submit" disabled={submittingReply || !replyBody.trim()}>
+            {submittingReply ? 'Posting...' : 'Post reply'}
+          </button>
+          {replyError && <p className="error compact-message">{replyError}</p>}
+        </form>
+      )}
+
+      {!isReply && comment.replies.length > 0 && (
+        <div className="comment-replies">
+          {comment.replies.map((reply) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              targetType={targetType}
+              currentUser={currentUser}
+              isAdmin={isAdmin}
+              isReply
+              reportedIds={reportedIds}
+              onDelete={onDelete}
+              onReport={onReport}
+              onLikeChange={onLikeChange}
+              onReply={onReply}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

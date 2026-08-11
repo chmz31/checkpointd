@@ -1,14 +1,16 @@
 package com.chmz31.checkpointd.comment.controller;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.chmz31.checkpointd.comment.entity.ListComment;
+import com.chmz31.checkpointd.comment.entity.ListCommentLike;
 import com.chmz31.checkpointd.comment.entity.ReviewComment;
 import com.chmz31.checkpointd.comment.repository.ListCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentReportRepository;
@@ -34,14 +36,12 @@ import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -50,7 +50,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class AdminCommentControllerTests {
+class CommentLikeControllerTests {
 
 	private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
 	private static final UUID OTHER_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
@@ -111,56 +111,87 @@ class AdminCommentControllerTests {
 	private ExternalGameImportService externalGameImportService;
 
 	@Test
-	void reportedListCommentsRequiresAuthentication() throws Exception {
-		mockMvc.perform(get("/api/v1/admin/comments/lists/reported"))
+	void likeListCommentRequiresAuthentication() throws Exception {
+		mockMvc.perform(post("/api/v1/likes/list-comments/{commentId}", COMMENT_ID).with(csrf()))
 				.andExpect(status().isUnauthorized());
 	}
 
 	@Test
-	void reportedListCommentsRejectsNonAdmin() throws Exception {
-		mockMvc.perform(get("/api/v1/admin/comments/lists/reported")
-						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()).claim("role", "USER"))))
-				.andExpect(status().isForbidden())
-				.andExpect(jsonPath("$.message").value("Admin access required"));
-	}
+	void authenticatedUserCanLikeListComment() throws Exception {
+		ListComment comment = listComment();
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(USER_ID)));
+		when(listCommentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(comment));
+		when(listCommentLikeRepository.existsByUserIdAndCommentId(USER_ID, COMMENT_ID)).thenReturn(false, true);
+		when(listCommentLikeRepository.countByCommentId(COMMENT_ID)).thenReturn(1L);
 
-	@Test
-	void adminCanListReportedListComments() throws Exception {
-		when(listCommentRepository.findReportedOrderByCreatedAtDesc(any(Pageable.class)))
-				.thenReturn(new PageImpl<>(List.of(listComment())));
-		when(listCommentReportRepository.countByCommentId(COMMENT_ID)).thenReturn(3L);
-
-		mockMvc.perform(get("/api/v1/admin/comments/lists/reported")
-						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()).claim("role", "ADMIN"))))
+		mockMvc.perform(post("/api/v1/likes/list-comments/{commentId}", COMMENT_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf()))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.content", hasSize(1)))
-				.andExpect(jsonPath("$.content[0].reportCount").value(3))
-				.andExpect(jsonPath("$.content[0].listName").value("Favorites"));
+				.andExpect(jsonPath("$.liked").value(true))
+				.andExpect(jsonPath("$.likeCount").value(1));
 	}
 
 	@Test
-	void reportedReviewCommentsRejectsNonAdmin() throws Exception {
-		mockMvc.perform(get("/api/v1/admin/comments/reviews/reported")
-						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
-				.andExpect(status().isForbidden());
-	}
+	void authenticatedUserCanUnlikeListComment() throws Exception {
+		ListComment comment = listComment();
+		ListCommentLike like = new ListCommentLike(user(USER_ID), comment);
 
-	@Test
-	void adminCanListReportedReviewComments() throws Exception {
-		when(reviewCommentRepository.findReportedOrderByCreatedAtDesc(any(Pageable.class)))
-				.thenReturn(new PageImpl<>(List.of(reviewComment())));
-		when(reviewCommentReportRepository.countByCommentId(COMMENT_ID)).thenReturn(1L);
+		when(listCommentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(comment));
+		when(listCommentLikeRepository.findByUserIdAndCommentId(USER_ID, COMMENT_ID)).thenReturn(Optional.of(like));
 
-		mockMvc.perform(get("/api/v1/admin/comments/reviews/reported")
-						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()).claim("role", "ADMIN"))))
+		mockMvc.perform(delete("/api/v1/likes/list-comments/{commentId}", COMMENT_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf()))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.content", hasSize(1)))
-				.andExpect(jsonPath("$.content[0].gameTitle").value("Chrono Trigger"));
+				.andExpect(jsonPath("$.liked").value(false));
+	}
+
+	@Test
+	void listCommentLikeStatusWorksWithoutAuthentication() throws Exception {
+		when(listCommentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(listComment()));
+		when(listCommentLikeRepository.countByCommentId(COMMENT_ID)).thenReturn(5L);
+
+		mockMvc.perform(get("/api/v1/likes/list-comments/{commentId}/status", COMMENT_ID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.liked").value(false))
+				.andExpect(jsonPath("$.likeCount").value(5));
+	}
+
+	@Test
+	void likeReviewCommentRequiresAuthentication() throws Exception {
+		mockMvc.perform(post("/api/v1/likes/review-comments/{commentId}", COMMENT_ID).with(csrf()))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void authenticatedUserCanLikeReviewComment() throws Exception {
+		ReviewComment comment = reviewComment();
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(USER_ID)));
+		when(reviewCommentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(comment));
+		when(reviewCommentLikeRepository.existsByUserIdAndCommentId(USER_ID, COMMENT_ID)).thenReturn(false, true);
+		when(reviewCommentLikeRepository.countByCommentId(COMMENT_ID)).thenReturn(1L);
+
+		mockMvc.perform(post("/api/v1/likes/review-comments/{commentId}", COMMENT_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.liked").value(true));
+	}
+
+	@Test
+	void reviewCommentLikeStatusWorksWithoutAuthentication() throws Exception {
+		when(reviewCommentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(reviewComment()));
+		when(reviewCommentLikeRepository.countByCommentId(COMMENT_ID)).thenReturn(2L);
+
+		mockMvc.perform(get("/api/v1/likes/review-comments/{commentId}/status", COMMENT_ID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.liked").value(false))
+				.andExpect(jsonPath("$.likeCount").value(2));
 	}
 
 	private User user(UUID id) {
 		User user = new User(id + "@example.com", "player-" + id, "hash", Role.USER);
-		user.setDisplayName("Player " + id);
 		user.setProfileVisibility(ProfileVisibility.PUBLIC);
 		ReflectionTestUtils.setField(user, "id", id);
 
