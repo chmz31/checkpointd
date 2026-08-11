@@ -17,11 +17,13 @@ public record ReviewResponse(
 		String body,
 		boolean containsSpoilers,
 		ReviewVisibility visibility,
+		long likeCount,
+		boolean liked,
 		Instant createdAt,
 		Instant updatedAt,
 		boolean owner) {
 
-	public static ReviewResponse from(Review review, boolean owner) {
+	public static ReviewResponse from(Review review, long likeCount, boolean liked, boolean owner) {
 		return new ReviewResponse(
 				review.getId(),
 				review.getUser().getUsername(),
@@ -34,6 +36,8 @@ public record ReviewResponse(
 				review.getBody(),
 				review.isContainsSpoilers(),
 				review.getVisibility(),
+				likeCount,
+				liked,
 				review.getCreatedAt(),
 				review.getUpdatedAt(),
 				owner);

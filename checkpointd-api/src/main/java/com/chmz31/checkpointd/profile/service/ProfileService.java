@@ -4,6 +4,7 @@ import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.profile.dto.PublicProfileGameResponse;
 import com.chmz31.checkpointd.profile.dto.PublicProfileResponse;
 import com.chmz31.checkpointd.profile.dto.PublicProfileStatsResponse;
@@ -27,32 +28,35 @@ public class ProfileService {
 	private final UserRepository userRepository;
 	private final LibraryEntryRepository libraryEntryRepository;
 	private final ReviewRepository reviewRepository;
+	private final ReviewLikeRepository reviewLikeRepository;
 	private final FollowRepository followRepository;
 
 	public ProfileService(
 			UserRepository userRepository,
 			LibraryEntryRepository libraryEntryRepository,
 			ReviewRepository reviewRepository,
+			ReviewLikeRepository reviewLikeRepository,
 			FollowRepository followRepository) {
 		this.userRepository = userRepository;
 		this.libraryEntryRepository = libraryEntryRepository;
 		this.reviewRepository = reviewRepository;
+		this.reviewLikeRepository = reviewLikeRepository;
 		this.followRepository = followRepository;
 	}
 
 	@Transactional(readOnly = true)
-	public PublicProfileResponse getPublicProfile(String username) {
+	public PublicProfileResponse getPublicProfile(String username, UUID currentUserId) {
 		User user = findByUsername(username);
 		if (user.getProfileVisibility() != ProfileVisibility.PUBLIC) {
 			throw new ResourceNotFoundException("Profile not found");
 		}
 
-		return buildProfile(user);
+		return buildProfile(user, currentUserId);
 	}
 
 	@Transactional(readOnly = true)
 	public PublicProfileResponse getMyProfile(UUID userId) {
-		return buildProfile(findById(userId));
+		return buildProfile(findById(userId), userId);
 	}
 
 	@Transactional
@@ -64,10 +68,10 @@ public class ProfileService {
 			user.setProfileVisibility(request.profileVisibility());
 		}
 
-		return buildProfile(userRepository.save(user));
+		return buildProfile(userRepository.save(user), userId);
 	}
 
-	private PublicProfileResponse buildProfile(User user) {
+	private PublicProfileResponse buildProfile(User user, UUID currentUserId) {
 		UUID userId = user.getId();
 		String username = user.getUsername();
 		long reviewCount = reviewRepository.countByUserUsernameAndUserProfileVisibilityAndVisibility(
@@ -87,7 +91,12 @@ public class ProfileService {
 				.toList();
 		var recentReviews = reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
 				username, ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC, PageRequest.of(0, RECENT_REVIEWS_LIMIT))
-				.map(review -> ReviewResponse.from(review, false))
+				.map(review -> {
+					long likeCount = reviewLikeRepository.countByReviewId(review.getId());
+					boolean liked = currentUserId != null
+							&& reviewLikeRepository.existsByUserIdAndReviewId(currentUserId, review.getId());
+					return ReviewResponse.from(review, likeCount, liked, false);
+				})
 				.toList();
 
 		return new PublicProfileResponse(

@@ -12,7 +12,8 @@ export function ListCard({ list }: { list: GameList }) {
       </div>
       {list.description && <p className="review-text">{list.description}</p>}
       <p className="muted">
-        {list.itemCount} {list.itemCount === 1 ? 'game' : 'games'} · Updated {formatDate(list.updatedAt)}
+        {list.itemCount} {list.itemCount === 1 ? 'game' : 'games'} · {list.likeCount} {list.likeCount === 1 ? 'like' : 'likes'}
+        {' '}· Updated {formatDate(list.updatedAt)}
       </p>
     </Link>
   );

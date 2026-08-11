@@ -18,6 +18,15 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 	Optional<Review> findByUserIdAndGameId(UUID userId, UUID gameId);
 
 	@EntityGraph(attributePaths = {"user", "game"})
+	Optional<Review> findByIdAndUserId(UUID id, UUID userId);
+
+	@EntityGraph(attributePaths = {"user", "game"})
+	Optional<Review> findByIdAndVisibilityAndUserProfileVisibility(
+			UUID id,
+			ReviewVisibility visibility,
+			ProfileVisibility profileVisibility);
+
+	@EntityGraph(attributePaths = {"user", "game"})
 	Page<Review> findByUserIdOrderByUpdatedAtDesc(UUID userId, Pageable pageable);
 
 	@EntityGraph(attributePaths = {"user", "game"})

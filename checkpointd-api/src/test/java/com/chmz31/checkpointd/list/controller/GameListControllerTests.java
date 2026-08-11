@@ -18,6 +18,8 @@ import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.like.repository.ListLikeRepository;
+import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.list.entity.GameList;
 import com.chmz31.checkpointd.list.entity.GameListItem;
 import com.chmz31.checkpointd.list.model.ListVisibility;
@@ -80,6 +82,12 @@ class GameListControllerTests {
 	@MockitoBean
 	private ExternalGameImportService externalGameImportService;
 
+	@MockitoBean
+	private ListLikeRepository listLikeRepository;
+
+	@MockitoBean
+	private ReviewLikeRepository reviewLikeRepository;
+
 	@Test
 	void createRequiresAuthentication() throws Exception {
 		mockMvc.perform(post("/api/v1/lists")
@@ -114,7 +122,9 @@ class GameListControllerTests {
 				.andExpect(jsonPath("$.name").value("Cozy games"))
 				.andExpect(jsonPath("$.visibility").value("PRIVATE"))
 				.andExpect(jsonPath("$.owner").value(true))
-				.andExpect(jsonPath("$.itemCount").value(0));
+				.andExpect(jsonPath("$.itemCount").value(0))
+				.andExpect(jsonPath("$.likeCount").value(0))
+				.andExpect(jsonPath("$.liked").value(false));
 	}
 
 	@Test
@@ -250,10 +260,29 @@ class GameListControllerTests {
 				LIST_ID, "playerone", ListVisibility.PUBLIC, ProfileVisibility.PUBLIC))
 				.thenReturn(Optional.of(list(ListVisibility.PUBLIC)));
 		when(gameListItemRepository.findByListIdOrderByPositionAsc(LIST_ID)).thenReturn(List.of());
+		when(listLikeRepository.countByListId(LIST_ID)).thenReturn(4L);
 
-		mockMvc.perform(get("/api/v1/lists/users/playerone/{listId}", LIST_ID))
+		mockMvc.perform(get("/api/v1/lists/users/playerone/{listId}", LIST_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.owner").value(false));
+				.andExpect(jsonPath("$.owner").value(false))
+				.andExpect(jsonPath("$.likeCount").value(4))
+				.andExpect(jsonPath("$.liked").value(false));
+	}
+
+	@Test
+	void userListReflectsLikedStateForCurrentUser() throws Exception {
+		when(gameListRepository.findByIdAndUserUsernameAndVisibilityAndUserProfileVisibility(
+				LIST_ID, "playerone", ListVisibility.PUBLIC, ProfileVisibility.PUBLIC))
+				.thenReturn(Optional.of(list(ListVisibility.PUBLIC)));
+		when(gameListItemRepository.findByListIdOrderByPositionAsc(LIST_ID)).thenReturn(List.of());
+		when(listLikeRepository.countByListId(LIST_ID)).thenReturn(1L);
+		when(listLikeRepository.existsByUserIdAndListId(USER_ID, LIST_ID)).thenReturn(true);
+
+		mockMvc.perform(get("/api/v1/lists/users/playerone/{listId}", LIST_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.liked").value(true));
 	}
 
 	@Test

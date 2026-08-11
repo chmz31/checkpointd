@@ -12,6 +12,7 @@ import type {
   LibrarySortOption,
   LibraryStats,
   LibraryStatus,
+  LikeStatus,
   PaginatedResponse,
   PublicProfile,
   Review,
@@ -311,6 +312,38 @@ export const api = {
     return apiRequest<PaginatedResponse<UserSummary>>(
       `/api/v1/follows/users/${encodeURIComponent(username)}/following?page=${page}&size=${size}`,
     );
+  },
+
+  likeList(listId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/lists/${listId}`, {
+      method: 'POST',
+    });
+  },
+
+  unlikeList(listId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/lists/${listId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getListLikeStatus(listId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/lists/${listId}/status`);
+  },
+
+  likeReview(reviewId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/reviews/${reviewId}`, {
+      method: 'POST',
+    });
+  },
+
+  unlikeReview(reviewId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/reviews/${reviewId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getReviewLikeStatus(reviewId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/reviews/${reviewId}/status`);
   },
 
   updateLibraryEntry(entryId: string, input: LibraryEntryUpdateInput) {

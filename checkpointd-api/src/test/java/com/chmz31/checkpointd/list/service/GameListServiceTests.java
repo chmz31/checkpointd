@@ -12,6 +12,7 @@ import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.like.repository.ListLikeRepository;
 import com.chmz31.checkpointd.list.dto.AddGameListItemRequest;
 import com.chmz31.checkpointd.list.dto.GameListDetailResponse;
 import com.chmz31.checkpointd.list.dto.GameListRequest;
@@ -52,6 +53,9 @@ class GameListServiceTests {
 
 	@Mock
 	private GameListItemRepository gameListItemRepository;
+
+	@Mock
+	private ListLikeRepository listLikeRepository;
 
 	@Mock
 	private UserRepository userRepository;
@@ -111,18 +115,22 @@ class GameListServiceTests {
 		when(gameListRepository.findByUserIdOrderByUpdatedAtDesc(eq(USER_ID), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(list(ListVisibility.PRIVATE))));
 		when(gameListItemRepository.countByListId(LIST_ID)).thenReturn(3L);
+		when(listLikeRepository.countByListId(LIST_ID)).thenReturn(5L);
+		when(listLikeRepository.existsByUserIdAndListId(USER_ID, LIST_ID)).thenReturn(true);
 
 		Page<GameListResponse> lists = gameListService.getMyLists(USER_ID, 0, 20);
 
 		assertThat(lists.getContent()).extracting(GameListResponse::owner).containsExactly(true);
 		assertThat(lists.getContent()).extracting(GameListResponse::itemCount).containsExactly(3L);
+		assertThat(lists.getContent()).extracting(GameListResponse::likeCount).containsExactly(5L);
+		assertThat(lists.getContent()).extracting(GameListResponse::liked).containsExactly(true);
 	}
 
 	@Test
 	void getPublicListsRejectsPrivateProfile() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PRIVATE)));
 
-		assertThatThrownBy(() -> gameListService.getPublicLists("playerone", 0, 20))
+		assertThatThrownBy(() -> gameListService.getPublicLists("playerone", null, 0, 20))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Profile not found");
 	}
@@ -160,7 +168,7 @@ class GameListServiceTests {
 				.thenReturn(Optional.of(list));
 		when(gameListItemRepository.findByListIdOrderByPositionAsc(LIST_ID)).thenReturn(List.of());
 
-		GameListDetailResponse response = gameListService.getPublicList("playerone", LIST_ID);
+		GameListDetailResponse response = gameListService.getPublicList("playerone", LIST_ID, null);
 
 		assertThat(response.owner()).isFalse();
 		assertThat(response.items()).isEmpty();
@@ -172,7 +180,7 @@ class GameListServiceTests {
 				LIST_ID, "playerone", ListVisibility.PUBLIC, ProfileVisibility.PUBLIC))
 				.thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> gameListService.getPublicList("playerone", LIST_ID))
+		assertThatThrownBy(() -> gameListService.getPublicList("playerone", LIST_ID, null))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("List not found");
 	}

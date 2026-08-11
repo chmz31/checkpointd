@@ -87,6 +87,8 @@ export type GameList = {
   description?: string | null;
   visibility: ListVisibility;
   itemCount: number;
+  likeCount: number;
+  liked: boolean;
   createdAt: string;
   updatedAt: string;
   owner: boolean;
@@ -122,6 +124,11 @@ export type UserSummary = {
   displayName?: string | null;
 };
 
+export type LikeStatus = {
+  liked: boolean;
+  likeCount: number;
+};
+
 export type ReviewVisibility = 'PUBLIC' | 'PRIVATE';
 
 export type Review = {
@@ -136,6 +143,8 @@ export type Review = {
   body: string;
   containsSpoilers: boolean;
   visibility: ReviewVisibility;
+  likeCount: number;
+  liked: boolean;
   createdAt: string;
   updatedAt: string;
   owner: boolean;

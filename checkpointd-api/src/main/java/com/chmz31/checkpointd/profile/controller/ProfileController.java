@@ -35,11 +35,11 @@ public class ProfileController {
 	}
 
 	@GetMapping("/{username}")
-	PublicProfileResponse getPublicProfile(@PathVariable String username) {
-		return profileService.getPublicProfile(username);
+	PublicProfileResponse getPublicProfile(@AuthenticationPrincipal Jwt jwt, @PathVariable String username) {
+		return profileService.getPublicProfile(username, currentUserId(jwt));
 	}
 
 	private UUID currentUserId(Jwt jwt) {
-		return UUID.fromString(jwt.getSubject());
+		return jwt == null ? null : UUID.fromString(jwt.getSubject());
 	}
 }

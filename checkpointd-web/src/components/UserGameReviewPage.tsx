@@ -105,7 +105,14 @@ export function UserGameReviewPage({ currentUser }: { currentUser: CurrentUser |
         <ReviewForm review={review} submitting={saving} onSubmit={saveReview} />
       ) : (
         <>
-          <ReviewCard review={review} showGame={false} currentUsername={currentUser?.username ?? null} />
+          <ReviewCard
+            review={review}
+            showGame={false}
+            currentUsername={currentUser?.username ?? null}
+            onLikeChange={(status) =>
+              setReview((current) => (current ? { ...current, liked: status.liked, likeCount: status.likeCount } : current))
+            }
+          />
           {isOwnReview && (
             <div className="inline-actions">
               <button className="button-ghost button-small" onClick={() => setEditing(true)}>

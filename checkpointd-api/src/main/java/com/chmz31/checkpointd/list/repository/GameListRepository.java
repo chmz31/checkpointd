@@ -16,6 +16,12 @@ public interface GameListRepository extends JpaRepository<GameList, UUID> {
 	Optional<GameList> findByIdAndUserId(UUID id, UUID userId);
 
 	@EntityGraph(attributePaths = {"user"})
+	Optional<GameList> findByIdAndVisibilityAndUserProfileVisibility(
+			UUID id,
+			ListVisibility visibility,
+			ProfileVisibility profileVisibility);
+
+	@EntityGraph(attributePaths = {"user"})
 	Optional<GameList> findByIdAndUserUsernameAndVisibilityAndUserProfileVisibility(
 			UUID id,
 			String username,

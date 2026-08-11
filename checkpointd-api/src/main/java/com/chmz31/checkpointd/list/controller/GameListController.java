@@ -84,19 +84,21 @@ public class GameListController {
 
 	@GetMapping("/users/{username}")
 	PaginatedResponse<GameListResponse> userLists(
+			@AuthenticationPrincipal Jwt jwt,
 			@PathVariable String username,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size) {
-		var lists = gameListService.getPublicLists(username, page, size);
+		var lists = gameListService.getPublicLists(username, currentUserId(jwt), page, size);
 		return PaginatedResponse.from(lists, lists.getContent());
 	}
 
 	@GetMapping("/users/{username}/{listId}")
-	GameListDetailResponse userList(@PathVariable String username, @PathVariable UUID listId) {
-		return gameListService.getPublicList(username, listId);
+	GameListDetailResponse userList(
+			@AuthenticationPrincipal Jwt jwt, @PathVariable String username, @PathVariable UUID listId) {
+		return gameListService.getPublicList(username, listId, currentUserId(jwt));
 	}
 
 	private UUID currentUserId(Jwt jwt) {
-		return UUID.fromString(jwt.getSubject());
+		return jwt == null ? null : UUID.fromString(jwt.getSubject());
 	}
 }
