@@ -60,7 +60,10 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
             </NavLink>
             {user && (
               <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/notifications">
-                Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
+                Notifications
+                {unreadCount > 0 && (
+                  <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                )}
               </NavLink>
             )}
             {user?.role === 'ADMIN' && (
