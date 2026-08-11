@@ -17,8 +17,10 @@ import com.chmz31.checkpointd.comment.entity.ListComment;
 import com.chmz31.checkpointd.comment.entity.ListCommentReport;
 import com.chmz31.checkpointd.comment.entity.ReviewComment;
 import com.chmz31.checkpointd.comment.entity.ReviewCommentReport;
+import com.chmz31.checkpointd.comment.repository.ListCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentRepository;
+import com.chmz31.checkpointd.comment.repository.ReviewCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentRepository;
 import com.chmz31.checkpointd.common.exception.BadRequestException;
@@ -73,6 +75,12 @@ class CommentServiceTests {
 	private ReviewCommentReportRepository reviewCommentReportRepository;
 
 	@Mock
+	private ListCommentLikeRepository listCommentLikeRepository;
+
+	@Mock
+	private ReviewCommentLikeRepository reviewCommentLikeRepository;
+
+	@Mock
 	private GameListRepository gameListRepository;
 
 	@Mock
@@ -95,7 +103,7 @@ class CommentServiceTests {
 				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(list));
 		when(listCommentRepository.save(any(ListComment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-		CommentResponse response = commentService.addListComment(USER_ID, LIST_ID, new CommentRequest("  Nice list!  "));
+		CommentResponse response = commentService.addListComment(USER_ID, LIST_ID, new CommentRequest("  Nice list!  ", null));
 
 		ArgumentCaptor<ListComment> captor = ArgumentCaptor.forClass(ListComment.class);
 		verify(listCommentRepository).save(captor.capture());
@@ -112,11 +120,89 @@ class CommentServiceTests {
 		when(gameListRepository.findByIdAndVisibilityAndUserProfileVisibility(
 				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> commentService.addListComment(USER_ID, LIST_ID, new CommentRequest("Hi")))
+		assertThatThrownBy(() -> commentService.addListComment(USER_ID, LIST_ID, new CommentRequest("Hi", null)))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("List not found");
 
 		verify(listCommentRepository, never()).save(any(ListComment.class));
+	}
+
+	@Test
+	void addListCommentCreatesReplyToTopLevelComment() {
+		User user = user(USER_ID);
+		GameList list = list(ListVisibility.PUBLIC);
+		ListComment topLevel = listComment(list, user(OTHER_USER_ID));
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+		when(gameListRepository.findByIdAndUserId(LIST_ID, USER_ID)).thenReturn(Optional.empty());
+		when(gameListRepository.findByIdAndVisibilityAndUserProfileVisibility(
+				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(list));
+		when(listCommentRepository.findByIdAndListId(COMMENT_ID, LIST_ID)).thenReturn(Optional.of(topLevel));
+		when(listCommentRepository.save(any(ListComment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		commentService.addListComment(USER_ID, LIST_ID, new CommentRequest("A reply", COMMENT_ID));
+
+		ArgumentCaptor<ListComment> captor = ArgumentCaptor.forClass(ListComment.class);
+		verify(listCommentRepository).save(captor.capture());
+		assertThat(captor.getValue().getParent()).isSameAs(topLevel);
+	}
+
+	@Test
+	void addListCommentRejectsReplyToAReply() {
+		UUID replyId = UUID.fromString("00000000-0000-0000-0000-000000000602");
+		GameList list = list(ListVisibility.PUBLIC);
+		ListComment topLevel = listComment(list, user(OTHER_USER_ID));
+		ListComment existingReply = new ListComment(user(OTHER_USER_ID), list, topLevel, "First reply");
+		ReflectionTestUtils.setField(existingReply, "id", replyId);
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(USER_ID)));
+		when(gameListRepository.findByIdAndUserId(LIST_ID, USER_ID)).thenReturn(Optional.empty());
+		when(gameListRepository.findByIdAndVisibilityAndUserProfileVisibility(
+				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(list));
+		when(listCommentRepository.findByIdAndListId(replyId, LIST_ID)).thenReturn(Optional.of(existingReply));
+
+		assertThatThrownBy(() -> commentService.addListComment(USER_ID, LIST_ID, new CommentRequest("Nested reply", replyId)))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessage("Replies can only be added to top-level comments");
+
+		verify(listCommentRepository, never()).save(any(ListComment.class));
+	}
+
+	@Test
+	void getListCommentsEmbedsRepliesInChronologicalOrder() {
+		GameList list = list(ListVisibility.PUBLIC);
+		ListComment topLevel = listComment(list, user(USER_ID));
+		ListComment reply = new ListComment(user(OTHER_USER_ID), list, topLevel, "A reply");
+		ReflectionTestUtils.setField(reply, "id", UUID.fromString("00000000-0000-0000-0000-000000000602"));
+
+		when(gameListRepository.findByIdAndVisibilityAndUserProfileVisibility(
+				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(list));
+		when(listCommentRepository.findByListIdAndParentIsNullOrderByCreatedAtDesc(eq(LIST_ID), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(topLevel)));
+		when(listCommentRepository.findByParentIdOrderByCreatedAtAsc(COMMENT_ID)).thenReturn(List.of(reply));
+
+		Page<CommentResponse> comments = commentService.getListComments(USER_ID, LIST_ID, 0, 20);
+
+		assertThat(comments.getContent()).hasSize(1);
+		assertThat(comments.getContent().getFirst().replies()).extracting(CommentResponse::body).containsExactly("A reply");
+	}
+
+	@Test
+	void getListCommentsReflectsLikeCountAndLikedState() {
+		GameList list = list(ListVisibility.PUBLIC);
+		ListComment comment = listComment(list, user(OTHER_USER_ID));
+
+		when(gameListRepository.findByIdAndVisibilityAndUserProfileVisibility(
+				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(list));
+		when(listCommentRepository.findByListIdAndParentIsNullOrderByCreatedAtDesc(eq(LIST_ID), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(comment)));
+		when(listCommentLikeRepository.countByCommentId(COMMENT_ID)).thenReturn(4L);
+		when(listCommentLikeRepository.existsByUserIdAndCommentId(USER_ID, COMMENT_ID)).thenReturn(true);
+
+		Page<CommentResponse> comments = commentService.getListComments(USER_ID, LIST_ID, 0, 20);
+
+		assertThat(comments.getContent()).extracting(CommentResponse::likeCount).containsExactly(4L);
+		assertThat(comments.getContent()).extracting(CommentResponse::liked).containsExactly(true);
 	}
 
 	@Test
@@ -126,7 +212,7 @@ class CommentServiceTests {
 
 		when(gameListRepository.findByIdAndVisibilityAndUserProfileVisibility(
 				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(list));
-		when(listCommentRepository.findByListIdOrderByCreatedAtDesc(eq(LIST_ID), any(Pageable.class)))
+		when(listCommentRepository.findByListIdAndParentIsNullOrderByCreatedAtDesc(eq(LIST_ID), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(comment)));
 
 		Page<CommentResponse> comments = commentService.getListComments(USER_ID, LIST_ID, 0, 20);
@@ -141,7 +227,7 @@ class CommentServiceTests {
 
 		when(gameListRepository.findByIdAndVisibilityAndUserProfileVisibility(
 				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(list));
-		when(listCommentRepository.findByListIdOrderByCreatedAtDesc(eq(LIST_ID), any(Pageable.class)))
+		when(listCommentRepository.findByListIdAndParentIsNullOrderByCreatedAtDesc(eq(LIST_ID), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(comment)));
 
 		Page<CommentResponse> comments = commentService.getListComments(null, LIST_ID, 0, 20);
@@ -260,7 +346,7 @@ class CommentServiceTests {
 				REVIEW_ID, ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(review));
 		when(reviewCommentRepository.save(any(ReviewComment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-		CommentResponse response = commentService.addReviewComment(USER_ID, REVIEW_ID, new CommentRequest("Great review"));
+		CommentResponse response = commentService.addReviewComment(USER_ID, REVIEW_ID, new CommentRequest("Great review", null));
 
 		ArgumentCaptor<ReviewComment> captor = ArgumentCaptor.forClass(ReviewComment.class);
 		verify(reviewCommentRepository).save(captor.capture());

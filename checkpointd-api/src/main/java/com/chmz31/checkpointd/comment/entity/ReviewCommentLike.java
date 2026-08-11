@@ -1,6 +1,5 @@
 package com.chmz31.checkpointd.comment.entity;
 
-import com.chmz31.checkpointd.list.entity.GameList;
 import com.chmz31.checkpointd.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,12 +11,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "list_comments")
-public class ListComment {
+@Table(name = "review_comment_likes", uniqueConstraints = {
+		@UniqueConstraint(name = "uk_review_comment_likes_user_comment", columnNames = {"user_id", "comment_id"})
+})
+public class ReviewCommentLike {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -28,31 +30,18 @@ public class ListComment {
 	private User user;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "list_id", nullable = false)
-	private GameList list;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "parent_id")
-	private ListComment parent;
-
-	@Column(nullable = false, columnDefinition = "TEXT")
-	private String body;
+	@JoinColumn(name = "comment_id", nullable = false)
+	private ReviewComment comment;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
-	protected ListComment() {
+	protected ReviewCommentLike() {
 	}
 
-	public ListComment(User user, GameList list, String body) {
-		this(user, list, null, body);
-	}
-
-	public ListComment(User user, GameList list, ListComment parent, String body) {
+	public ReviewCommentLike(User user, ReviewComment comment) {
 		this.user = user;
-		this.list = list;
-		this.parent = parent;
-		this.body = body;
+		this.comment = comment;
 	}
 
 	@PrePersist
@@ -68,16 +57,8 @@ public class ListComment {
 		return user;
 	}
 
-	public GameList getList() {
-		return list;
-	}
-
-	public ListComment getParent() {
-		return parent;
-	}
-
-	public String getBody() {
-		return body;
+	public ReviewComment getComment() {
+		return comment;
 	}
 
 	public Instant getCreatedAt() {

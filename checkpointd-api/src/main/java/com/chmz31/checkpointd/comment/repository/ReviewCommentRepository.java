@@ -1,6 +1,7 @@
 package com.chmz31.checkpointd.comment.repository;
 
 import com.chmz31.checkpointd.comment.entity.ReviewComment;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -12,7 +13,10 @@ import org.springframework.data.jpa.repository.Query;
 public interface ReviewCommentRepository extends JpaRepository<ReviewComment, UUID> {
 
 	@EntityGraph(attributePaths = {"user"})
-	Page<ReviewComment> findByReviewIdOrderByCreatedAtDesc(UUID reviewId, Pageable pageable);
+	Page<ReviewComment> findByReviewIdAndParentIsNullOrderByCreatedAtDesc(UUID reviewId, Pageable pageable);
+
+	@EntityGraph(attributePaths = {"user"})
+	List<ReviewComment> findByParentIdOrderByCreatedAtAsc(UUID parentId);
 
 	@EntityGraph(attributePaths = {"user", "review"})
 	Optional<ReviewComment> findByIdAndReviewId(UUID id, UUID reviewId);

@@ -136,10 +136,14 @@ export type Comment = {
   body: string;
   createdAt: string;
   owner: boolean;
+  likeCount: number;
+  liked: boolean;
+  replies: Comment[];
 };
 
 export type CommentRequest = {
   body: string;
+  parentId?: string;
 };
 
 export type ReportedListComment = {

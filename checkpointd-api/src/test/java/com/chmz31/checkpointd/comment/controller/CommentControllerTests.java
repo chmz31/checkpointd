@@ -14,8 +14,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.chmz31.checkpointd.comment.entity.ListComment;
 import com.chmz31.checkpointd.comment.entity.ReviewComment;
+import com.chmz31.checkpointd.comment.repository.ListCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentRepository;
+import com.chmz31.checkpointd.comment.repository.ReviewCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentRepository;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
@@ -78,6 +80,12 @@ class CommentControllerTests {
 	private ReviewCommentReportRepository reviewCommentReportRepository;
 
 	@MockitoBean
+	private ListCommentLikeRepository listCommentLikeRepository;
+
+	@MockitoBean
+	private ReviewCommentLikeRepository reviewCommentLikeRepository;
+
+	@MockitoBean
 	private ListLikeRepository listLikeRepository;
 
 	@MockitoBean
@@ -133,6 +141,44 @@ class CommentControllerTests {
 	}
 
 	@Test
+	void authenticatedUserCanReplyToTopLevelComment() throws Exception {
+		GameList list = list(ListVisibility.PUBLIC);
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(USER_ID)));
+		when(gameListRepository.findByIdAndUserId(LIST_ID, USER_ID)).thenReturn(Optional.of(list));
+		when(listCommentRepository.findByIdAndListId(COMMENT_ID, LIST_ID)).thenReturn(Optional.of(listComment(list)));
+		when(listCommentRepository.save(any(ListComment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		mockMvc.perform(post("/api/v1/comments/lists/{listId}", LIST_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf())
+						.contentType("application/json")
+						.content("{\"body\":\"A reply\",\"parentId\":\"" + COMMENT_ID + "\"}"))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.body").value("A reply"));
+	}
+
+	@Test
+	void replyingToAReplyReturnsBadRequest() throws Exception {
+		UUID replyId = UUID.fromString("00000000-0000-0000-0000-000000000602");
+		GameList list = list(ListVisibility.PUBLIC);
+		ListComment topLevel = listComment(list);
+		ListComment existingReply = new ListComment(user(OTHER_USER_ID), list, topLevel, "First reply");
+		ReflectionTestUtils.setField(existingReply, "id", replyId);
+
+		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(USER_ID)));
+		when(gameListRepository.findByIdAndUserId(LIST_ID, USER_ID)).thenReturn(Optional.of(list));
+		when(listCommentRepository.findByIdAndListId(replyId, LIST_ID)).thenReturn(Optional.of(existingReply));
+
+		mockMvc.perform(post("/api/v1/comments/lists/{listId}", LIST_ID)
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf())
+						.contentType("application/json")
+						.content("{\"body\":\"Nested reply\",\"parentId\":\"" + replyId + "\"}"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("Replies can only be added to top-level comments"));
+	}
+
+	@Test
 	void addListCommentRejectsBlankBody() throws Exception {
 		mockMvc.perform(post("/api/v1/comments/lists/{listId}", LIST_ID)
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
@@ -148,7 +194,7 @@ class CommentControllerTests {
 		GameList list = list(ListVisibility.PUBLIC);
 		when(gameListRepository.findByIdAndVisibilityAndUserProfileVisibility(
 				LIST_ID, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(list));
-		when(listCommentRepository.findByListIdOrderByCreatedAtDesc(eq(LIST_ID), any(Pageable.class)))
+		when(listCommentRepository.findByListIdAndParentIsNullOrderByCreatedAtDesc(eq(LIST_ID), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(listComment(list))));
 
 		mockMvc.perform(get("/api/v1/comments/lists/{listId}", LIST_ID))
@@ -265,7 +311,7 @@ class CommentControllerTests {
 		Review review = review(ReviewVisibility.PUBLIC);
 		when(reviewRepository.findByIdAndVisibilityAndUserProfileVisibility(
 				REVIEW_ID, ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC)).thenReturn(Optional.of(review));
-		when(reviewCommentRepository.findByReviewIdOrderByCreatedAtDesc(eq(REVIEW_ID), any(Pageable.class)))
+		when(reviewCommentRepository.findByReviewIdAndParentIsNullOrderByCreatedAtDesc(eq(REVIEW_ID), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(reviewComment(review))));
 
 		mockMvc.perform(get("/api/v1/comments/reviews/{reviewId}", REVIEW_ID))

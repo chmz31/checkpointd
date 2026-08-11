@@ -414,6 +414,38 @@ export const api = {
     );
   },
 
+  likeListComment(commentId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/list-comments/${commentId}`, {
+      method: 'POST',
+    });
+  },
+
+  unlikeListComment(commentId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/list-comments/${commentId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getListCommentLikeStatus(commentId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/list-comments/${commentId}/status`);
+  },
+
+  likeReviewComment(commentId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/review-comments/${commentId}`, {
+      method: 'POST',
+    });
+  },
+
+  unlikeReviewComment(commentId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/review-comments/${commentId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getReviewCommentLikeStatus(commentId: string) {
+    return apiRequest<LikeStatus>(`/api/v1/likes/review-comments/${commentId}/status`);
+  },
+
   updateLibraryEntry(entryId: string, input: LibraryEntryUpdateInput) {
     return apiRequest<LibraryEntry>(`/api/v1/library/${entryId}`, {
       method: 'PATCH',

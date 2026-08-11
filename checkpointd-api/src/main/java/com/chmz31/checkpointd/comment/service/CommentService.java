@@ -9,8 +9,10 @@ import com.chmz31.checkpointd.comment.entity.ListComment;
 import com.chmz31.checkpointd.comment.entity.ListCommentReport;
 import com.chmz31.checkpointd.comment.entity.ReviewComment;
 import com.chmz31.checkpointd.comment.entity.ReviewCommentReport;
+import com.chmz31.checkpointd.comment.repository.ListCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentRepository;
+import com.chmz31.checkpointd.comment.repository.ReviewCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentRepository;
 import com.chmz31.checkpointd.common.exception.BadRequestException;
@@ -26,6 +28,7 @@ import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import com.chmz31.checkpointd.user.repository.UserRepository;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +45,8 @@ public class CommentService {
 	private final ReviewCommentRepository reviewCommentRepository;
 	private final ListCommentReportRepository listCommentReportRepository;
 	private final ReviewCommentReportRepository reviewCommentReportRepository;
+	private final ListCommentLikeRepository listCommentLikeRepository;
+	private final ReviewCommentLikeRepository reviewCommentLikeRepository;
 	private final GameListRepository gameListRepository;
 	private final ReviewRepository reviewRepository;
 	private final UserRepository userRepository;
@@ -51,6 +56,8 @@ public class CommentService {
 			ReviewCommentRepository reviewCommentRepository,
 			ListCommentReportRepository listCommentReportRepository,
 			ReviewCommentReportRepository reviewCommentReportRepository,
+			ListCommentLikeRepository listCommentLikeRepository,
+			ReviewCommentLikeRepository reviewCommentLikeRepository,
 			GameListRepository gameListRepository,
 			ReviewRepository reviewRepository,
 			UserRepository userRepository) {
@@ -58,6 +65,8 @@ public class CommentService {
 		this.reviewCommentRepository = reviewCommentRepository;
 		this.listCommentReportRepository = listCommentReportRepository;
 		this.reviewCommentReportRepository = reviewCommentReportRepository;
+		this.listCommentLikeRepository = listCommentLikeRepository;
+		this.reviewCommentLikeRepository = reviewCommentLikeRepository;
 		this.gameListRepository = gameListRepository;
 		this.reviewRepository = reviewRepository;
 		this.userRepository = userRepository;
@@ -68,16 +77,17 @@ public class CommentService {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 		GameList list = accessibleList(userId, listId);
+		ListComment parent = resolveParentListComment(listId, request.parentId());
 
-		ListComment saved = listCommentRepository.save(new ListComment(user, list, request.body().trim()));
-		return CommentResponse.from(saved, true);
+		ListComment saved = listCommentRepository.save(new ListComment(user, list, parent, request.body().trim()));
+		return toResponse(saved, userId);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<CommentResponse> getListComments(UUID currentUserId, UUID listId, int page, int size) {
 		accessibleList(currentUserId, listId);
-		return listCommentRepository.findByListIdOrderByCreatedAtDesc(listId, pageRequest(page, size))
-				.map(comment -> CommentResponse.from(comment, currentUserId != null && comment.getUser().getId().equals(currentUserId)));
+		return listCommentRepository.findByListIdAndParentIsNullOrderByCreatedAtDesc(listId, pageRequest(page, size))
+				.map(comment -> toResponseWithReplies(comment, currentUserId));
 	}
 
 	@Transactional
@@ -116,16 +126,17 @@ public class CommentService {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found"));
 		Review review = accessibleReview(userId, reviewId);
+		ReviewComment parent = resolveParentReviewComment(reviewId, request.parentId());
 
-		ReviewComment saved = reviewCommentRepository.save(new ReviewComment(user, review, request.body().trim()));
-		return CommentResponse.from(saved, true);
+		ReviewComment saved = reviewCommentRepository.save(new ReviewComment(user, review, parent, request.body().trim()));
+		return toResponse(saved, userId);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<CommentResponse> getReviewComments(UUID currentUserId, UUID reviewId, int page, int size) {
 		accessibleReview(currentUserId, reviewId);
-		return reviewCommentRepository.findByReviewIdOrderByCreatedAtDesc(reviewId, pageRequest(page, size))
-				.map(comment -> CommentResponse.from(comment, currentUserId != null && comment.getUser().getId().equals(currentUserId)));
+		return reviewCommentRepository.findByReviewIdAndParentIsNullOrderByCreatedAtDesc(reviewId, pageRequest(page, size))
+				.map(comment -> toResponseWithReplies(comment, currentUserId));
 	}
 
 	@Transactional
@@ -157,6 +168,68 @@ public class CommentService {
 		return reviewCommentRepository.findReportedOrderByCreatedAtDesc(pageRequest(page, size))
 				.map(comment -> ReportedReviewCommentResponse.from(
 						comment, reviewCommentReportRepository.countByCommentId(comment.getId())));
+	}
+
+	private ListComment resolveParentListComment(UUID listId, UUID parentId) {
+		if (parentId == null) {
+			return null;
+		}
+		ListComment parent = listCommentRepository.findByIdAndListId(parentId, listId)
+				.orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+		if (parent.getParent() != null) {
+			throw new BadRequestException("Replies can only be added to top-level comments");
+		}
+		return parent;
+	}
+
+	private ReviewComment resolveParentReviewComment(UUID reviewId, UUID parentId) {
+		if (parentId == null) {
+			return null;
+		}
+		ReviewComment parent = reviewCommentRepository.findByIdAndReviewId(parentId, reviewId)
+				.orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+		if (parent.getParent() != null) {
+			throw new BadRequestException("Replies can only be added to top-level comments");
+		}
+		return parent;
+	}
+
+	private CommentResponse toResponse(ListComment comment, UUID currentUserId) {
+		boolean owner = currentUserId != null && comment.getUser().getId().equals(currentUserId);
+		long likeCount = listCommentLikeRepository.countByCommentId(comment.getId());
+		boolean liked = currentUserId != null
+				&& listCommentLikeRepository.existsByUserIdAndCommentId(currentUserId, comment.getId());
+		return CommentResponse.from(comment, owner, likeCount, liked, List.of());
+	}
+
+	private CommentResponse toResponseWithReplies(ListComment comment, UUID currentUserId) {
+		List<CommentResponse> replies = listCommentRepository.findByParentIdOrderByCreatedAtAsc(comment.getId()).stream()
+				.map(reply -> toResponse(reply, currentUserId))
+				.toList();
+		boolean owner = currentUserId != null && comment.getUser().getId().equals(currentUserId);
+		long likeCount = listCommentLikeRepository.countByCommentId(comment.getId());
+		boolean liked = currentUserId != null
+				&& listCommentLikeRepository.existsByUserIdAndCommentId(currentUserId, comment.getId());
+		return CommentResponse.from(comment, owner, likeCount, liked, replies);
+	}
+
+	private CommentResponse toResponse(ReviewComment comment, UUID currentUserId) {
+		boolean owner = currentUserId != null && comment.getUser().getId().equals(currentUserId);
+		long likeCount = reviewCommentLikeRepository.countByCommentId(comment.getId());
+		boolean liked = currentUserId != null
+				&& reviewCommentLikeRepository.existsByUserIdAndCommentId(currentUserId, comment.getId());
+		return CommentResponse.from(comment, owner, likeCount, liked, List.of());
+	}
+
+	private CommentResponse toResponseWithReplies(ReviewComment comment, UUID currentUserId) {
+		List<CommentResponse> replies = reviewCommentRepository.findByParentIdOrderByCreatedAtAsc(comment.getId()).stream()
+				.map(reply -> toResponse(reply, currentUserId))
+				.toList();
+		boolean owner = currentUserId != null && comment.getUser().getId().equals(currentUserId);
+		long likeCount = reviewCommentLikeRepository.countByCommentId(comment.getId());
+		boolean liked = currentUserId != null
+				&& reviewCommentLikeRepository.existsByUserIdAndCommentId(currentUserId, comment.getId());
+		return CommentResponse.from(comment, owner, likeCount, liked, replies);
 	}
 
 	private GameList accessibleList(UUID currentUserId, UUID listId) {
