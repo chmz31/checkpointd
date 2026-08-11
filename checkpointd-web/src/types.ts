@@ -169,6 +169,35 @@ export type ReportedReviewComment = {
   gameTitle: string;
 };
 
+export type NotificationType =
+  | 'FOLLOW'
+  | 'LIST_LIKE'
+  | 'REVIEW_LIKE'
+  | 'LIST_COMMENT'
+  | 'REVIEW_COMMENT'
+  | 'COMMENT_REPLY'
+  | 'LIST_COMMENT_LIKE'
+  | 'REVIEW_COMMENT_LIKE';
+
+export type NotificationItem = {
+  id: string;
+  type: NotificationType;
+  actorUsername: string;
+  actorDisplayName?: string | null;
+  listId?: string | null;
+  listName?: string | null;
+  reviewId?: string | null;
+  gameId?: string | null;
+  gameSlug?: string | null;
+  gameTitle?: string | null;
+  read: boolean;
+  createdAt: string;
+};
+
+export type UnreadCount = {
+  count: number;
+};
+
 export type ReviewVisibility = 'PUBLIC' | 'PRIVATE';
 
 export type Review = {

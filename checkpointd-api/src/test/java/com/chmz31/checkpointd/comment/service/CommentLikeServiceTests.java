@@ -21,6 +21,7 @@ import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.like.dto.LikeStatusResponse;
 import com.chmz31.checkpointd.list.entity.GameList;
 import com.chmz31.checkpointd.list.model.ListVisibility;
+import com.chmz31.checkpointd.notification.service.NotificationService;
 import com.chmz31.checkpointd.review.entity.Review;
 import com.chmz31.checkpointd.review.model.ReviewVisibility;
 import com.chmz31.checkpointd.user.entity.User;
@@ -61,6 +62,9 @@ class CommentLikeServiceTests {
 
 	@Mock
 	private UserRepository userRepository;
+
+	@Mock
+	private NotificationService notificationService;
 
 	@InjectMocks
 	private CommentLikeService commentLikeService;

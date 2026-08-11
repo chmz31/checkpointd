@@ -15,6 +15,7 @@ import com.chmz31.checkpointd.follow.dto.FollowStatusResponse;
 import com.chmz31.checkpointd.follow.dto.UserSummaryResponse;
 import com.chmz31.checkpointd.follow.entity.Follow;
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
+import com.chmz31.checkpointd.notification.service.NotificationService;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import com.chmz31.checkpointd.user.model.Role;
@@ -44,6 +45,9 @@ class FollowServiceTests {
 
 	@Mock
 	private UserRepository userRepository;
+
+	@Mock
+	private NotificationService notificationService;
 
 	@InjectMocks
 	private FollowService followService;

@@ -15,12 +15,14 @@ import type {
   LibraryStats,
   LibraryStatus,
   LikeStatus,
+  NotificationItem,
   PaginatedResponse,
   PublicProfile,
   ReportedListComment,
   ReportedReviewComment,
   Review,
   ReviewRequest,
+  UnreadCount,
   UpdateProfileInput,
   UserSummary,
 } from './types';
@@ -462,6 +464,20 @@ export const api = {
   deleteLibraryEntry(entryId: string) {
     return apiRequest<void>(`/api/v1/library/${entryId}`, {
       method: 'DELETE',
+    });
+  },
+
+  getNotifications(page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<NotificationItem>>(`/api/v1/notifications?page=${page}&size=${size}`);
+  },
+
+  getUnreadNotificationCount() {
+    return apiRequest<UnreadCount>('/api/v1/notifications/unread-count');
+  },
+
+  markAllNotificationsAsRead() {
+    return apiRequest<void>('/api/v1/notifications/read-all', {
+      method: 'POST',
     });
   },
 };
