@@ -12,6 +12,7 @@ import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.like.dto.LikeStatusResponse;
 import com.chmz31.checkpointd.list.model.ListVisibility;
+import com.chmz31.checkpointd.notification.service.NotificationService;
 import com.chmz31.checkpointd.review.model.ReviewVisibility;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
@@ -28,18 +29,21 @@ public class CommentLikeService {
 	private final ListCommentLikeRepository listCommentLikeRepository;
 	private final ReviewCommentLikeRepository reviewCommentLikeRepository;
 	private final UserRepository userRepository;
+	private final NotificationService notificationService;
 
 	public CommentLikeService(
 			ListCommentRepository listCommentRepository,
 			ReviewCommentRepository reviewCommentRepository,
 			ListCommentLikeRepository listCommentLikeRepository,
 			ReviewCommentLikeRepository reviewCommentLikeRepository,
-			UserRepository userRepository) {
+			UserRepository userRepository,
+			NotificationService notificationService) {
 		this.listCommentRepository = listCommentRepository;
 		this.reviewCommentRepository = reviewCommentRepository;
 		this.listCommentLikeRepository = listCommentLikeRepository;
 		this.reviewCommentLikeRepository = reviewCommentLikeRepository;
 		this.userRepository = userRepository;
+		this.notificationService = notificationService;
 	}
 
 	@Transactional
@@ -53,6 +57,7 @@ public class CommentLikeService {
 		}
 
 		listCommentLikeRepository.save(new ListCommentLike(user, comment));
+		notificationService.notifyListCommentLiked(user, comment.getUser(), comment.getList());
 		return listCommentStatus(currentUserId, commentId);
 	}
 
@@ -83,6 +88,7 @@ public class CommentLikeService {
 		}
 
 		reviewCommentLikeRepository.save(new ReviewCommentLike(user, comment));
+		notificationService.notifyReviewCommentLiked(user, comment.getUser(), comment.getReview());
 		return reviewCommentStatus(currentUserId, commentId);
 	}
 

@@ -1,8 +1,42 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { api } from '../api';
 import { userProfilePath } from '../routePaths';
 import type { CurrentUser } from '../types';
 
+const UNREAD_POLL_INTERVAL_MS = 30000;
+
 export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogout: () => void }) {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    let cancelled = false;
+
+    function poll() {
+      api
+        .getUnreadNotificationCount()
+        .then((result) => {
+          if (!cancelled) setUnreadCount(result.count);
+        })
+        .catch(() => {
+          // Transient network hiccups shouldn't clear the badge.
+        });
+    }
+
+    poll();
+    const interval = window.setInterval(poll, UNREAD_POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [user]);
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -24,6 +58,11 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
             <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/lists/popular">
               Popular
             </NavLink>
+            {user && (
+              <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/notifications">
+                Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
+              </NavLink>
+            )}
             {user?.role === 'ADMIN' && (
               <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/admin/comments">
                 Moderation

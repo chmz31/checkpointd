@@ -7,6 +7,7 @@ import com.chmz31.checkpointd.follow.dto.FollowStatusResponse;
 import com.chmz31.checkpointd.follow.dto.UserSummaryResponse;
 import com.chmz31.checkpointd.follow.entity.Follow;
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
+import com.chmz31.checkpointd.notification.service.NotificationService;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import com.chmz31.checkpointd.user.repository.UserRepository;
@@ -24,10 +25,13 @@ public class FollowService {
 
 	private final FollowRepository followRepository;
 	private final UserRepository userRepository;
+	private final NotificationService notificationService;
 
-	public FollowService(FollowRepository followRepository, UserRepository userRepository) {
+	public FollowService(
+			FollowRepository followRepository, UserRepository userRepository, NotificationService notificationService) {
 		this.followRepository = followRepository;
 		this.userRepository = userRepository;
+		this.notificationService = notificationService;
 	}
 
 	@Transactional
@@ -45,6 +49,7 @@ public class FollowService {
 		}
 
 		followRepository.save(new Follow(follower, followee));
+		notificationService.notifyFollow(follower, followee);
 		return status(followee.getId(), true);
 	}
 

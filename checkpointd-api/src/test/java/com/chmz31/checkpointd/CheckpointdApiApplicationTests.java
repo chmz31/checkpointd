@@ -9,6 +9,7 @@ import com.chmz31.checkpointd.comment.repository.ReviewCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.notification.repository.NotificationRepository;
 import com.chmz31.checkpointd.like.repository.ListLikeRepository;
 import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
@@ -68,6 +69,9 @@ class CheckpointdApiApplicationTests {
 
 	@MockitoBean
 	private ReviewCommentLikeRepository reviewCommentLikeRepository;
+
+	@MockitoBean
+	private NotificationRepository notificationRepository;
 
 	@Test
 	void contextLoads() {

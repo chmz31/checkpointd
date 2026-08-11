@@ -22,6 +22,7 @@ import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.list.entity.GameList;
 import com.chmz31.checkpointd.list.model.ListVisibility;
 import com.chmz31.checkpointd.list.repository.GameListRepository;
+import com.chmz31.checkpointd.notification.service.NotificationService;
 import com.chmz31.checkpointd.review.entity.Review;
 import com.chmz31.checkpointd.review.model.ReviewVisibility;
 import com.chmz31.checkpointd.review.repository.ReviewRepository;
@@ -50,6 +51,7 @@ public class CommentService {
 	private final GameListRepository gameListRepository;
 	private final ReviewRepository reviewRepository;
 	private final UserRepository userRepository;
+	private final NotificationService notificationService;
 
 	public CommentService(
 			ListCommentRepository listCommentRepository,
@@ -60,7 +62,8 @@ public class CommentService {
 			ReviewCommentLikeRepository reviewCommentLikeRepository,
 			GameListRepository gameListRepository,
 			ReviewRepository reviewRepository,
-			UserRepository userRepository) {
+			UserRepository userRepository,
+			NotificationService notificationService) {
 		this.listCommentRepository = listCommentRepository;
 		this.reviewCommentRepository = reviewCommentRepository;
 		this.listCommentReportRepository = listCommentReportRepository;
@@ -70,6 +73,7 @@ public class CommentService {
 		this.gameListRepository = gameListRepository;
 		this.reviewRepository = reviewRepository;
 		this.userRepository = userRepository;
+		this.notificationService = notificationService;
 	}
 
 	@Transactional
@@ -80,6 +84,11 @@ public class CommentService {
 		ListComment parent = resolveParentListComment(listId, request.parentId());
 
 		ListComment saved = listCommentRepository.save(new ListComment(user, list, parent, request.body().trim()));
+		if (parent != null) {
+			notificationService.notifyListCommentReplied(user, parent.getUser(), list);
+		} else {
+			notificationService.notifyListCommented(user, list);
+		}
 		return toResponse(saved, userId);
 	}
 
@@ -129,6 +138,11 @@ public class CommentService {
 		ReviewComment parent = resolveParentReviewComment(reviewId, request.parentId());
 
 		ReviewComment saved = reviewCommentRepository.save(new ReviewComment(user, review, parent, request.body().trim()));
+		if (parent != null) {
+			notificationService.notifyReviewCommentReplied(user, parent.getUser(), review);
+		} else {
+			notificationService.notifyReviewCommented(user, review);
+		}
 		return toResponse(saved, userId);
 	}
 

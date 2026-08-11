@@ -8,6 +8,7 @@ import com.chmz31.checkpointd.like.entity.ReviewLike;
 import com.chmz31.checkpointd.like.repository.ListLikeRepository;
 import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.list.entity.GameList;
+import com.chmz31.checkpointd.notification.service.NotificationService;
 import com.chmz31.checkpointd.list.model.ListVisibility;
 import com.chmz31.checkpointd.list.repository.GameListRepository;
 import com.chmz31.checkpointd.review.entity.Review;
@@ -28,18 +29,21 @@ public class LikeService {
 	private final UserRepository userRepository;
 	private final GameListRepository gameListRepository;
 	private final ReviewRepository reviewRepository;
+	private final NotificationService notificationService;
 
 	public LikeService(
 			ListLikeRepository listLikeRepository,
 			ReviewLikeRepository reviewLikeRepository,
 			UserRepository userRepository,
 			GameListRepository gameListRepository,
-			ReviewRepository reviewRepository) {
+			ReviewRepository reviewRepository,
+			NotificationService notificationService) {
 		this.listLikeRepository = listLikeRepository;
 		this.reviewLikeRepository = reviewLikeRepository;
 		this.userRepository = userRepository;
 		this.gameListRepository = gameListRepository;
 		this.reviewRepository = reviewRepository;
+		this.notificationService = notificationService;
 	}
 
 	@Transactional
@@ -53,6 +57,7 @@ public class LikeService {
 		}
 
 		listLikeRepository.save(new ListLike(user, list));
+		notificationService.notifyListLiked(user, list);
 		return listStatus(currentUserId, list.getId());
 	}
 
@@ -83,6 +88,7 @@ public class LikeService {
 		}
 
 		reviewLikeRepository.save(new ReviewLike(user, review));
+		notificationService.notifyReviewLiked(user, review);
 		return reviewStatus(currentUserId, review.getId());
 	}
 

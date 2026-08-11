@@ -26,6 +26,7 @@ import com.chmz31.checkpointd.like.repository.ListLikeRepository;
 import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
 import com.chmz31.checkpointd.list.repository.GameListRepository;
+import com.chmz31.checkpointd.notification.repository.NotificationRepository;
 import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
@@ -98,6 +99,9 @@ class AuthControllerTests {
 
 	@MockitoBean
 	private ReviewCommentLikeRepository reviewCommentLikeRepository;
+
+	@MockitoBean
+	private NotificationRepository notificationRepository;
 
 	@Test
 	void authPreflightAllowsLocalViteOrigin() throws Exception {

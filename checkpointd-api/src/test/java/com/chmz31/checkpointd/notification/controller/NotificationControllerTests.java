@@ -1,15 +1,16 @@
-package com.chmz31.checkpointd.comment.controller;
+package com.chmz31.checkpointd.notification.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.chmz31.checkpointd.comment.entity.ListComment;
-import com.chmz31.checkpointd.comment.entity.ReviewComment;
 import com.chmz31.checkpointd.comment.repository.ListCommentLikeRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentRepository;
@@ -18,7 +19,6 @@ import com.chmz31.checkpointd.comment.repository.ReviewCommentReportRepository;
 import com.chmz31.checkpointd.comment.repository.ReviewCommentRepository;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
-import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.like.repository.ListLikeRepository;
@@ -27,9 +27,9 @@ import com.chmz31.checkpointd.list.entity.GameList;
 import com.chmz31.checkpointd.list.model.ListVisibility;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
 import com.chmz31.checkpointd.list.repository.GameListRepository;
+import com.chmz31.checkpointd.notification.entity.Notification;
+import com.chmz31.checkpointd.notification.model.NotificationType;
 import com.chmz31.checkpointd.notification.repository.NotificationRepository;
-import com.chmz31.checkpointd.review.entity.Review;
-import com.chmz31.checkpointd.review.model.ReviewVisibility;
 import com.chmz31.checkpointd.review.repository.ReviewRepository;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
@@ -51,17 +51,17 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class AdminCommentControllerTests {
+class NotificationControllerTests {
 
 	private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
 	private static final UUID OTHER_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
 	private static final UUID LIST_ID = UUID.fromString("00000000-0000-0000-0000-000000000401");
-	private static final UUID REVIEW_ID = UUID.fromString("00000000-0000-0000-0000-000000000301");
-	private static final UUID COMMENT_ID = UUID.fromString("00000000-0000-0000-0000-000000000601");
-	private static final UUID GAME_ID = UUID.fromString("00000000-0000-0000-0000-000000000101");
 
 	@Autowired
 	private MockMvc mockMvc;
+
+	@MockitoBean
+	private NotificationRepository notificationRepository;
 
 	@MockitoBean
 	private ListCommentRepository listCommentRepository;
@@ -80,9 +80,6 @@ class AdminCommentControllerTests {
 
 	@MockitoBean
 	private ReviewCommentLikeRepository reviewCommentLikeRepository;
-
-	@MockitoBean
-	private NotificationRepository notificationRepository;
 
 	@MockitoBean
 	private ListLikeRepository listLikeRepository;
@@ -115,56 +112,61 @@ class AdminCommentControllerTests {
 	private ExternalGameImportService externalGameImportService;
 
 	@Test
-	void reportedListCommentsRequiresAuthentication() throws Exception {
-		mockMvc.perform(get("/api/v1/admin/comments/lists/reported"))
+	void listRequiresAuthentication() throws Exception {
+		mockMvc.perform(get("/api/v1/notifications"))
 				.andExpect(status().isUnauthorized());
 	}
 
 	@Test
-	void reportedListCommentsRejectsNonAdmin() throws Exception {
-		mockMvc.perform(get("/api/v1/admin/comments/lists/reported")
-						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()).claim("role", "USER"))))
-				.andExpect(status().isForbidden())
-				.andExpect(jsonPath("$.message").value("Admin access required"));
-	}
+	void authenticatedUserCanListNotifications() throws Exception {
+		GameList list = list();
+		Notification notification = new Notification(user(USER_ID), user(OTHER_USER_ID), NotificationType.LIST_LIKE, list, null);
+		ReflectionTestUtils.setField(notification, "id", UUID.randomUUID());
+		ReflectionTestUtils.setField(notification, "createdAt", java.time.Instant.parse("2026-01-01T00:00:00Z"));
 
-	@Test
-	void adminCanListReportedListComments() throws Exception {
-		when(listCommentRepository.findReportedOrderByCreatedAtDesc(any(Pageable.class)))
-				.thenReturn(new PageImpl<>(List.of(listComment())));
-		when(listCommentReportRepository.countByCommentId(COMMENT_ID)).thenReturn(3L);
+		when(notificationRepository.findByRecipientIdOrderByCreatedAtDesc(eq(USER_ID), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(notification)));
 
-		mockMvc.perform(get("/api/v1/admin/comments/lists/reported")
-						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()).claim("role", "ADMIN"))))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.content", hasSize(1)))
-				.andExpect(jsonPath("$.content[0].reportCount").value(3))
-				.andExpect(jsonPath("$.content[0].listName").value("Favorites"));
-	}
-
-	@Test
-	void reportedReviewCommentsRejectsNonAdmin() throws Exception {
-		mockMvc.perform(get("/api/v1/admin/comments/reviews/reported")
+		mockMvc.perform(get("/api/v1/notifications")
 						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
-				.andExpect(status().isForbidden());
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].type").value("LIST_LIKE"))
+				.andExpect(jsonPath("$.content[0].actorUsername").value("player-" + OTHER_USER_ID));
 	}
 
 	@Test
-	void adminCanListReportedReviewComments() throws Exception {
-		when(reviewCommentRepository.findReportedOrderByCreatedAtDesc(any(Pageable.class)))
-				.thenReturn(new PageImpl<>(List.of(reviewComment())));
-		when(reviewCommentReportRepository.countByCommentId(COMMENT_ID)).thenReturn(1L);
+	void unreadCountRequiresAuthentication() throws Exception {
+		mockMvc.perform(get("/api/v1/notifications/unread-count"))
+				.andExpect(status().isUnauthorized());
+	}
 
-		mockMvc.perform(get("/api/v1/admin/comments/reviews/reported")
-						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()).claim("role", "ADMIN"))))
+	@Test
+	void authenticatedUserCanGetUnreadCount() throws Exception {
+		when(notificationRepository.countByRecipientIdAndReadFalse(USER_ID)).thenReturn(3L);
+
+		mockMvc.perform(get("/api/v1/notifications/unread-count")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.content", hasSize(1)))
-				.andExpect(jsonPath("$.content[0].gameTitle").value("Chrono Trigger"));
+				.andExpect(jsonPath("$.count").value(3));
+	}
+
+	@Test
+	void markAllAsReadRequiresAuthentication() throws Exception {
+		mockMvc.perform(post("/api/v1/notifications/read-all").with(csrf()))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void authenticatedUserCanMarkAllAsRead() throws Exception {
+		mockMvc.perform(post("/api/v1/notifications/read-all")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString())))
+						.with(csrf()))
+				.andExpect(status().isNoContent());
 	}
 
 	private User user(UUID id) {
 		User user = new User(id + "@example.com", "player-" + id, "hash", Role.USER);
-		user.setDisplayName("Player " + id);
 		user.setProfileVisibility(ProfileVisibility.PUBLIC);
 		ReflectionTestUtils.setField(user, "id", id);
 
@@ -172,39 +174,10 @@ class AdminCommentControllerTests {
 	}
 
 	private GameList list() {
-		GameList list = new GameList(user(OTHER_USER_ID), "Favorites");
+		GameList list = new GameList(user(USER_ID), "Favorites");
 		list.setVisibility(ListVisibility.PUBLIC);
 		ReflectionTestUtils.setField(list, "id", LIST_ID);
 
 		return list;
-	}
-
-	private Game game() {
-		Game game = new Game("Chrono Trigger");
-		ReflectionTestUtils.setField(game, "id", GAME_ID);
-
-		return game;
-	}
-
-	private Review review() {
-		Review review = new Review(user(OTHER_USER_ID), game(), "A public opinion.");
-		review.setVisibility(ReviewVisibility.PUBLIC);
-		ReflectionTestUtils.setField(review, "id", REVIEW_ID);
-
-		return review;
-	}
-
-	private ListComment listComment() {
-		ListComment comment = new ListComment(user(OTHER_USER_ID), list(), "Great list!");
-		ReflectionTestUtils.setField(comment, "id", COMMENT_ID);
-
-		return comment;
-	}
-
-	private ReviewComment reviewComment() {
-		ReviewComment comment = new ReviewComment(user(OTHER_USER_ID), review(), "Great review!");
-		ReflectionTestUtils.setField(comment, "id", COMMENT_ID);
-
-		return comment;
 	}
 }
