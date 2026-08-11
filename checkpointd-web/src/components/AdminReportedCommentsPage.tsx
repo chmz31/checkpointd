@@ -53,7 +53,12 @@ function ReportedListComments() {
       <h3>List comments</h3>
       {error && <p className="error compact-message">{error}</p>}
       {loading && <p className="muted">Loading...</p>}
-      {!loading && comments?.content.length === 0 && <p className="muted">No reported list comments.</p>}
+      {!loading && comments?.content.length === 0 && (
+        <div className="empty-state catalog-empty">
+          <h3>No reported list comments</h3>
+          <p>Comments flagged by users will show up here.</p>
+        </div>
+      )}
       {comments?.content.map((comment) => (
         <div key={comment.id} className="comment-item">
           <p className="muted">
@@ -108,7 +113,12 @@ function ReportedReviewComments() {
       <h3>Review comments</h3>
       {error && <p className="error compact-message">{error}</p>}
       {loading && <p className="muted">Loading...</p>}
-      {!loading && comments?.content.length === 0 && <p className="muted">No reported review comments.</p>}
+      {!loading && comments?.content.length === 0 && (
+        <div className="empty-state catalog-empty">
+          <h3>No reported review comments</h3>
+          <p>Comments flagged by users will show up here.</p>
+        </div>
+      )}
       {comments?.content.map((comment) => (
         <div key={comment.id} className="comment-item">
           <p className="muted">

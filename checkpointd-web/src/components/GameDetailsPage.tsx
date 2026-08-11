@@ -134,7 +134,10 @@ export function GameDetailsPage() {
   if (!game) {
     return (
       <section className="panel">
-        <p className="error">{error || 'Game not found'}</p>
+        <div className="empty-state catalog-empty">
+          <h3>Game not found</h3>
+          <p>{error || 'This game does not exist or could not be loaded.'}</p>
+        </div>
         <Link className="nav-link" to="/library">
           Back to library
         </Link>
@@ -300,7 +303,12 @@ export function GameDetailsPage() {
                 <ReviewCard key={review.id} review={review} showGame={false} />
               ))}
             </div>
-            {reviews.length === 0 && <p className="muted">No public reviews yet.</p>}
+            {reviews.length === 0 && (
+              <div className="empty-state catalog-empty">
+                <h3>No public reviews yet</h3>
+                <p>Be the first to share your thoughts on this game.</p>
+              </div>
+            )}
           </section>
 
           <section className="detail-section callout-section">
