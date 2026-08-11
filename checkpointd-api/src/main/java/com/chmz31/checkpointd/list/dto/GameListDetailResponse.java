@@ -13,12 +13,15 @@ public record GameListDetailResponse(
 		String name,
 		String description,
 		ListVisibility visibility,
+		long likeCount,
+		boolean liked,
 		Instant createdAt,
 		Instant updatedAt,
 		boolean owner,
 		List<GameListItemResponse> items) {
 
-	public static GameListDetailResponse from(GameList list, List<GameListItemResponse> items, boolean owner) {
+	public static GameListDetailResponse from(
+			GameList list, List<GameListItemResponse> items, long likeCount, boolean liked, boolean owner) {
 		return new GameListDetailResponse(
 				list.getId(),
 				list.getUser().getUsername(),
@@ -26,6 +29,8 @@ public record GameListDetailResponse(
 				list.getName(),
 				list.getDescription(),
 				list.getVisibility(),
+				likeCount,
+				liked,
 				list.getCreatedAt(),
 				list.getUpdatedAt(),
 				owner,

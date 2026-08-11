@@ -21,6 +21,8 @@ import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.like.repository.ListLikeRepository;
+import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.review.entity.Review;
 import com.chmz31.checkpointd.review.model.ReviewVisibility;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
@@ -82,6 +84,12 @@ class ReviewControllerTests {
 	@MockitoBean
 	private ExternalGameImportService externalGameImportService;
 
+	@MockitoBean
+	private ListLikeRepository listLikeRepository;
+
+	@MockitoBean
+	private ReviewLikeRepository reviewLikeRepository;
+
 	@Test
 	void authenticatedUserCanCreateReview() throws Exception {
 		when(libraryEntryRepository.findByUserIdAndGameId(USER_ID, GAME_ID))
@@ -112,6 +120,8 @@ class ReviewControllerTests {
 				.andExpect(jsonPath("$.containsSpoilers").value(true))
 				.andExpect(jsonPath("$.visibility").value("PUBLIC"))
 				.andExpect(jsonPath("$.owner").value(true))
+				.andExpect(jsonPath("$.likeCount").value(0))
+				.andExpect(jsonPath("$.liked").value(false))
 				.andExpect(jsonPath("$.notes").doesNotExist());
 	}
 
@@ -179,12 +189,15 @@ class ReviewControllerTests {
 		when(reviewRepository.findByGameIdAndVisibilityAndUserProfileVisibilityOrderByUpdatedAtDesc(
 				eq(GAME_ID), eq(ReviewVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(review), PageRequest.of(0, 10), 1));
+		when(reviewLikeRepository.countByReviewId(REVIEW_ID)).thenReturn(2L);
 
 		mockMvc.perform(get("/api/v1/reviews/games/{gameId}", GAME_ID))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.content", hasSize(1)))
 				.andExpect(jsonPath("$.content[0].visibility").value("PUBLIC"))
-				.andExpect(jsonPath("$.content[0].username").value("playerone"));
+				.andExpect(jsonPath("$.content[0].username").value("playerone"))
+				.andExpect(jsonPath("$.content[0].likeCount").value(2))
+				.andExpect(jsonPath("$.content[0].liked").value(false));
 	}
 
 	@Test

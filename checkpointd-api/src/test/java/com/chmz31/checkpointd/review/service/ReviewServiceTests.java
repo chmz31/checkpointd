@@ -15,6 +15,7 @@ import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.review.dto.ReviewRequest;
 import com.chmz31.checkpointd.review.dto.ReviewResponse;
 import com.chmz31.checkpointd.review.entity.Review;
@@ -58,6 +59,9 @@ class ReviewServiceTests {
 	@Mock
 	private LibraryEntryRepository libraryEntryRepository;
 
+	@Mock
+	private ReviewLikeRepository reviewLikeRepository;
+
 	@InjectMocks
 	private ReviewService reviewService;
 
@@ -67,7 +71,7 @@ class ReviewServiceTests {
 				eq(GAME_ID), eq(ReviewVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(review(ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC))));
 
-		Page<ReviewResponse> reviews = reviewService.getPublicGameReviews(GAME_ID, 0, 10);
+		Page<ReviewResponse> reviews = reviewService.getPublicGameReviews(GAME_ID, null, 0, 10);
 
 		assertThat(reviews.getContent()).extracting(ReviewResponse::owner).containsExactly(false);
 	}
@@ -79,7 +83,7 @@ class ReviewServiceTests {
 				.thenReturn(new PageImpl<>(List.of(review(ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC))));
 		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
-		reviewService.getPublicGameReviews(GAME_ID, -2, 500);
+		reviewService.getPublicGameReviews(GAME_ID, null, -2, 500);
 
 		verify(reviewRepository).findByGameIdAndVisibilityAndUserProfileVisibilityOrderByUpdatedAtDesc(
 				eq(GAME_ID), eq(ReviewVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), pageableCaptor.capture());
@@ -94,7 +98,7 @@ class ReviewServiceTests {
 				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(review(ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC))));
 
-		Page<ReviewResponse> reviews = reviewService.getPublicUserReviews("playerone", 0, 10);
+		Page<ReviewResponse> reviews = reviewService.getPublicUserReviews("playerone", null, 0, 10);
 
 		assertThat(reviews.getContent()).extracting(ReviewResponse::username).containsExactly("playerone");
 	}
@@ -103,7 +107,7 @@ class ReviewServiceTests {
 	void getPublicUserReviewsRejectsPrivateProfile() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PRIVATE)));
 
-		assertThatThrownBy(() -> reviewService.getPublicUserReviews("playerone", 0, 10))
+		assertThatThrownBy(() -> reviewService.getPublicUserReviews("playerone", null, 0, 10))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Profile not found");
 	}
@@ -112,7 +116,7 @@ class ReviewServiceTests {
 	void getPublicUserReviewsRejectsMissingUser() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> reviewService.getPublicUserReviews("playerone", 0, 10))
+		assertThatThrownBy(() -> reviewService.getPublicUserReviews("playerone", null, 0, 10))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Profile not found");
 	}
@@ -124,7 +128,7 @@ class ReviewServiceTests {
 				"playerone", GAME_ID, ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC))
 				.thenReturn(Optional.of(review(ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC)));
 
-		ReviewResponse response = reviewService.getPublicUserGameReview("playerone", GAME_ID);
+		ReviewResponse response = reviewService.getPublicUserGameReview("playerone", GAME_ID, null);
 
 		assertThat(response.owner()).isFalse();
 		assertThat(response.gameId()).isEqualTo(GAME_ID);
@@ -134,7 +138,7 @@ class ReviewServiceTests {
 	void getPublicUserGameReviewRejectsPrivateProfileBeforeQueryingReview() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PRIVATE)));
 
-		assertThatThrownBy(() -> reviewService.getPublicUserGameReview("playerone", GAME_ID))
+		assertThatThrownBy(() -> reviewService.getPublicUserGameReview("playerone", GAME_ID, null))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Profile not found");
 
@@ -149,7 +153,7 @@ class ReviewServiceTests {
 				"playerone", GAME_ID, ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC))
 				.thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> reviewService.getPublicUserGameReview("playerone", GAME_ID))
+		assertThatThrownBy(() -> reviewService.getPublicUserGameReview("playerone", GAME_ID, null))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Review not found");
 	}
@@ -158,10 +162,14 @@ class ReviewServiceTests {
 	void getMyReviewsReturnsOwnersReviews() {
 		when(reviewRepository.findByUserIdOrderByUpdatedAtDesc(eq(USER_ID), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(review(ReviewVisibility.PRIVATE, ProfileVisibility.PUBLIC))));
+		when(reviewLikeRepository.countByReviewId(REVIEW_ID)).thenReturn(6L);
+		when(reviewLikeRepository.existsByUserIdAndReviewId(USER_ID, REVIEW_ID)).thenReturn(true);
 
 		Page<ReviewResponse> reviews = reviewService.getMyReviews(USER_ID, 0, 10);
 
 		assertThat(reviews.getContent()).extracting(ReviewResponse::owner).containsExactly(true);
+		assertThat(reviews.getContent()).extracting(ReviewResponse::likeCount).containsExactly(6L);
+		assertThat(reviews.getContent()).extracting(ReviewResponse::liked).containsExactly(true);
 	}
 
 	@Test

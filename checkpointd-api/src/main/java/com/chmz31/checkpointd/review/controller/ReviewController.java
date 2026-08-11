@@ -31,25 +31,28 @@ public class ReviewController {
 
 	@GetMapping("/games/{gameId}")
 	PaginatedResponse<ReviewResponse> gameReviews(
+			@AuthenticationPrincipal Jwt jwt,
 			@PathVariable UUID gameId,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
-		var reviews = reviewService.getPublicGameReviews(gameId, page, size);
+		var reviews = reviewService.getPublicGameReviews(gameId, currentUserId(jwt), page, size);
 		return PaginatedResponse.from(reviews, reviews.getContent());
 	}
 
 	@GetMapping("/users/{username}")
 	PaginatedResponse<ReviewResponse> userReviews(
+			@AuthenticationPrincipal Jwt jwt,
 			@PathVariable String username,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
-		var reviews = reviewService.getPublicUserReviews(username, page, size);
+		var reviews = reviewService.getPublicUserReviews(username, currentUserId(jwt), page, size);
 		return PaginatedResponse.from(reviews, reviews.getContent());
 	}
 
 	@GetMapping("/users/{username}/games/{gameId}")
-	ReviewResponse userGameReview(@PathVariable String username, @PathVariable UUID gameId) {
-		return reviewService.getPublicUserGameReview(username, gameId);
+	ReviewResponse userGameReview(
+			@AuthenticationPrincipal Jwt jwt, @PathVariable String username, @PathVariable UUID gameId) {
+		return reviewService.getPublicUserGameReview(username, gameId, currentUserId(jwt));
 	}
 
 	@GetMapping("/me")
@@ -81,6 +84,6 @@ public class ReviewController {
 	}
 
 	private UUID currentUserId(Jwt jwt) {
-		return UUID.fromString(jwt.getSubject());
+		return jwt == null ? null : UUID.fromString(jwt.getSubject());
 	}
 }

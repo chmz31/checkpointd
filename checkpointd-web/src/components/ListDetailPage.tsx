@@ -4,6 +4,7 @@ import { api } from '../api';
 import { gamePath, userProfilePath } from '../routePaths';
 import type { CurrentUser, Game, GameListDetail, GameListRequest } from '../types';
 import { CoverImage } from './CoverImage';
+import { LikeButton } from './LikeButton';
 import { ListForm } from './ListForm';
 
 export function ListDetailPage({ currentUser }: { currentUser: CurrentUser | null }) {
@@ -140,6 +141,17 @@ export function ListDetailPage({ currentUser }: { currentUser: CurrentUser | nul
           </p>
         </div>
         <div className="inline-actions">
+          {currentUser && (
+            <LikeButton
+              liked={list.liked}
+              likeCount={list.likeCount}
+              onLike={() => api.likeList(list.id)}
+              onUnlike={() => api.unlikeList(list.id)}
+              onChange={(status) =>
+                setList((current) => (current ? { ...current, liked: status.liked, likeCount: status.likeCount } : current))
+              }
+            />
+          )}
           <button className="button-ghost button-small" onClick={shareList}>
             Share
           </button>

@@ -4,6 +4,7 @@ import com.chmz31.checkpointd.common.exception.DuplicateResourceException;
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.repository.GameRepository;
+import com.chmz31.checkpointd.like.repository.ListLikeRepository;
 import com.chmz31.checkpointd.list.dto.AddGameListItemRequest;
 import com.chmz31.checkpointd.list.dto.GameListDetailResponse;
 import com.chmz31.checkpointd.list.dto.GameListItemResponse;
@@ -32,16 +33,19 @@ public class GameListService {
 
 	private final GameListRepository gameListRepository;
 	private final GameListItemRepository gameListItemRepository;
+	private final ListLikeRepository listLikeRepository;
 	private final UserRepository userRepository;
 	private final GameRepository gameRepository;
 
 	public GameListService(
 			GameListRepository gameListRepository,
 			GameListItemRepository gameListItemRepository,
+			ListLikeRepository listLikeRepository,
 			UserRepository userRepository,
 			GameRepository gameRepository) {
 		this.gameListRepository = gameListRepository;
 		this.gameListItemRepository = gameListItemRepository;
+		this.listLikeRepository = listLikeRepository;
 		this.userRepository = userRepository;
 		this.gameRepository = gameRepository;
 	}
@@ -56,21 +60,21 @@ public class GameListService {
 		list.setVisibility(request.visibility() == null ? ListVisibility.PUBLIC : request.visibility());
 
 		GameList saved = gameListRepository.save(list);
-		return GameListResponse.from(saved, 0, true);
+		return GameListResponse.from(saved, 0, 0, false, true);
 	}
 
 	@Transactional(readOnly = true)
 	public Page<GameListResponse> getMyLists(UUID userId, int page, int size) {
 		return gameListRepository.findByUserIdOrderByUpdatedAtDesc(userId, pageRequest(page, size))
-				.map(list -> GameListResponse.from(list, gameListItemRepository.countByListId(list.getId()), true));
+				.map(list -> toResponse(list, userId, true));
 	}
 
 	@Transactional(readOnly = true)
-	public Page<GameListResponse> getPublicLists(String username, int page, int size) {
+	public Page<GameListResponse> getPublicLists(String username, UUID currentUserId, int page, int size) {
 		User user = publicUser(username);
 		return gameListRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
 				user.getUsername(), ProfileVisibility.PUBLIC, ListVisibility.PUBLIC, pageRequest(page, size))
-				.map(list -> GameListResponse.from(list, gameListItemRepository.countByListId(list.getId()), false));
+				.map(list -> toResponse(list, currentUserId, false));
 	}
 
 	@Transactional(readOnly = true)
@@ -78,16 +82,16 @@ public class GameListService {
 		GameList list = gameListRepository.findByIdAndUserId(listId, userId)
 				.orElseThrow(() -> new ResourceNotFoundException("List not found"));
 
-		return GameListDetailResponse.from(list, items(list.getId()), true);
+		return toDetailResponse(list, userId, true);
 	}
 
 	@Transactional(readOnly = true)
-	public GameListDetailResponse getPublicList(String username, UUID listId) {
+	public GameListDetailResponse getPublicList(String username, UUID listId, UUID currentUserId) {
 		GameList list = gameListRepository.findByIdAndUserUsernameAndVisibilityAndUserProfileVisibility(
 				listId, username, ListVisibility.PUBLIC, ProfileVisibility.PUBLIC)
 				.orElseThrow(() -> new ResourceNotFoundException("List not found"));
 
-		return GameListDetailResponse.from(list, items(list.getId()), false);
+		return toDetailResponse(list, currentUserId, false);
 	}
 
 	@Transactional
@@ -98,7 +102,7 @@ public class GameListService {
 		list.setVisibility(request.visibility() == null ? ListVisibility.PUBLIC : request.visibility());
 
 		GameList saved = gameListRepository.save(list);
-		return GameListResponse.from(saved, gameListItemRepository.countByListId(saved.getId()), true);
+		return toResponse(saved, userId, true);
 	}
 
 	@Transactional
@@ -120,7 +124,7 @@ public class GameListService {
 		int nextPosition = gameListItemRepository.maxPositionByListId(listId) + 1;
 		gameListItemRepository.save(new GameListItem(list, game, nextPosition));
 
-		return GameListDetailResponse.from(list, items(listId), true);
+		return toDetailResponse(list, userId, true);
 	}
 
 	@Transactional
@@ -130,7 +134,7 @@ public class GameListService {
 				.orElseThrow(() -> new ResourceNotFoundException("List item not found"));
 
 		gameListItemRepository.delete(item);
-		return GameListDetailResponse.from(list, items(listId), true);
+		return toDetailResponse(list, userId, true);
 	}
 
 	private GameList getOwnedList(UUID userId, UUID listId) {
@@ -142,6 +146,18 @@ public class GameListService {
 		return gameListItemRepository.findByListIdOrderByPositionAsc(listId).stream()
 				.map(GameListItemResponse::from)
 				.toList();
+	}
+
+	private GameListResponse toResponse(GameList list, UUID currentUserId, boolean owner) {
+		long likeCount = listLikeRepository.countByListId(list.getId());
+		boolean liked = currentUserId != null && listLikeRepository.existsByUserIdAndListId(currentUserId, list.getId());
+		return GameListResponse.from(list, gameListItemRepository.countByListId(list.getId()), likeCount, liked, owner);
+	}
+
+	private GameListDetailResponse toDetailResponse(GameList list, UUID currentUserId, boolean owner) {
+		long likeCount = listLikeRepository.countByListId(list.getId());
+		boolean liked = currentUserId != null && listLikeRepository.existsByUserIdAndListId(currentUserId, list.getId());
+		return GameListDetailResponse.from(list, items(list.getId()), likeCount, liked, owner);
 	}
 
 	private User publicUser(String username) {

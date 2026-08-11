@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../api';
 import { formatDate } from '../dateUtils';
 import { gamePath, userGameReviewPath, userProfilePath } from '../routePaths';
-import type { Review } from '../types';
+import type { LikeStatus, Review } from '../types';
 import { CoverImage } from './CoverImage';
+import { LikeButton } from './LikeButton';
 
 export function ReviewCard({
   review,
   showGame = true,
   currentUsername = null,
+  onLikeChange,
 }: {
   review: Review;
   showGame?: boolean;
   currentUsername?: string | null;
+  onLikeChange?: (status: LikeStatus) => void;
 }) {
   const [revealed, setRevealed] = useState(!review.containsSpoilers);
   const authorName = review.displayName || review.username;
@@ -48,6 +52,15 @@ export function ReviewCard({
           <p className="review-text">{review.body}</p>
         )}
         <div className="inline-actions">
+          {currentUsername && (
+            <LikeButton
+              liked={review.liked}
+              likeCount={review.likeCount}
+              onLike={() => api.likeReview(review.id)}
+              onUnlike={() => api.unlikeReview(review.id)}
+              onChange={(status) => onLikeChange?.(status)}
+            />
+          )}
           {review.containsSpoilers && <span className="status-badge">Spoilers</span>}
           <Link
             className="inline-link"

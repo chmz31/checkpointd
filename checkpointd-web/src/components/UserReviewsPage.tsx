@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { userProfilePath } from '../routePaths';
-import type { CurrentUser, PaginatedResponse, Review } from '../types';
+import type { CurrentUser, LikeStatus, PaginatedResponse, Review } from '../types';
 import { ReviewCard } from './ReviewCard';
 
 export function UserReviewsPage({ currentUser }: { currentUser: CurrentUser | null }) {
@@ -22,6 +22,19 @@ export function UserReviewsPage({ currentUser }: { currentUser: CurrentUser | nu
       .catch((caught) => setError(caught instanceof Error ? caught.message : 'Could not load reviews'))
       .finally(() => setLoading(false));
   }, [username, page]);
+
+  function updateReviewLike(reviewId: string, status: LikeStatus) {
+    setReviews((current) =>
+      current
+        ? {
+            ...current,
+            content: current.content.map((review) =>
+              review.id === reviewId ? { ...review, liked: status.liked, likeCount: status.likeCount } : review,
+            ),
+          }
+        : current,
+    );
+  }
 
   return (
     <section className="panel review-page">
@@ -48,7 +61,12 @@ export function UserReviewsPage({ currentUser }: { currentUser: CurrentUser | nu
       )}
       <div className="review-list">
         {reviews?.content.map((review) => (
-          <ReviewCard key={review.id} review={review} currentUsername={currentUser?.username ?? null} />
+          <ReviewCard
+            key={review.id}
+            review={review}
+            currentUsername={currentUser?.username ?? null}
+            onLikeChange={(status) => updateReviewLike(review.id, status)}
+          />
         ))}
       </div>
       {reviews && reviews.totalPages > 1 && (

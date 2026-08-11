@@ -7,6 +7,7 @@ import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.review.dto.ReviewRequest;
 import com.chmz31.checkpointd.review.dto.ReviewResponse;
 import com.chmz31.checkpointd.review.entity.Review;
@@ -32,64 +33,67 @@ public class ReviewService {
 			LibraryStatus.PLAYING, LibraryStatus.COMPLETED, LibraryStatus.DROPPED, LibraryStatus.PAUSED);
 
 	private final ReviewRepository reviewRepository;
+	private final ReviewLikeRepository reviewLikeRepository;
 	private final UserRepository userRepository;
 	private final GameRepository gameRepository;
 	private final LibraryEntryRepository libraryEntryRepository;
 
 	public ReviewService(
 			ReviewRepository reviewRepository,
+			ReviewLikeRepository reviewLikeRepository,
 			UserRepository userRepository,
 			GameRepository gameRepository,
 			LibraryEntryRepository libraryEntryRepository) {
 		this.reviewRepository = reviewRepository;
+		this.reviewLikeRepository = reviewLikeRepository;
 		this.userRepository = userRepository;
 		this.gameRepository = gameRepository;
 		this.libraryEntryRepository = libraryEntryRepository;
 	}
 
 	@Transactional(readOnly = true)
-	public Page<ReviewResponse> getPublicGameReviews(UUID gameId, int page, int size) {
+	public Page<ReviewResponse> getPublicGameReviews(UUID gameId, UUID currentUserId, int page, int size) {
 		return reviewRepository.findByGameIdAndVisibilityAndUserProfileVisibilityOrderByUpdatedAtDesc(
 				gameId,
 				ReviewVisibility.PUBLIC,
 				ProfileVisibility.PUBLIC,
 				pageRequest(page, size))
-				.map(review -> ReviewResponse.from(review, false));
+				.map(review -> toResponse(review, currentUserId, false));
 	}
 
 	@Transactional(readOnly = true)
-	public Page<ReviewResponse> getPublicUserReviews(String username, int page, int size) {
+	public Page<ReviewResponse> getPublicUserReviews(String username, UUID currentUserId, int page, int size) {
 		User user = publicUser(username);
 		return reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
 				user.getUsername(),
 				ProfileVisibility.PUBLIC,
 				ReviewVisibility.PUBLIC,
 				pageRequest(page, size))
-				.map(review -> ReviewResponse.from(review, false));
+				.map(review -> toResponse(review, currentUserId, false));
 	}
 
 	@Transactional(readOnly = true)
-	public ReviewResponse getPublicUserGameReview(String username, UUID gameId) {
+	public ReviewResponse getPublicUserGameReview(String username, UUID gameId, UUID currentUserId) {
 		publicUser(username);
 		return reviewRepository.findByUserUsernameAndGameIdAndVisibilityAndUserProfileVisibility(
 				username,
 				gameId,
 				ReviewVisibility.PUBLIC,
 				ProfileVisibility.PUBLIC)
-				.map(review -> ReviewResponse.from(review, false))
+				.map(review -> toResponse(review, currentUserId, false))
 				.orElseThrow(() -> new ResourceNotFoundException("Review not found"));
 	}
 
 	@Transactional(readOnly = true)
 	public Page<ReviewResponse> getMyReviews(UUID userId, int page, int size) {
 		return reviewRepository.findByUserIdOrderByUpdatedAtDesc(userId, pageRequest(page, size))
-				.map(review -> ReviewResponse.from(review, true));
+				.map(review -> toResponse(review, userId, true));
 	}
 
 	@Transactional(readOnly = true)
 	public ReviewResponse getMyGameReview(UUID userId, UUID gameId) {
 		return reviewRepository.findByUserIdAndGameId(userId, gameId)
-				.map(review -> ReviewResponse.from(review, true))
+				.map(review -> toResponse(review, userId, true))
 				.orElseThrow(() -> new ResourceNotFoundException("Review not found"));
 	}
 
@@ -108,7 +112,7 @@ public class ReviewService {
 		review.setContainsSpoilers(Boolean.TRUE.equals(request.containsSpoilers()));
 		review.setVisibility(request.visibility() == null ? ReviewVisibility.PUBLIC : request.visibility());
 
-		return ReviewResponse.from(reviewRepository.save(review), true);
+		return toResponse(reviewRepository.save(review), userId, true);
 	}
 
 	@Transactional
@@ -116,6 +120,13 @@ public class ReviewService {
 		Review review = reviewRepository.findByUserIdAndGameId(userId, gameId)
 				.orElseThrow(() -> new ResourceNotFoundException("Review not found"));
 		reviewRepository.delete(review);
+	}
+
+	private ReviewResponse toResponse(Review review, UUID currentUserId, boolean owner) {
+		long likeCount = reviewLikeRepository.countByReviewId(review.getId());
+		boolean liked = currentUserId != null
+				&& reviewLikeRepository.existsByUserIdAndReviewId(currentUserId, review.getId());
+		return ReviewResponse.from(review, likeCount, liked, owner);
 	}
 
 	private void requireReviewEligibility(UUID userId, UUID gameId) {

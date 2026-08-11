@@ -24,6 +24,8 @@ import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
+import com.chmz31.checkpointd.like.repository.ListLikeRepository;
+import com.chmz31.checkpointd.like.repository.ReviewLikeRepository;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
 import com.chmz31.checkpointd.list.repository.GameListRepository;
 import com.chmz31.checkpointd.review.repository.ReviewRepository;
@@ -82,6 +84,12 @@ class LibraryControllerTests {
 
 	@MockitoBean
 	private GameListItemRepository gameListItemRepository;
+
+	@MockitoBean
+	private ListLikeRepository listLikeRepository;
+
+	@MockitoBean
+	private ReviewLikeRepository reviewLikeRepository;
 
 	@Test
 	void createRequiresAuthentication() throws Exception {
