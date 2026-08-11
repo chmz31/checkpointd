@@ -372,6 +372,57 @@ h3 {
   background: rgba(29, 26, 18, 0.34);
 }
 
+.comment-item {
+  border: 1px solid rgba(139, 211, 199, 0.14);
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: rgba(9, 15, 23, 0.5);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.callout-section > .comment-item + .comment-item {
+  margin-top: 0.75rem;
+}
+
+.comment-reply {
+  margin-left: 1.5rem;
+  border-color: rgba(139, 211, 199, 0.1);
+  background: rgba(9, 15, 23, 0.32);
+}
+
+.comment-replies {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.comment-form {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.notification-item {
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.notification-item:hover {
+  border-color: rgba(166, 199, 232, 0.5);
+  background: rgba(20, 32, 44, 0.6);
+}
+
+.notification-item.unread {
+  border-color: rgba(236, 194, 91, 0.45);
+  background: rgba(129, 91, 26, 0.14);
+}
+
+.notification-item.unread:hover {
+  border-color: rgba(236, 194, 91, 0.65);
+}
+
 .review-form,
 .review-detail-hero {
   margin-top: 0.75rem;
@@ -910,6 +961,23 @@ h3 {
   border: 1px solid rgba(236, 194, 91, 0.42);
   color: #ffdd89;
   background: rgba(129, 91, 26, 0.24);
+}
+
+.notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  margin-left: 0.4rem;
+  padding: 0 0.32rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #241a04;
+  background: #ecc25b;
+  vertical-align: middle;
 }
 
 .entry-notes,
