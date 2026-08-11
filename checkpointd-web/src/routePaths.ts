@@ -39,6 +39,14 @@ export function userListsPath(username: string) {
   return `/u/${encodeURIComponent(username)}/lists`;
 }
 
+export function userFollowersPath(username: string) {
+  return `/u/${encodeURIComponent(username)}/followers`;
+}
+
+export function userFollowingPath(username: string) {
+  return `/u/${encodeURIComponent(username)}/following`;
+}
+
 export function listPath(username: string, list: { id: string; name: string }) {
   return `/u/${encodeURIComponent(username)}/lists/${list.id}/${slugSegment(list.name || 'list')}`;
 }

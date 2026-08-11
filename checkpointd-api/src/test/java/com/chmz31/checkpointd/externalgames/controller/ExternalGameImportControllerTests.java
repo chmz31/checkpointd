@@ -14,6 +14,7 @@ import com.chmz31.checkpointd.externalgames.dto.ImportExternalGameRequest;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
 import com.chmz31.checkpointd.externalgames.service.ImportedGameResult;
 import com.chmz31.checkpointd.game.entity.Game;
+import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
@@ -49,6 +50,9 @@ class ExternalGameImportControllerTests {
 
 	@MockitoBean
 	private GameRepository gameRepository;
+
+	@MockitoBean
+	private FollowRepository followRepository;
 
 	@MockitoBean
 	private LibraryEntryRepository libraryEntryRepository;

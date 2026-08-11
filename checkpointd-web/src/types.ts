@@ -44,6 +44,8 @@ export type PublicProfileStats = {
   ratedGames: number;
   averageRating: number | null;
   reviewCount: number;
+  followerCount: number;
+  followingCount: number;
 };
 
 export type PublicProfileGame = {
@@ -107,6 +109,17 @@ export type GameListRequest = {
   name: string;
   description?: string | null;
   visibility?: ListVisibility;
+};
+
+export type FollowStatus = {
+  following: boolean;
+  followerCount: number;
+  followingCount: number;
+};
+
+export type UserSummary = {
+  username: string;
+  displayName?: string | null;
 };
 
 export type ReviewVisibility = 'PUBLIC' | 'PRIVATE';

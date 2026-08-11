@@ -5,5 +5,7 @@ public record PublicProfileStatsResponse(
 		long completedGames,
 		long ratedGames,
 		Double averageRating,
-		long reviewCount) {
+		long reviewCount,
+		long followerCount,
+		long followingCount) {
 }

@@ -2,6 +2,7 @@ import type {
   AuthResponse,
   CurrentUser,
   ExternalGameSearchResult,
+  FollowStatus,
   Game,
   GameList,
   GameListDetail,
@@ -16,6 +17,7 @@ import type {
   Review,
   ReviewRequest,
   UpdateProfileInput,
+  UserSummary,
 } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -281,6 +283,34 @@ export const api = {
     return apiRequest<GameListDetail>(`/api/v1/lists/me/${listId}/items/${gameId}`, {
       method: 'DELETE',
     });
+  },
+
+  followUser(username: string) {
+    return apiRequest<FollowStatus>(`/api/v1/follows/users/${encodeURIComponent(username)}`, {
+      method: 'POST',
+    });
+  },
+
+  unfollowUser(username: string) {
+    return apiRequest<FollowStatus>(`/api/v1/follows/users/${encodeURIComponent(username)}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getFollowStatus(username: string) {
+    return apiRequest<FollowStatus>(`/api/v1/follows/users/${encodeURIComponent(username)}/status`);
+  },
+
+  getFollowers(username: string, page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<UserSummary>>(
+      `/api/v1/follows/users/${encodeURIComponent(username)}/followers?page=${page}&size=${size}`,
+    );
+  },
+
+  getFollowing(username: string, page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<UserSummary>>(
+      `/api/v1/follows/users/${encodeURIComponent(username)}/following?page=${page}&size=${size}`,
+    );
   },
 
   updateLibraryEntry(entryId: string, input: LibraryEntryUpdateInput) {

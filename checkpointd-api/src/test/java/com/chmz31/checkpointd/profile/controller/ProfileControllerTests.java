@@ -15,6 +15,7 @@ import com.chmz31.checkpointd.library.entity.LibraryEntry;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameImportService;
+import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.review.entity.Review;
 import com.chmz31.checkpointd.review.model.ReviewVisibility;
@@ -64,6 +65,9 @@ class ProfileControllerTests {
 	private GameRepository gameRepository;
 
 	@MockitoBean
+	private FollowRepository followRepository;
+
+	@MockitoBean
 	private ExternalGameImportService externalGameImportService;
 
 	@MockitoBean
@@ -91,6 +95,8 @@ class ProfileControllerTests {
 		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
 				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(review())));
+		when(followRepository.countByFolloweeId(USER_ID)).thenReturn(5L);
+		when(followRepository.countByFollowerId(USER_ID)).thenReturn(4L);
 
 		mockMvc.perform(get("/api/v1/profiles/playerone"))
 				.andExpect(status().isOk())
@@ -103,6 +109,8 @@ class ProfileControllerTests {
 				.andExpect(jsonPath("$.stats.ratedGames").value(2))
 				.andExpect(jsonPath("$.stats.averageRating").value(8.5))
 				.andExpect(jsonPath("$.stats.reviewCount").value(2))
+				.andExpect(jsonPath("$.stats.followerCount").value(5))
+				.andExpect(jsonPath("$.stats.followingCount").value(4))
 				.andExpect(jsonPath("$.recentGames", hasSize(1)))
 				.andExpect(jsonPath("$.recentGames[0].libraryEntryId").value(ENTRY_ID.toString()))
 				.andExpect(jsonPath("$.recentGames[0].gameTitle").value("Chrono Trigger"))
