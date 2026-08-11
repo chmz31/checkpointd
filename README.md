@@ -258,6 +258,29 @@ deploy/deploy.sh
 
 This pulls `main`, rebuilds the images, restarts the stack with `docker compose up -d`, and prunes old images. Flyway migrations run automatically on API startup, same as local development — no manual migration step.
 
+### Database Backups
+
+`deploy/backup-db.sh` dumps the production Postgres database with `pg_dump`, gzips it to `/var/backups/checkpointd/`, and prunes anything older than 7 days. Backups are local to the VPS — they protect against accidental data loss/corruption, not against losing the VPS itself.
+
+Set it up to run daily via cron:
+
+```bash
+sudo crontab -e
+```
+
+```cron
+0 3 * * * /opt/checkpointd/deploy/backup-db.sh >> /var/log/checkpointd-backup.log 2>&1
+```
+
+To restore a backup:
+
+```bash
+cd /opt/checkpointd
+gunzip -c /var/backups/checkpointd/checkpointd-<timestamp>.sql.gz | \
+  docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T db \
+  psql -U checkpointd -d checkpointd
+```
+
 ## Security Notes
 
 - `JWT_SECRET` is required for local backend auth.
