@@ -300,7 +300,7 @@ gunzip -c /var/backups/checkpointd/checkpointd-<timestamp>.sql.gz | \
 - Social features
 - Crossplay data
 - Recommendations
-- Deployment
+- [x] Deployment — live at [checkpointd.fun](https://checkpointd.fun)
 
 ## Philosophy
 
