@@ -252,6 +252,10 @@ export const api = {
     );
   },
 
+  getPopularLists(page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<GameList>>(`/api/v1/lists/popular?page=${page}&size=${size}`);
+  },
+
   getMyList(listId: string) {
     return apiRequest<GameListDetail>(`/api/v1/lists/me/${listId}`);
   },

@@ -127,6 +127,51 @@ class GameListServiceTests {
 	}
 
 	@Test
+	void getPopularListsReturnsListsInLikeRankedOrder() {
+		UUID secondListId = UUID.fromString("00000000-0000-0000-0000-000000000402");
+		GameList first = list(ListVisibility.PUBLIC);
+		GameList second = list(ListVisibility.PUBLIC);
+		ReflectionTestUtils.setField(second, "id", secondListId);
+
+		when(listLikeRepository.findPopularListIds(eq(ListVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(LIST_ID, secondListId)));
+		when(gameListRepository.findAllById(List.of(LIST_ID, secondListId))).thenReturn(List.of(second, first));
+		when(listLikeRepository.countByListId(LIST_ID)).thenReturn(5L);
+		when(listLikeRepository.countByListId(secondListId)).thenReturn(2L);
+
+		Page<GameListResponse> popular = gameListService.getPopularLists(null, 0, 20);
+
+		assertThat(popular.getContent()).extracting(GameListResponse::id).containsExactly(LIST_ID, secondListId);
+		assertThat(popular.getContent()).extracting(GameListResponse::likeCount).containsExactly(5L, 2L);
+	}
+
+	@Test
+	void getPopularListsMarksOwnerAndLikedForViewersOwnList() {
+		GameList list = list(ListVisibility.PUBLIC);
+
+		when(listLikeRepository.findPopularListIds(eq(ListVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(LIST_ID)));
+		when(gameListRepository.findAllById(List.of(LIST_ID))).thenReturn(List.of(list));
+		when(listLikeRepository.countByListId(LIST_ID)).thenReturn(3L);
+		when(listLikeRepository.existsByUserIdAndListId(USER_ID, LIST_ID)).thenReturn(true);
+
+		Page<GameListResponse> popular = gameListService.getPopularLists(USER_ID, 0, 20);
+
+		assertThat(popular.getContent()).extracting(GameListResponse::owner).containsExactly(true);
+		assertThat(popular.getContent()).extracting(GameListResponse::liked).containsExactly(true);
+	}
+
+	@Test
+	void getPopularListsReturnsEmptyWhenNoListsAreLiked() {
+		when(listLikeRepository.findPopularListIds(eq(ListVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of()));
+
+		Page<GameListResponse> popular = gameListService.getPopularLists(null, 0, 20);
+
+		assertThat(popular.getContent()).isEmpty();
+	}
+
+	@Test
 	void getPublicListsRejectsPrivateProfile() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PRIVATE)));
 

@@ -21,6 +21,9 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
             <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/lists">
               Lists
             </NavLink>
+            <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/lists/popular">
+              Popular
+            </NavLink>
             {user && (
               <NavLink className="user-pill" to={userProfilePath(user.username)}>
                 {user.username}

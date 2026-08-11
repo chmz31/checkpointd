@@ -242,6 +242,35 @@ class GameListControllerTests {
 	}
 
 	@Test
+	void popularListsWorksWithoutAuthentication() throws Exception {
+		when(listLikeRepository.findPopularListIds(eq(ListVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(LIST_ID)));
+		when(gameListRepository.findAllById(List.of(LIST_ID))).thenReturn(List.of(list(ListVisibility.PUBLIC)));
+		when(listLikeRepository.countByListId(LIST_ID)).thenReturn(4L);
+
+		mockMvc.perform(get("/api/v1/lists/popular"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].likeCount").value(4))
+				.andExpect(jsonPath("$.content[0].liked").value(false));
+	}
+
+	@Test
+	void popularListsReflectsLikedStateForCurrentUser() throws Exception {
+		when(listLikeRepository.findPopularListIds(eq(ListVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(LIST_ID)));
+		when(gameListRepository.findAllById(List.of(LIST_ID))).thenReturn(List.of(list(ListVisibility.PUBLIC)));
+		when(listLikeRepository.countByListId(LIST_ID)).thenReturn(4L);
+		when(listLikeRepository.existsByUserIdAndListId(USER_ID, LIST_ID)).thenReturn(true);
+
+		mockMvc.perform(get("/api/v1/lists/popular")
+						.with(jwt().jwt(jwt -> jwt.subject(USER_ID.toString()))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content[0].liked").value(true))
+				.andExpect(jsonPath("$.content[0].owner").value(true));
+	}
+
+	@Test
 	void userListsWorksWithoutAuthentication() throws Exception {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
 		when(gameListRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
