@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.chmz31.checkpointd.common.exception.ServiceUnavailableException;
 import com.chmz31.checkpointd.externalgames.dto.ExternalGameSearchResult;
 import com.chmz31.checkpointd.externalgames.service.ExternalGameSearchService;
+import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
@@ -42,6 +43,9 @@ class ExternalGameSearchControllerTests {
 
 	@MockitoBean
 	private GameRepository gameRepository;
+
+	@MockitoBean
+	private FollowRepository followRepository;
 
 	@MockitoBean
 	private LibraryEntryRepository libraryEntryRepository;

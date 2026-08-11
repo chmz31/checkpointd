@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.chmz31.checkpointd.game.entity.Game;
 import com.chmz31.checkpointd.game.entity.GameWebsite;
+import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
@@ -43,6 +44,9 @@ class GameControllerTests {
 
 	@MockitoBean
 	private GameRepository gameRepository;
+
+	@MockitoBean
+	private FollowRepository followRepository;
 
 	@MockitoBean
 	private UserRepository userRepository;

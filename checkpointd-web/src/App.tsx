@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { api, clearStoredToken, getStoredToken, setStoredToken } from './api';
 import { AuthPanel } from './components/AuthPanel';
 import { AppShell } from './components/AppShell';
+import { FollowListPage } from './components/FollowListPage';
 import { GameDetailsPage } from './components/GameDetailsPage';
 import { GameReviewsPage } from './components/GameReviewsPage';
 import { LibraryEntryDetailsPage } from './components/LibraryEntryDetailsPage';
@@ -79,6 +80,8 @@ export default function App() {
           <Route path="/u/:username/lists" element={<UserListsPage />} />
           <Route path="/u/:username/lists/:listId/:slug" element={<ListDetailPage currentUser={user} />} />
           <Route path="/u/:username/lists/:listId" element={<ListDetailPage currentUser={user} />} />
+          <Route path="/u/:username/followers" element={<FollowListPage mode="followers" />} />
+          <Route path="/u/:username/following" element={<FollowListPage mode="following" />} />
         </Route>
         <Route
           element={

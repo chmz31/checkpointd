@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, isApiErrorStatus } from '../api';
-import { gamePath, userListsPath, userReviewsPath } from '../routePaths';
-import type { CurrentUser, ProfileVisibility, PublicProfile } from '../types';
+import { gamePath, userFollowersPath, userFollowingPath, userListsPath, userReviewsPath } from '../routePaths';
+import type { CurrentUser, FollowStatus, ProfileVisibility, PublicProfile } from '../types';
 import { CoverImage } from './CoverImage';
 import { ChipGroup } from './ChipGroup';
 import { DetailFact } from './DetailFact';
@@ -15,6 +15,9 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [followStatus, setFollowStatus] = useState<FollowStatus | null>(null);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followError, setFollowError] = useState<string | null>(null);
 
   const isOwnProfile = Boolean(currentUser && profile && currentUser.username === profile.username);
 
@@ -52,9 +55,46 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
     loadProfile();
   }, [username, currentUser]);
 
+  useEffect(() => {
+    if (!currentUser || !profile || isOwnProfile) {
+      setFollowStatus(null);
+      return;
+    }
+
+    api
+      .getFollowStatus(profile.username)
+      .then(setFollowStatus)
+      .catch(() => setFollowStatus(null));
+  }, [currentUser, profile, isOwnProfile]);
+
   function handleUpdated(nextProfile: PublicProfile) {
     setProfile(nextProfile);
     setEditing(false);
+  }
+
+  async function toggleFollow() {
+    if (!profile) return;
+    setFollowLoading(true);
+    setFollowError(null);
+
+    try {
+      const next = followStatus?.following
+        ? await api.unfollowUser(profile.username)
+        : await api.followUser(profile.username);
+      setFollowStatus(next);
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              stats: { ...current.stats, followerCount: next.followerCount, followingCount: next.followingCount },
+            }
+          : current,
+      );
+    } catch (caught) {
+      setFollowError(caught instanceof Error ? caught.message : 'Could not update follow status');
+    } finally {
+      setFollowLoading(false);
+    }
   }
 
   if (loading) {
@@ -94,6 +134,12 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
             <Link className="nav-link button-small" to={userListsPath(profile.username)}>
               Lists
             </Link>
+            <Link className="nav-link button-small" to={userFollowersPath(profile.username)}>
+              Followers
+            </Link>
+            <Link className="nav-link button-small" to={userFollowingPath(profile.username)}>
+              Following
+            </Link>
             <button className="button-ghost" onClick={() => setEditing((current) => !current)}>
               {editing ? 'Close' : 'Edit profile'}
             </button>
@@ -107,10 +153,22 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
             <Link className="nav-link button-small" to={userListsPath(profile.username)}>
               Lists
             </Link>
+            <Link className="nav-link button-small" to={userFollowersPath(profile.username)}>
+              Followers
+            </Link>
+            <Link className="nav-link button-small" to={userFollowingPath(profile.username)}>
+              Following
+            </Link>
+            {currentUser && followStatus && (
+              <button className="button-ghost button-small" onClick={toggleFollow} disabled={followLoading}>
+                {followLoading ? 'Saving...' : followStatus.following ? 'Unfollow' : 'Follow'}
+              </button>
+            )}
           </div>
         )}
       </div>
 
+      {followError && <p className="error compact-message">{followError}</p>}
       {profile.bio && <p className="profile-bio">{profile.bio}</p>}
 
       {isOwnProfile && editing && <ProfileEditForm profile={profile} onUpdated={handleUpdated} />}
@@ -124,6 +182,8 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
           value={profile.stats.averageRating == null ? 'Not set' : profile.stats.averageRating.toFixed(1)}
         />
         <DetailFact label="Reviews" value={String(profile.stats.reviewCount)} />
+        <DetailFact label="Followers" value={String(profile.stats.followerCount)} />
+        <DetailFact label="Following" value={String(profile.stats.followingCount)} />
         <DetailFact label="Joined" value={formatDate(profile.joinedAt)} />
         {isOwnProfile && <DetailFact label="Visibility" value={profile.profileVisibility} />}
       </div>

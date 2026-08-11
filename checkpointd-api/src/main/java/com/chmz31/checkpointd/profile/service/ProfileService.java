@@ -1,6 +1,7 @@
 package com.chmz31.checkpointd.profile.service;
 
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
+import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.profile.dto.PublicProfileGameResponse;
@@ -26,14 +27,17 @@ public class ProfileService {
 	private final UserRepository userRepository;
 	private final LibraryEntryRepository libraryEntryRepository;
 	private final ReviewRepository reviewRepository;
+	private final FollowRepository followRepository;
 
 	public ProfileService(
 			UserRepository userRepository,
 			LibraryEntryRepository libraryEntryRepository,
-			ReviewRepository reviewRepository) {
+			ReviewRepository reviewRepository,
+			FollowRepository followRepository) {
 		this.userRepository = userRepository;
 		this.libraryEntryRepository = libraryEntryRepository;
 		this.reviewRepository = reviewRepository;
+		this.followRepository = followRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -75,7 +79,9 @@ public class ProfileService {
 						username, ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC),
 				reviewRepository.averageRatingByUsernameAndVisibility(
 						username, ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC),
-				reviewCount);
+				reviewCount,
+				followRepository.countByFolloweeId(userId),
+				followRepository.countByFollowerId(userId));
 		var recentGames = libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(userId).stream()
 				.map(PublicProfileGameResponse::from)
 				.toList();

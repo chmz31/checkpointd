@@ -1,5 +1,6 @@
 package com.chmz31.checkpointd;
 
+import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
 import com.chmz31.checkpointd.list.repository.GameListItemRepository;
@@ -20,6 +21,9 @@ class CheckpointdApiApplicationTests {
 
 	@MockitoBean
 	private GameRepository gameRepository;
+
+	@MockitoBean
+	private FollowRepository followRepository;
 
 	@MockitoBean
 	private LibraryEntryRepository libraryEntryRepository;
