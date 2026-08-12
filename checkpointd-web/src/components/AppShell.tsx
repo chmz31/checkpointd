@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { api } from '../api';
 import { userProfilePath } from '../routePaths';
 import type { CurrentUser } from '../types';
@@ -83,6 +83,14 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
       <section className="workspace">
         <Outlet />
       </section>
+      <footer className="app-footer">
+        <Link className="inline-link" to="/about">
+          About
+        </Link>
+        <Link className="inline-link" to="/privacy">
+          Privacy
+        </Link>
+      </footer>
     </main>
   );
 }

@@ -22,6 +22,14 @@ export function PublicShell() {
       <section className="workspace">
         <Outlet />
       </section>
+      <footer className="app-footer">
+        <Link className="inline-link" to="/about">
+          About
+        </Link>
+        <Link className="inline-link" to="/privacy">
+          Privacy
+        </Link>
+      </footer>
     </main>
   );
 }

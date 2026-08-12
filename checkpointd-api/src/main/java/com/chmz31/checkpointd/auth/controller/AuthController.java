@@ -2,6 +2,7 @@ package com.chmz31.checkpointd.auth.controller;
 
 import com.chmz31.checkpointd.auth.dto.AuthResponse;
 import com.chmz31.checkpointd.auth.dto.CurrentUserResponse;
+import com.chmz31.checkpointd.auth.dto.DeleteAccountRequest;
 import com.chmz31.checkpointd.auth.dto.LoginRequest;
 import com.chmz31.checkpointd.auth.dto.RegisterRequest;
 import com.chmz31.checkpointd.auth.service.AuthService;
@@ -13,6 +14,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,5 +56,11 @@ public class AuthController {
 				jwt.getClaimAsString("email"),
 				jwt.getClaimAsString("username"),
 				Role.valueOf(jwt.getClaimAsString("role")));
+	}
+
+	@DeleteMapping("/users/me")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void deleteAccount(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody DeleteAccountRequest request) {
+		authService.deleteAccount(UUID.fromString(jwt.getSubject()), request.password());
 	}
 }

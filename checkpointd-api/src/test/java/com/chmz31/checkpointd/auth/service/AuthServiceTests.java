@@ -15,6 +15,7 @@ import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -136,5 +137,52 @@ class AuthServiceTests {
 
 		verify(userRepository).findByEmail("player@example.com");
 		verify(passwordEncoder).matches(request.password(), user.getPasswordHash());
+	}
+
+	@Test
+	void deleteAccountRemovesUserForValidPassword() {
+		UUID userId = UUID.randomUUID();
+		User user = new User("player@example.com", "playerone", "hashed-password", Role.USER);
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("plain-password", user.getPasswordHash())).thenReturn(true);
+
+		authService.deleteAccount(userId, "plain-password");
+
+		verify(userRepository).findById(userId);
+		verify(passwordEncoder).matches("plain-password", user.getPasswordHash());
+		verify(userRepository).delete(user);
+	}
+
+	@Test
+	void deleteAccountRejectsUnknownUser() {
+		UUID userId = UUID.randomUUID();
+
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> authService.deleteAccount(userId, "plain-password"))
+				.isInstanceOf(InvalidCredentialsException.class)
+				.hasMessage("Invalid email or password");
+
+		verify(userRepository).findById(userId);
+		verify(passwordEncoder, never()).matches(any(), any());
+		verify(userRepository, never()).delete(any(User.class));
+	}
+
+	@Test
+	void deleteAccountRejectsWrongPassword() {
+		UUID userId = UUID.randomUUID();
+		User user = new User("player@example.com", "playerone", "hashed-password", Role.USER);
+
+		when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("wrong-password", user.getPasswordHash())).thenReturn(false);
+
+		assertThatThrownBy(() -> authService.deleteAccount(userId, "wrong-password"))
+				.isInstanceOf(InvalidCredentialsException.class)
+				.hasMessage("Invalid email or password");
+
+		verify(userRepository).findById(userId);
+		verify(passwordEncoder).matches("wrong-password", user.getPasswordHash());
+		verify(userRepository, never()).delete(any(User.class));
 	}
 }
