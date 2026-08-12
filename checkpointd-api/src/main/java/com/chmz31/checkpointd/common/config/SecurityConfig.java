@@ -48,6 +48,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/api/v1/reviews/users/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/reviews/users/*/games/*").permitAll()
 						.requestMatchers("/api/v1/lists/me", "/api/v1/lists/me/**").authenticated()
+						.requestMatchers(HttpMethod.GET, "/api/v1/lists/search").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/lists/popular").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/lists/users/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/lists/users/*/*").permitAll()

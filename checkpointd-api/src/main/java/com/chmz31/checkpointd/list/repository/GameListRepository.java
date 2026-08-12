@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface GameListRepository extends JpaRepository<GameList, UUID> {
 
@@ -41,4 +43,13 @@ public interface GameListRepository extends JpaRepository<GameList, UUID> {
 			ProfileVisibility profileVisibility,
 			ListVisibility visibility,
 			Pageable pageable);
+
+	@EntityGraph(attributePaths = {"user"})
+	@Query("""
+			select l from GameList l
+			where l.visibility = com.chmz31.checkpointd.list.model.ListVisibility.PUBLIC
+				and l.user.profileVisibility = com.chmz31.checkpointd.user.model.ProfileVisibility.PUBLIC
+				and lower(l.name) like lower(concat('%', :query, '%'))
+			""")
+	Page<GameList> searchPublicLists(@Param("query") String query, Pageable pageable);
 }

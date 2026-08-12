@@ -172,6 +172,26 @@ class GameListServiceTests {
 	}
 
 	@Test
+	void searchListsReturnsMatchingPublicLists() {
+		GameList list = list(ListVisibility.PUBLIC);
+		when(gameListRepository.searchPublicLists(eq("favor"), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(list)));
+
+		Page<GameListResponse> results = gameListService.searchLists("favor", null, 0, 20);
+
+		assertThat(results.getContent()).extracting(GameListResponse::id).containsExactly(LIST_ID);
+	}
+
+	@Test
+	void searchListsReturnsEmptyWhenNoneMatch() {
+		when(gameListRepository.searchPublicLists(eq("nothing"), any(Pageable.class))).thenReturn(Page.empty());
+
+		Page<GameListResponse> results = gameListService.searchLists("nothing", null, 0, 20);
+
+		assertThat(results.getContent()).isEmpty();
+	}
+
+	@Test
 	void getPublicListsRejectsPrivateProfile() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PRIVATE)));
 

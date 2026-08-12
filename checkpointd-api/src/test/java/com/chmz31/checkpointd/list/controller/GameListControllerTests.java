@@ -270,6 +270,17 @@ class GameListControllerTests {
 	}
 
 	@Test
+	void searchListsWorksWithoutAuthentication() throws Exception {
+		when(gameListRepository.searchPublicLists(eq("favor"), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(list(ListVisibility.PUBLIC)), PageRequest.of(0, 20), 1));
+
+		mockMvc.perform(get("/api/v1/lists/search").param("q", "favor"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].owner").value(false));
+	}
+
+	@Test
 	void popularListsWorksWithoutAuthentication() throws Exception {
 		when(listLikeRepository.findPopularListIds(eq(ListVisibility.PUBLIC), eq(ProfileVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(LIST_ID)));

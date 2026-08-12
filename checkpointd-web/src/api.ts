@@ -141,6 +141,18 @@ export const api = {
     );
   },
 
+  searchUsers(query: string, page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<UserSummary>>(
+      `/api/v1/profiles/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`,
+    );
+  },
+
+  searchLists(query: string, page = 0, size = 20) {
+    return apiRequest<PaginatedResponse<GameList>>(
+      `/api/v1/lists/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`,
+    );
+  },
+
   importExternalGame(provider: string, externalId: string) {
     return apiRequest<Game>('/api/v1/external-games/import', {
       method: 'POST',
