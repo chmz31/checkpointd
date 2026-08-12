@@ -128,16 +128,16 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
         </div>
         {isOwnProfile && (
           <div className="inline-actions">
-            <Link className="nav-link button-small" to={userReviewsPath(profile.username)}>
+            <Link className="profile-tab-link" to={userReviewsPath(profile.username)}>
               Reviews
             </Link>
-            <Link className="nav-link button-small" to={userListsPath(profile.username)}>
+            <Link className="profile-tab-link" to={userListsPath(profile.username)}>
               Lists
             </Link>
-            <Link className="nav-link button-small" to={userFollowersPath(profile.username)}>
+            <Link className="profile-tab-link" to={userFollowersPath(profile.username)}>
               Followers
             </Link>
-            <Link className="nav-link button-small" to={userFollowingPath(profile.username)}>
+            <Link className="profile-tab-link" to={userFollowingPath(profile.username)}>
               Following
             </Link>
             <button className="button-ghost" onClick={() => setEditing((current) => !current)}>
@@ -147,16 +147,16 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
         )}
         {!isOwnProfile && (
           <div className="inline-actions">
-            <Link className="nav-link button-small" to={userReviewsPath(profile.username)}>
+            <Link className="profile-tab-link" to={userReviewsPath(profile.username)}>
               Reviews
             </Link>
-            <Link className="nav-link button-small" to={userListsPath(profile.username)}>
+            <Link className="profile-tab-link" to={userListsPath(profile.username)}>
               Lists
             </Link>
-            <Link className="nav-link button-small" to={userFollowersPath(profile.username)}>
+            <Link className="profile-tab-link" to={userFollowersPath(profile.username)}>
               Followers
             </Link>
-            <Link className="nav-link button-small" to={userFollowingPath(profile.username)}>
+            <Link className="profile-tab-link" to={userFollowingPath(profile.username)}>
               Following
             </Link>
             {currentUser && followStatus && (

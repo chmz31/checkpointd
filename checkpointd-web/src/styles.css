@@ -1452,7 +1452,8 @@ h3 {
   gap: 0.5rem;
 }
 
-.primary-nav-link {
+.primary-nav-link,
+.profile-tab-link {
   border: none;
   border-radius: 0;
   background: none;
@@ -1468,7 +1469,9 @@ h3 {
 }
 
 .primary-nav-link:hover,
-.primary-nav-link.active {
+.primary-nav-link.active,
+.profile-tab-link:hover,
+.profile-tab-link.active {
   color: #f8fbff;
   border-bottom-color: #8bd3c7;
   background: none;
