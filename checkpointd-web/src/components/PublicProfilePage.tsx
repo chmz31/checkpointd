@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api, isApiErrorStatus } from '../api';
+import { api, clearStoredToken, isApiErrorStatus } from '../api';
 import { gamePath, userFollowersPath, userFollowingPath, userListsPath, userReviewsPath } from '../routePaths';
 import type { CurrentUser, FollowStatus, ProfileVisibility, PublicProfile } from '../types';
 import { CoverImage } from './CoverImage';
@@ -173,6 +173,8 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
 
       {isOwnProfile && editing && <ProfileEditForm profile={profile} onUpdated={handleUpdated} />}
 
+      {isOwnProfile && editing && <DeleteAccountSection />}
+
       <div className="detail-facts profile-stats">
         <DetailFact label="Games" value={String(profile.stats.totalGames)} />
         <DetailFact label="Completed" value={String(profile.stats.completedGames)} />
@@ -310,5 +312,76 @@ function ProfileEditForm({
         {saving ? 'Saving...' : 'Save profile'}
       </button>
     </form>
+  );
+}
+
+function DeleteAccountSection() {
+  const [confirming, setConfirming] = useState(false);
+  const [password, setPassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setDeleting(true);
+    setError(null);
+
+    try {
+      await api.deleteMyAccount(password);
+      clearStoredToken();
+      window.location.href = '/';
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not delete account');
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <section className="detail-section secondary-actions-section">
+      <h3>Danger zone</h3>
+      {!confirming ? (
+        <>
+          <p className="muted">Permanently delete your account and everything you&apos;ve posted.</p>
+          <button className="button-danger button-small" onClick={() => setConfirming(true)}>
+            Delete my account
+          </button>
+        </>
+      ) : (
+        <form className="edit-form" onSubmit={submit}>
+          <label className="full-width">
+            Confirm your password to permanently delete your account
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Password"
+              required
+            />
+          </label>
+          <p className="muted full-width">
+            This immediately and permanently deletes your account, library, reviews, lists, comments, and
+            follows. This cannot be undone.
+          </p>
+          {error && <p className="error compact-message full-width">{error}</p>}
+          <div className="inline-actions full-width">
+            <button type="submit" className="button-danger" disabled={deleting || !password}>
+              {deleting ? 'Deleting...' : 'Permanently delete my account'}
+            </button>
+            <button
+              type="button"
+              className="button-ghost"
+              onClick={() => {
+                setConfirming(false);
+                setPassword('');
+                setError(null);
+              }}
+              disabled={deleting}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
   );
 }

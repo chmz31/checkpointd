@@ -2,8 +2,11 @@ package com.chmz31.checkpointd.auth.controller;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -224,6 +227,67 @@ class AuthControllerTests {
 				.andExpect(jsonPath("$.username").value("playerone"))
 				.andExpect(jsonPath("$.role").value("USER"))
 				.andExpect(jsonPath("$.passwordHash").doesNotExist());
+	}
+
+	@Test
+	void deleteAccountRequiresAuthentication() throws Exception {
+		mockMvc.perform(delete("/api/v1/users/me")
+						.with(csrf())
+						.contentType("application/json")
+						.content("""
+								{
+								  "password": "plain-password"
+								}
+								"""))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void deleteAccountRemovesAccountForValidPassword() throws Exception {
+		String accessToken = registerAndReturnToken();
+		User user = withId(new User("player@example.com", "playerone",
+				passwordEncoder.encode("plain-password"), Role.USER));
+
+		when(userRepository.findById(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+				.thenReturn(Optional.of(user));
+
+		mockMvc.perform(delete("/api/v1/users/me")
+						.with(csrf())
+						.header("Authorization", "Bearer " + accessToken)
+						.contentType("application/json")
+						.content("""
+								{
+								  "password": "plain-password"
+								}
+								"""))
+				.andExpect(status().isNoContent());
+
+		verify(userRepository).delete(user);
+	}
+
+	@Test
+	void deleteAccountRejectsWrongPassword() throws Exception {
+		String accessToken = registerAndReturnToken();
+		User user = withId(new User("player@example.com", "playerone",
+				passwordEncoder.encode("plain-password"), Role.USER));
+
+		when(userRepository.findById(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+				.thenReturn(Optional.of(user));
+
+		mockMvc.perform(delete("/api/v1/users/me")
+						.with(csrf())
+						.header("Authorization", "Bearer " + accessToken)
+						.contentType("application/json")
+						.content("""
+								{
+								  "password": "wrong-password"
+								}
+								"""))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.status").value(401))
+				.andExpect(jsonPath("$.message").value("Invalid email or password"));
+
+		verify(userRepository, never()).delete(any(User.class));
 	}
 
 	private String registerAndReturnToken() throws Exception {

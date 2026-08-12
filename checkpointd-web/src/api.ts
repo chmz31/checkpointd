@@ -112,6 +112,13 @@ export const api = {
     return apiRequest<CurrentUser>('/api/v1/users/me');
   },
 
+  deleteMyAccount(password: string) {
+    return apiRequest<void>('/api/v1/users/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    });
+  },
+
   getPublicProfile(username: string) {
     return apiRequest<PublicProfile>(`/api/v1/profiles/${encodeURIComponent(username)}`);
   },

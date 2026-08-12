@@ -7,6 +7,7 @@ import com.chmz31.checkpointd.common.exception.InvalidCredentialsException;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
 import com.chmz31.checkpointd.user.repository.UserRepository;
+import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,5 +53,17 @@ public class AuthService {
 		}
 
 		return user;
+	}
+
+	@Transactional
+	public void deleteAccount(UUID userId, String password) {
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+
+		if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+			throw new InvalidCredentialsException("Invalid email or password");
+		}
+
+		userRepository.delete(user);
 	}
 }

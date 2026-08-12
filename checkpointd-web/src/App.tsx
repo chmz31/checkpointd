@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { api, clearStoredToken, getStoredToken, setStoredToken } from './api';
+import { AboutPage } from './components/AboutPage';
 import { AdminReportedCommentsPage } from './components/AdminReportedCommentsPage';
 import { AuthPanel } from './components/AuthPanel';
 import { AppShell } from './components/AppShell';
@@ -13,6 +14,7 @@ import { ListDetailPage } from './components/ListDetailPage';
 import { MyListsPage } from './components/MyListsPage';
 import { NotificationsPage } from './components/NotificationsPage';
 import { PopularListsPage } from './components/PopularListsPage';
+import { PrivacyPage } from './components/PrivacyPage';
 import { PublicProfilePage } from './components/PublicProfilePage';
 import { PublicShell } from './components/PublicShell';
 import { SearchView } from './components/SearchView';
@@ -85,6 +87,8 @@ export default function App() {
           <Route path="/u/:username/lists/:listId" element={<ListDetailPage currentUser={user} />} />
           <Route path="/u/:username/followers" element={<FollowListPage mode="followers" />} />
           <Route path="/u/:username/following" element={<FollowListPage mode="following" />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Route>
         <Route
           element={
