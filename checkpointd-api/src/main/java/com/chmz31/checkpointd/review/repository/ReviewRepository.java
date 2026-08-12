@@ -44,7 +44,7 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 			Pageable pageable);
 
 	@EntityGraph(attributePaths = {"user", "game"})
-	Page<Review> findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+	Page<Review> findByUserUsernameAndUserProfileVisibilityAndVisibility(
 			String username,
 			ProfileVisibility profileVisibility,
 			ReviewVisibility visibility,

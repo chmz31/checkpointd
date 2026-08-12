@@ -128,7 +128,7 @@ class ProfileControllerTests {
 		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of(entry()));
 		when(reviewRepository.countByUserUsernameAndUserProfileVisibilityAndVisibility(
 				"playerone", ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC)).thenReturn(2L);
-		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibility(
 				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(review())));
 		when(followRepository.countByFolloweeId(USER_ID)).thenReturn(5L);
@@ -163,7 +163,7 @@ class ProfileControllerTests {
 		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of());
 		when(reviewRepository.countByUserUsernameAndUserProfileVisibilityAndVisibility(
 				"playerone", ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC)).thenReturn(0L);
-		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibility(
 				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(Page.empty());
 
@@ -215,7 +215,7 @@ class ProfileControllerTests {
 		User user = user(ProfileVisibility.PRIVATE);
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of());
-		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibility(
 				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(Page.empty());
 
@@ -232,7 +232,7 @@ class ProfileControllerTests {
 		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 		when(userRepository.save(user)).thenReturn(user);
 		when(libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(USER_ID)).thenReturn(List.of());
-		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibility(
 				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(Page.empty());
 

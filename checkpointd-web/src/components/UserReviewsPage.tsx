@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { userProfilePath } from '../routePaths';
-import type { CurrentUser, LikeStatus, PaginatedResponse, Review } from '../types';
+import type { CurrentUser, LikeStatus, PaginatedResponse, Review, ReviewSortOption } from '../types';
 import { ReviewCard } from './ReviewCard';
 
 export function UserReviewsPage({ currentUser }: { currentUser: CurrentUser | null }) {
   const { username } = useParams();
   const [reviews, setReviews] = useState<PaginatedResponse<Review> | null>(null);
   const [page, setPage] = useState(0);
+  const [sort, setSort] = useState<ReviewSortOption>('newest');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,11 +18,16 @@ export function UserReviewsPage({ currentUser }: { currentUser: CurrentUser | nu
     setLoading(true);
     setError(null);
     api
-      .getUserReviews(username, page, 10)
+      .getUserReviews(username, page, 10, sort)
       .then(setReviews)
       .catch((caught) => setError(caught instanceof Error ? caught.message : 'Could not load reviews'))
       .finally(() => setLoading(false));
-  }, [username, page]);
+  }, [username, page, sort]);
+
+  function changeSort(nextSort: ReviewSortOption) {
+    setSort(nextSort);
+    setPage(0);
+  }
 
   function updateReviewLike(reviewId: string, status: LikeStatus) {
     setReviews((current) =>
@@ -40,11 +46,22 @@ export function UserReviewsPage({ currentUser }: { currentUser: CurrentUser | nu
     <section className="panel review-page">
       <div className="section-heading">
         <h2>{username ? `Reviews by @${username}` : 'Reviews'}</h2>
-        {username && (
-          <Link className="nav-link button-small" to={userProfilePath(username)}>
-            Back to profile
-          </Link>
-        )}
+        <div className="inline-actions">
+          <label>
+            Sort by
+            <select value={sort} onChange={(event) => changeSort(event.target.value as ReviewSortOption)}>
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="highest">Highest rated</option>
+              <option value="lowest">Lowest rated</option>
+            </select>
+          </label>
+          {username && (
+            <Link className="nav-link button-small" to={userProfilePath(username)}>
+              Back to profile
+            </Link>
+          )}
+        </div>
       </div>
       {error && (
         <div className="empty-state catalog-empty">

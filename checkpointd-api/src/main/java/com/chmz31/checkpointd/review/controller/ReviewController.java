@@ -44,8 +44,9 @@ public class ReviewController {
 			@AuthenticationPrincipal Jwt jwt,
 			@PathVariable String username,
 			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
-		var reviews = reviewService.getPublicUserReviews(username, currentUserId(jwt), page, size);
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "newest") String sort) {
+		var reviews = reviewService.getPublicUserReviews(username, currentUserId(jwt), page, size, sort);
 		return PaginatedResponse.from(reviews, reviews.getContent());
 	}
 

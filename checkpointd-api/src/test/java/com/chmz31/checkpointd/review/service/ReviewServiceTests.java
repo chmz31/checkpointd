@@ -38,6 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,20 +95,35 @@ class ReviewServiceTests {
 	@Test
 	void getPublicUserReviewsReturnsReviewsForPublicProfile() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
-		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibility(
 				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
 				.thenReturn(new PageImpl<>(List.of(review(ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC))));
 
-		Page<ReviewResponse> reviews = reviewService.getPublicUserReviews("playerone", null, 0, 10);
+		Page<ReviewResponse> reviews = reviewService.getPublicUserReviews("playerone", null, 0, 10, "newest");
 
 		assertThat(reviews.getContent()).extracting(ReviewResponse::username).containsExactly("playerone");
+	}
+
+	@Test
+	void getPublicUserReviewsSortsByHighestRating() {
+		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PUBLIC)));
+		when(reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibility(
+				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(review(ReviewVisibility.PUBLIC, ProfileVisibility.PUBLIC))));
+		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+		reviewService.getPublicUserReviews("playerone", null, 0, 10, "highest");
+
+		verify(reviewRepository).findByUserUsernameAndUserProfileVisibilityAndVisibility(
+				eq("playerone"), eq(ProfileVisibility.PUBLIC), eq(ReviewVisibility.PUBLIC), pageableCaptor.capture());
+		assertThat(pageableCaptor.getValue().getSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "rating"));
 	}
 
 	@Test
 	void getPublicUserReviewsRejectsPrivateProfile() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.of(user(ProfileVisibility.PRIVATE)));
 
-		assertThatThrownBy(() -> reviewService.getPublicUserReviews("playerone", null, 0, 10))
+		assertThatThrownBy(() -> reviewService.getPublicUserReviews("playerone", null, 0, 10, "newest"))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Profile not found");
 	}
@@ -116,7 +132,7 @@ class ReviewServiceTests {
 	void getPublicUserReviewsRejectsMissingUser() {
 		when(userRepository.findByUsername("playerone")).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> reviewService.getPublicUserReviews("playerone", null, 0, 10))
+		assertThatThrownBy(() -> reviewService.getPublicUserReviews("playerone", null, 0, 10, "newest"))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Profile not found");
 	}

@@ -17,6 +17,7 @@ import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,8 +90,9 @@ public class ProfileService {
 		var recentGames = libraryEntryRepository.findTop8ByUserIdOrderByUpdatedAtDesc(userId).stream()
 				.map(PublicProfileGameResponse::from)
 				.toList();
-		var recentReviews = reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
-				username, ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC, PageRequest.of(0, RECENT_REVIEWS_LIMIT))
+		var recentReviews = reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibility(
+				username, ProfileVisibility.PUBLIC, ReviewVisibility.PUBLIC,
+				PageRequest.of(0, RECENT_REVIEWS_LIMIT, Sort.by(Sort.Direction.DESC, "updatedAt")))
 				.map(review -> {
 					long likeCount = reviewLikeRepository.countByReviewId(review.getId());
 					boolean liked = currentUserId != null
