@@ -8,7 +8,7 @@ REPO_DIR="/opt/checkpointd"
 COMPOSE_FILE="$REPO_DIR/docker-compose.prod.yml"
 ENV_FILE="$REPO_DIR/.env.prod"
 BACKUP_DIR="/var/backups/checkpointd"
-RETENTION_DAYS=7
+RETENTION_DAYS=14
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
 mkdir -p "$BACKUP_DIR"

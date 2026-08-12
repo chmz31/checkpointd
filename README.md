@@ -260,7 +260,7 @@ This pulls `main`, rebuilds the images, restarts the stack with `docker compose 
 
 ### Database Backups
 
-`deploy/backup-db.sh` dumps the production Postgres database with `pg_dump`, gzips it to `/var/backups/checkpointd/`, and prunes anything older than 7 days. Backups are local to the VPS — they protect against accidental data loss/corruption, not against losing the VPS itself.
+`deploy/backup-db.sh` dumps the production Postgres database with `pg_dump`, gzips it to `/var/backups/checkpointd/`, and prunes anything older than 14 days. Backups are local to the VPS by default — an off-box copy is pulled separately (not part of this repo) so a lost VPS doesn't mean lost data.
 
 Set it up to run daily via cron:
 
