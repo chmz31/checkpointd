@@ -5,25 +5,40 @@ Spring Boot backend API for checkpointd.
 ## Stack
 
 - Java 25
-- Spring Boot
-- Spring Security JWT
+- Spring Boot 4.1.0
+- Spring Security (JWT via OAuth2 resource server support)
 - Spring Data JPA
 - PostgreSQL 18
-- Flyway
+- Flyway (schema currently at `V18`)
 - Maven Wrapper
 
-## Responsibilities
+## Architecture
 
-- Auth and current-user endpoints
-- JWT access token generation and validation
-- Local game catalog persistence
-- External IGDB search through Twitch client credentials
-- External game import/cache
-- User library add/list/filter/get/update/delete
+Package-per-domain-module under `com.chmz31.checkpointd`, each following `entity/ repository/ service/ controller/ dto/` internally, with a deliberate no-cycles discipline between modules (check whether a target module already depends on the source module, directly or transitively, before adding a new cross-module dependency).
+
+| Module | Owns |
+|---|---|
+| `auth` | Registration, login, JWT issuance, current-user identity, account deletion |
+| `user` | Core `User` entity and repository (no controller of its own) |
+| `game` | Canonical local `Game` entity — creation, lookup, listing, metadata staleness |
+| `externalgames` | External IGDB search through Twitch client credentials, import/cache into local `Game` |
+| `library` | Per-user library entries — add/list/filter/get/update/delete, stats, metadata sync |
+| `profile` | Public/own profile data, profile editing, member search |
+| `review` | Per-user, per-game reviews (upsert), public/own listings, sortable order |
+| `list` | User-curated game lists — CRUD, items, search, popularity, public listing |
+| `follow` | User-to-user follow relationships, followers/following listings |
+| `like` | Likes on lists and reviews |
+| `comment` | Comments on lists/reviews with one level of threaded replies, comment likes, reporting, admin moderation queue |
+| `notification` | In-app notifications (follows, likes, comments, replies), unread counts, read-state |
+| `common` | Cross-cutting: `SecurityConfig`, async/HTTP client config, shared `PaginatedResponse` DTO, global exception handling |
+
+**Auth model:** JWT (HS256) via Spring Security's OAuth2 resource server support, not sessions. There is no `hasRole()`/route-level role gating in `SecurityConfig` — it only distinguishes `authenticated()` vs `permitAll()` per route. Admin-only behavior (comment moderation) reads the JWT's `role` claim manually inside the controller/service.
+
+**Entity modeling:** dedicated entity pairs per target type are the default (`ListLike`/`ReviewLike`, `ListComment`/`ReviewComment`) rather than generic/polymorphic tables. `notification.entity.Notification` is the one deliberate exception — a single generic entity with nullable FKs to lists and reviews, justified by 8 notification types that only ever resolve to one of two link shapes.
 
 ## Game Metadata
 
-checkpointd stores basic game metadata:
+checkpointd stores game metadata:
 
 - `summary`
 - `genres`
@@ -46,6 +61,8 @@ Flyway migration `V4__add_game_media_metadata.sql` adds `games.backdrop_url`, `g
 External search remains lightweight and focuses on core metadata. Richer visual media is retrieved during IGDB fetch-by-id flows used by import and metadata sync, then persisted for newly imported/cached or individually synced games.
 
 Existing cached games are not backfilled automatically.
+
+**IGDB search filtering:** external search restricts results to IGDB's `game_type` field (values `0, 4, 8, 9, 10, 11` — main game, standalone expansion, remake, remaster, expanded game, port), with a null-safety fallback since `game_type` isn't populated for every record. IGDB's older `category` field looks like it should do this job but is almost entirely unpopulated in practice — `game_type` is the field that's actually reliably filled in. This was found the hard way: filtering on `category` alone silently returned zero results for every search once deployed, since even ordinary main games have no `category` value set. See `IgdbClient.searchBody` for the exact query and the comment explaining the enum values.
 
 ## Local Development
 
@@ -86,4 +103,6 @@ Run from this directory:
 .\mvnw.cmd clean test
 ```
 
-Tests do not require a local PostgreSQL instance.
+Single test class: `.\mvnw.cmd test -Dtest=ClassName`. Single method: `.\mvnw.cmd test -Dtest=ClassName#methodName`.
+
+Tests do not require a local PostgreSQL instance. Services use Mockito unit tests (`@ExtendWith(MockitoExtension.class)`); controllers use full-context `@SpringBootTest @AutoConfigureMockMvc` tests, which require every repository in the app mocked via `@MockitoBean` — adding a new repository means adding a `@MockitoBean` to every existing controller test class.
