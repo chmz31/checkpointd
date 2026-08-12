@@ -96,8 +96,12 @@ public class IgdbClient {
 	}
 
 	private String searchBody(String query) {
+		// IGDB's `category` enum: 0=main_game, 4=standalone_expansion, 8=remake, 9=remaster,
+		// 10=expanded_game, 11=port — kept because each is a complete, independently playable game.
+		// Excluded: 1=dlc_addon, 2=expansion, 3=bundle, 5=mod, 6=episode, 7=season, 12=fork, 13=pack, 14=update.
 		return "search \"" + escape(query) + "\"; "
 				+ "fields id,name,slug,cover.url,cover.image_id,first_release_date,summary,genres.name,platforms.name; "
+				+ "where category = (0,4,8,9,10,11); "
 				+ "limit 20;";
 	}
 
