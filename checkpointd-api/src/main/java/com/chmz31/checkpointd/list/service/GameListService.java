@@ -83,6 +83,12 @@ public class GameListService {
 	}
 
 	@Transactional(readOnly = true)
+	public Page<GameListResponse> searchLists(String query, UUID currentUserId, int page, int size) {
+		return gameListRepository.searchPublicLists(query == null ? "" : query.trim(), pageRequest(page, size))
+				.map(list -> toResponse(list, currentUserId, false));
+	}
+
+	@Transactional(readOnly = true)
 	public Page<GameListResponse> getPopularLists(UUID currentUserId, int page, int size) {
 		Page<UUID> popularIds = listLikeRepository.findPopularListIds(
 				ListVisibility.PUBLIC, ProfileVisibility.PUBLIC, pageRequest(page, size));

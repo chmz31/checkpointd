@@ -1,6 +1,7 @@
 package com.chmz31.checkpointd.profile.service;
 
 import com.chmz31.checkpointd.common.exception.ResourceNotFoundException;
+import com.chmz31.checkpointd.follow.dto.UserSummaryResponse;
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.library.model.LibraryStatus;
 import com.chmz31.checkpointd.library.repository.LibraryEntryRepository;
@@ -16,6 +17,7 @@ import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.ProfileVisibility;
 import com.chmz31.checkpointd.user.repository.UserRepository;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileService {
 
 	private static final int RECENT_REVIEWS_LIMIT = 3;
+	private static final int DEFAULT_PAGE_SIZE = 20;
+	private static final int MAX_PAGE_SIZE = 50;
 
 	private final UserRepository userRepository;
 	private final LibraryEntryRepository libraryEntryRepository;
@@ -112,6 +116,12 @@ public class ProfileService {
 				recentReviews);
 	}
 
+	@Transactional(readOnly = true)
+	public Page<UserSummaryResponse> searchUsers(String query, int page, int size) {
+		return userRepository.searchPublicUsers(query == null ? "" : query.trim(), pageRequest(page, size))
+				.map(UserSummaryResponse::from);
+	}
+
 	private User findByUsername(String username) {
 		return userRepository.findByUsername(username)
 				.orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
@@ -124,5 +134,11 @@ public class ProfileService {
 
 	private String blankToNull(String value) {
 		return value == null || value.isBlank() ? null : value.trim();
+	}
+
+	private PageRequest pageRequest(int page, int size) {
+		int safePage = Math.max(page, 0);
+		int safeSize = size <= 0 ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
+		return PageRequest.of(safePage, safeSize);
 	}
 }

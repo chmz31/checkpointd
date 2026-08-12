@@ -192,6 +192,28 @@ class ProfileControllerTests {
 	}
 
 	@Test
+	void searchReturnsMatchingPublicUsersWithoutAuthentication() throws Exception {
+		User user = user(ProfileVisibility.PUBLIC);
+		when(userRepository.searchPublicUsers(eq("player"), any(Pageable.class)))
+				.thenReturn(new PageImpl<>(List.of(user)));
+
+		mockMvc.perform(get("/api/v1/profiles/search").param("q", "player"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].username").value("playerone"))
+				.andExpect(jsonPath("$.content[0].displayName").value("Player One"));
+	}
+
+	@Test
+	void searchWithNoMatchesReturnsEmptyContent() throws Exception {
+		when(userRepository.searchPublicUsers(eq("nobody"), any(Pageable.class))).thenReturn(Page.empty());
+
+		mockMvc.perform(get("/api/v1/profiles/search").param("q", "nobody"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(0)));
+	}
+
+	@Test
 	void meRequiresAuthentication() throws Exception {
 		mockMvc.perform(get("/api/v1/profiles/me"))
 				.andExpect(status().isUnauthorized());
