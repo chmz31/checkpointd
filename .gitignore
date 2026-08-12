@@ -30,6 +30,9 @@ pnpm-debug.log*
 !.env.example
 !.env.prod.example
 
+# Local dev notes (not committed)
+DEVLOG.md
+
 # OS junk
 .DS_Store
 Thumbs.db
