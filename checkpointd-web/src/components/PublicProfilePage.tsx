@@ -122,7 +122,7 @@ export function PublicProfilePage({ currentUser }: { currentUser: CurrentUser | 
   return (
     <section className="panel profile-page">
       <div className="profile-heading">
-        <div>
+        <div className="profile-identity">
           <h2>{profile.displayName || profile.username}</h2>
           <p className="muted">@{profile.username}</p>
         </div>
