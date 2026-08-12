@@ -10,10 +10,10 @@ export function PublicShell() {
             <p className="brand-tagline">your save file for every game you play.</p>
           </div>
           <nav className="app-nav" aria-label="Public">
-            <Link className="nav-link" to="/login">
+            <Link className="primary-nav-link" to="/login">
               Login
             </Link>
-            <Link className="nav-link" to="/register">
+            <Link className="primary-nav-link" to="/register">
               Register
             </Link>
           </nav>

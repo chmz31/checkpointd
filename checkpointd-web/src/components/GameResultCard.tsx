@@ -63,7 +63,7 @@ export function GameResultCard({
   }
 
   return (
-    <article className="search-result-card">
+    <article className={`search-result-card${adding ? ' expanded' : ''}`}>
       <div className="game-row search-result-summary">
         <div className="cover-link">
           <CoverImage src={result.coverUrl} title={result.title} />

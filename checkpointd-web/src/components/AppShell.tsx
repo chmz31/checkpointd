@@ -8,6 +8,7 @@ const UNREAD_POLL_INTERVAL_MS = 30000;
 
 export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogout: () => void }) {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -37,6 +38,10 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
     };
   }, [user]);
 
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -45,21 +50,50 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
             <p className="brand-wordmark">checkpointd</p>
             <p className="brand-tagline">your save file for every game you play.</p>
           </div>
-          <nav className="app-nav" aria-label="Primary">
-            <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/search">
+          <button
+            type="button"
+            className="nav-toggle"
+            onClick={() => setMenuOpen((current) => !current)}
+            aria-expanded={menuOpen}
+            aria-label="Toggle navigation menu"
+          >
+            {menuOpen ? 'Close' : 'Menu'}
+          </button>
+          <nav className={`app-nav collapsible${menuOpen ? ' open' : ''}`} aria-label="Primary">
+            <NavLink
+              className={({ isActive }) => `primary-nav-link${isActive ? ' active' : ''}`}
+              to="/search"
+              onClick={closeMenu}
+            >
               Search
             </NavLink>
-            <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/library">
+            <NavLink
+              className={({ isActive }) => `primary-nav-link${isActive ? ' active' : ''}`}
+              to="/library"
+              onClick={closeMenu}
+            >
               Library
             </NavLink>
-            <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/lists">
+            <NavLink
+              className={({ isActive }) => `primary-nav-link${isActive ? ' active' : ''}`}
+              to="/lists"
+              onClick={closeMenu}
+            >
               Lists
             </NavLink>
-            <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/lists/popular">
+            <NavLink
+              className={({ isActive }) => `primary-nav-link${isActive ? ' active' : ''}`}
+              to="/lists/popular"
+              onClick={closeMenu}
+            >
               Popular
             </NavLink>
             {user && (
-              <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/notifications">
+              <NavLink
+                className={({ isActive }) => `primary-nav-link${isActive ? ' active' : ''}`}
+                to="/notifications"
+                onClick={closeMenu}
+              >
                 Notifications
                 {unreadCount > 0 && (
                   <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
@@ -67,16 +101,28 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
               </NavLink>
             )}
             {user?.role === 'ADMIN' && (
-              <NavLink className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} to="/admin/comments">
+              <NavLink
+                className={({ isActive }) => `primary-nav-link${isActive ? ' active' : ''}`}
+                to="/admin/comments"
+                onClick={closeMenu}
+              >
                 Moderation
               </NavLink>
             )}
             {user && (
-              <NavLink className="user-pill" to={userProfilePath(user.username)}>
+              <NavLink className="primary-nav-link" to={userProfilePath(user.username)} onClick={closeMenu}>
                 {user.username}
               </NavLink>
             )}
-            <button onClick={onLogout}>Logout</button>
+            <button
+              className="primary-nav-link"
+              onClick={() => {
+                closeMenu();
+                onLogout();
+              }}
+            >
+              Logout
+            </button>
           </nav>
         </div>
       </header>

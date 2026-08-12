@@ -46,7 +46,7 @@ export function LibraryEntryCard({
   }
 
   return (
-    <article className="library-entry-card">
+    <article className={`library-entry-card${editing ? ' expanded' : ''}`}>
       <div className="library-entry">
         <Link className="cover-link" to={libraryEntryPath(entry)} aria-label={`View ${entry.gameTitle} details`}>
           <CoverImage src={entry.gameCoverUrl} title={entry.gameTitle} />
