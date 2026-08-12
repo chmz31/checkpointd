@@ -38,6 +38,8 @@ export type CurrentUser = {
 
 export type ProfileVisibility = 'PUBLIC' | 'PRIVATE';
 
+export type ReviewSortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
+
 export type PublicProfileStats = {
   totalGames: number;
   completedGames: number;

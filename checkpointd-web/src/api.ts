@@ -22,6 +22,7 @@ import type {
   ReportedReviewComment,
   Review,
   ReviewRequest,
+  ReviewSortOption,
   UnreadCount,
   UpdateProfileInput,
   UserSummary,
@@ -221,9 +222,9 @@ export const api = {
     );
   },
 
-  getUserReviews(username: string, page = 0, size = 10) {
+  getUserReviews(username: string, page = 0, size = 10, sort: ReviewSortOption = 'newest') {
     return apiRequest<PaginatedResponse<Review>>(
-      `/api/v1/reviews/users/${encodeURIComponent(username)}?page=${page}&size=${size}`,
+      `/api/v1/reviews/users/${encodeURIComponent(username)}?page=${page}&size=${size}&sort=${sort}`,
     );
   },
 

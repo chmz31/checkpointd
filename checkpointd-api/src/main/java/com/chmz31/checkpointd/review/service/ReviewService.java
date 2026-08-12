@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,14 +63,26 @@ public class ReviewService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<ReviewResponse> getPublicUserReviews(String username, UUID currentUserId, int page, int size) {
+	public Page<ReviewResponse> getPublicUserReviews(
+			String username, UUID currentUserId, int page, int size, String sort) {
 		User user = publicUser(username);
-		return reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibilityOrderByUpdatedAtDesc(
+		int safePage = Math.max(page, 0);
+		int safeSize = size <= 0 ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
+		return reviewRepository.findByUserUsernameAndUserProfileVisibilityAndVisibility(
 				user.getUsername(),
 				ProfileVisibility.PUBLIC,
 				ReviewVisibility.PUBLIC,
-				pageRequest(page, size))
+				PageRequest.of(safePage, safeSize, resolveReviewSort(sort)))
 				.map(review -> toResponse(review, currentUserId, false));
+	}
+
+	private Sort resolveReviewSort(String sort) {
+		return switch (sort == null ? "" : sort) {
+			case "oldest" -> Sort.by(Sort.Direction.ASC, "updatedAt");
+			case "highest" -> Sort.by(Sort.Direction.DESC, "rating");
+			case "lowest" -> Sort.by(Sort.Direction.ASC, "rating");
+			default -> Sort.by(Sort.Direction.DESC, "updatedAt");
+		};
 	}
 
 	@Transactional(readOnly = true)
