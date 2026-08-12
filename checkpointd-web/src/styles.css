@@ -488,6 +488,7 @@ h3 {
   border-radius: 8px;
   background: #0f1721;
   overflow: hidden;
+  min-width: 0;
 }
 
 .search-result-card {
@@ -495,6 +496,12 @@ h3 {
   border-radius: 8px;
   background: #0f1721;
   overflow: hidden;
+  min-width: 0;
+}
+
+.library-entry-card.expanded,
+.search-result-card.expanded {
+  grid-column: 1 / -1;
 }
 
 .game-row,
@@ -1208,10 +1215,6 @@ h3 {
 
   .panel {
     padding: 0.85rem;
-  }
-
-  .library-list {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
   .entry-card-body,
