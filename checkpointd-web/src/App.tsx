@@ -21,6 +21,7 @@ import { SearchView } from './components/SearchView';
 import { UserGameReviewPage } from './components/UserGameReviewPage';
 import { UserListsPage } from './components/UserListsPage';
 import { UserReviewsPage } from './components/UserReviewsPage';
+import { VerifyEmailPage } from './components/VerifyEmailPage';
 import type { CurrentUser } from './types';
 
 export default function App() {
@@ -89,6 +90,7 @@ export default function App() {
           <Route path="/u/:username/following" element={<FollowListPage mode="following" />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Route>
         <Route
           element={

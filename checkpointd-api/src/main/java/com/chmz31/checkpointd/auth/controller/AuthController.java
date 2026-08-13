@@ -5,10 +5,12 @@ import com.chmz31.checkpointd.auth.dto.CurrentUserResponse;
 import com.chmz31.checkpointd.auth.dto.DeleteAccountRequest;
 import com.chmz31.checkpointd.auth.dto.LoginRequest;
 import com.chmz31.checkpointd.auth.dto.RegisterRequest;
+import com.chmz31.checkpointd.auth.dto.VerifyEmailRequest;
 import com.chmz31.checkpointd.auth.service.AuthService;
 import com.chmz31.checkpointd.auth.service.JwtService;
 import com.chmz31.checkpointd.user.entity.User;
 import com.chmz31.checkpointd.user.model.Role;
+import com.chmz31.checkpointd.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -28,10 +30,12 @@ public class AuthController {
 
 	private final AuthService authService;
 	private final JwtService jwtService;
+	private final UserRepository userRepository;
 
-	public AuthController(AuthService authService, JwtService jwtService) {
+	public AuthController(AuthService authService, JwtService jwtService, UserRepository userRepository) {
 		this.authService = authService;
 		this.jwtService = jwtService;
+		this.userRepository = userRepository;
 	}
 
 	@PostMapping("/auth/register")
@@ -49,18 +53,36 @@ public class AuthController {
 		return jwtService.createAuthResponse(user);
 	}
 
+	@PostMapping("/auth/verify-email")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+		authService.verifyEmail(request.token());
+	}
+
 	@GetMapping("/users/me")
 	CurrentUserResponse me(@AuthenticationPrincipal Jwt jwt) {
+		UUID userId = UUID.fromString(jwt.getSubject());
+		boolean emailVerified = userRepository.findById(userId)
+				.map(User::isEmailVerified)
+				.orElse(false);
+
 		return new CurrentUserResponse(
-				UUID.fromString(jwt.getSubject()),
+				userId,
 				jwt.getClaimAsString("email"),
 				jwt.getClaimAsString("username"),
-				Role.valueOf(jwt.getClaimAsString("role")));
+				Role.valueOf(jwt.getClaimAsString("role")),
+				emailVerified);
 	}
 
 	@DeleteMapping("/users/me")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	void deleteAccount(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody DeleteAccountRequest request) {
 		authService.deleteAccount(UUID.fromString(jwt.getSubject()), request.password());
+	}
+
+	@PostMapping("/users/me/resend-verification")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	void resendVerification(@AuthenticationPrincipal Jwt jwt) {
+		authService.resendVerificationEmail(UUID.fromString(jwt.getSubject()));
 	}
 }

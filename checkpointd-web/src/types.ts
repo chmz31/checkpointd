@@ -34,6 +34,7 @@ export type CurrentUser = {
   email: string;
   username: string;
   role: string;
+  emailVerified: boolean;
 };
 
 export type ProfileVisibility = 'PUBLIC' | 'PRIVATE';

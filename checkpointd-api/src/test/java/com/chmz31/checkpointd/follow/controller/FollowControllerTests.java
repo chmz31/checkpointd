@@ -1,5 +1,7 @@
 package com.chmz31.checkpointd.follow.controller;
 
+import com.chmz31.checkpointd.auth.repository.EmailVerificationTokenRepository;
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -58,6 +60,9 @@ class FollowControllerTests {
 	@Autowired
 	private MockMvc mockMvc;
 
+
+	@MockitoBean
+	private EmailVerificationTokenRepository emailVerificationTokenRepository;
 	@MockitoBean
 	private FollowRepository followRepository;
 

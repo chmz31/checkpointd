@@ -1,5 +1,7 @@
 package com.chmz31.checkpointd.auth.controller;
 
+import com.chmz31.checkpointd.auth.repository.EmailVerificationTokenRepository;
+
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -55,6 +57,9 @@ class AuthControllerTests {
 	@Autowired
 	private MockMvc mockMvc;
 
+
+	@MockitoBean
+	private EmailVerificationTokenRepository emailVerificationTokenRepository;
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
@@ -218,6 +223,8 @@ class AuthControllerTests {
 	@Test
 	void meReturnsCurrentUserWithoutPasswordHash() throws Exception {
 		String accessToken = registerAndReturnToken();
+		when(userRepository.findById(UUID.fromString("00000000-0000-0000-0000-000000000001")))
+				.thenReturn(Optional.of(withId(new User("player@example.com", "playerone", "hashed", Role.USER))));
 
 		mockMvc.perform(get("/api/v1/users/me")
 						.header("Authorization", "Bearer " + accessToken))
@@ -226,7 +233,30 @@ class AuthControllerTests {
 				.andExpect(jsonPath("$.email").value("player@example.com"))
 				.andExpect(jsonPath("$.username").value("playerone"))
 				.andExpect(jsonPath("$.role").value("USER"))
+				.andExpect(jsonPath("$.emailVerified").value(false))
 				.andExpect(jsonPath("$.passwordHash").doesNotExist());
+	}
+
+	@Test
+	void verifyEmailWorksWithoutAuthentication() throws Exception {
+		when(emailVerificationTokenRepository.findByToken("good-token")).thenReturn(Optional.empty());
+
+		mockMvc.perform(post("/api/v1/auth/verify-email")
+						.with(csrf())
+						.contentType("application/json")
+						.content("""
+								{
+								  "token": "good-token"
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("Verification link is invalid or expired"));
+	}
+
+	@Test
+	void resendVerificationRequiresAuthentication() throws Exception {
+		mockMvc.perform(post("/api/v1/users/me/resend-verification").with(csrf()))
+				.andExpect(status().isUnauthorized());
 	}
 
 	@Test
