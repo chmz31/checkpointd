@@ -1,5 +1,7 @@
 package com.chmz31.checkpointd.externalgames.controller;
 
+import com.chmz31.checkpointd.auth.repository.EmailVerificationTokenRepository;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -51,6 +53,9 @@ class ExternalGameImportControllerTests {
 	@Autowired
 	private MockMvc mockMvc;
 
+
+	@MockitoBean
+	private EmailVerificationTokenRepository emailVerificationTokenRepository;
 	@MockitoBean
 	private ExternalGameImportService externalGameImportService;
 

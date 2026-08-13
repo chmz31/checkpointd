@@ -1,5 +1,7 @@
 package com.chmz31.checkpointd;
 
+import com.chmz31.checkpointd.auth.repository.EmailVerificationTokenRepository;
+
 import com.chmz31.checkpointd.follow.repository.FollowRepository;
 import com.chmz31.checkpointd.game.repository.GameRepository;
 import com.chmz31.checkpointd.comment.repository.ListCommentLikeRepository;
@@ -24,6 +26,9 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles("test")
 class CheckpointdApiApplicationTests {
+
+	@MockitoBean
+	private EmailVerificationTokenRepository emailVerificationTokenRepository;
 
 	@MockitoBean
 	private UserRepository userRepository;

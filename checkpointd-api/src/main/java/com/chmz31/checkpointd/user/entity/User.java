@@ -46,6 +46,9 @@ public class User {
 	@Column(name = "profile_visibility", nullable = false, length = 40)
 	private ProfileVisibility profileVisibility = ProfileVisibility.PUBLIC;
 
+	@Column(name = "email_verified", nullable = false)
+	private boolean emailVerified = false;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -132,6 +135,14 @@ public class User {
 
 	public void setProfileVisibility(ProfileVisibility profileVisibility) {
 		this.profileVisibility = profileVisibility;
+	}
+
+	public boolean isEmailVerified() {
+		return emailVerified;
+	}
+
+	public void setEmailVerified(boolean emailVerified) {
+		this.emailVerified = emailVerified;
 	}
 
 	public Instant getCreatedAt() {

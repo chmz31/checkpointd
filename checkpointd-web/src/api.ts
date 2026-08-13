@@ -120,6 +120,19 @@ export const api = {
     });
   },
 
+  verifyEmail(token: string) {
+    return apiRequest<void>('/api/v1/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  resendVerificationEmail() {
+    return apiRequest<void>('/api/v1/users/me/resend-verification', {
+      method: 'POST',
+    });
+  },
+
   getPublicProfile(username: string) {
     return apiRequest<PublicProfile>(`/api/v1/profiles/${encodeURIComponent(username)}`);
   },

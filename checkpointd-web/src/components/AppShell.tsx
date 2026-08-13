@@ -9,6 +9,9 @@ const UNREAD_POLL_INTERVAL_MS = 30000;
 export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogout: () => void }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [verifyBannerDismissed, setVerifyBannerDismissed] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -40,6 +43,20 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
 
   function closeMenu() {
     setMenuOpen(false);
+  }
+
+  async function resendVerification() {
+    setResending(true);
+    setResendMessage(null);
+
+    try {
+      await api.resendVerificationEmail();
+      setResendMessage('Verification email sent.');
+    } catch (caught) {
+      setResendMessage(caught instanceof Error ? caught.message : 'Could not send verification email.');
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
@@ -127,6 +144,20 @@ export function AppShell({ user, onLogout }: { user: CurrentUser | null; onLogou
         </div>
       </header>
       <section className="workspace">
+        {user && !user.emailVerified && !verifyBannerDismissed && (
+          <div className="callout-section">
+            <p>Verify your email to secure your account.</p>
+            <div className="inline-actions">
+              <button className="button-ghost button-small" onClick={resendVerification} disabled={resending}>
+                {resending ? 'Sending...' : 'Resend verification email'}
+              </button>
+              <button className="button-ghost button-small" onClick={() => setVerifyBannerDismissed(true)}>
+                Dismiss
+              </button>
+            </div>
+            {resendMessage && <p className="muted compact-message">{resendMessage}</p>}
+          </div>
+        )}
         <Outlet />
       </section>
       <footer className="app-footer">

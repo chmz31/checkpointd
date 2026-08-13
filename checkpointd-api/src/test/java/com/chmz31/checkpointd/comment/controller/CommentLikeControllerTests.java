@@ -1,5 +1,7 @@
 package com.chmz31.checkpointd.comment.controller;
 
+import com.chmz31.checkpointd.auth.repository.EmailVerificationTokenRepository;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -63,6 +65,9 @@ class CommentLikeControllerTests {
 	@Autowired
 	private MockMvc mockMvc;
 
+
+	@MockitoBean
+	private EmailVerificationTokenRepository emailVerificationTokenRepository;
 	@MockitoBean
 	private ListCommentRepository listCommentRepository;
 

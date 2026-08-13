@@ -38,7 +38,7 @@ public class SecurityConfig {
 				.cors(Customizer.withDefaults())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+						.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/verify-email").permitAll()
 						.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/profiles/me").authenticated()
 						.requestMatchers(HttpMethod.PATCH, "/api/v1/profiles/me").authenticated()
