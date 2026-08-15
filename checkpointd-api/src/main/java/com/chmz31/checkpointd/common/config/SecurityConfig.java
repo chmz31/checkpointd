@@ -43,6 +43,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/api/v1/profiles/me").authenticated()
 						.requestMatchers(HttpMethod.PATCH, "/api/v1/profiles/me").authenticated()
 						.requestMatchers(HttpMethod.GET, "/api/v1/profiles/*").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/v1/games/*").permitAll()
 						.requestMatchers("/api/v1/reviews/me", "/api/v1/reviews/me/**").authenticated()
 						.requestMatchers(HttpMethod.GET, "/api/v1/reviews/games/*").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/reviews/users/*").permitAll()

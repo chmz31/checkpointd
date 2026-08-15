@@ -272,6 +272,15 @@ class GameControllerTests {
 	}
 
 	@Test
+	void getWorksWithoutAuthentication() throws Exception {
+		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.of(withId(new Game("Chrono Trigger"))));
+
+		mockMvc.perform(get("/api/v1/games/{gameId}", GAME_ID))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.title").value("Chrono Trigger"));
+	}
+
+	@Test
 	void missingGameReturnsNotFound() throws Exception {
 		when(gameRepository.findById(GAME_ID)).thenReturn(Optional.empty());
 
