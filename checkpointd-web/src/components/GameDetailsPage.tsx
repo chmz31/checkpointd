@@ -180,11 +180,13 @@ export function GameDetailsPage({ currentUser }: { currentUser: CurrentUser | nu
               <h2>{game.title}</h2>
               <p className="muted">{game.slug || 'Catalog game'}</p>
             </div>
-            <div className="inline-actions detail-actions">
-              <Link className="nav-link button-small" to="/library">
-                Back to library
-              </Link>
-            </div>
+            {currentUser && (
+              <div className="inline-actions detail-actions">
+                <Link className="nav-link button-small" to="/library">
+                  Back to library
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="detail-facts">
