@@ -79,6 +79,8 @@ export default function App() {
         >
           <Route path="/games/:gameId/:slug/reviews" element={<GameReviewsPage currentUser={user} />} />
           <Route path="/games/:gameId/reviews" element={<GameReviewsPage currentUser={user} />} />
+          <Route path="/games/:gameId/:slug" element={<GameDetailsPage currentUser={user} />} />
+          <Route path="/games/:gameId" element={<GameDetailsPage currentUser={user} />} />
           <Route path="/u/:username" element={<PublicProfilePage currentUser={user} />} />
           <Route path="/u/:username/reviews" element={<UserReviewsPage currentUser={user} />} />
           <Route path="/u/:username/games/:gameId/:slug" element={<UserGameReviewPage currentUser={user} />} />
@@ -111,8 +113,6 @@ export default function App() {
           <Route path="/notifications" element={<NotificationsPage currentUser={user} />} />
           <Route path="/library/:entryId/:slug" element={<LibraryEntryDetailsPage />} />
           <Route path="/library/:entryId" element={<LibraryEntryDetailsPage />} />
-          <Route path="/games/:gameId/:slug" element={<GameDetailsPage />} />
-          <Route path="/games/:gameId" element={<GameDetailsPage />} />
           <Route
             path="/admin/comments"
             element={

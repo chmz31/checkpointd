@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, isApiErrorStatus } from '../api';
 import { formatDate } from '../dateUtils';
 import { gamePath, gameReviewsPath, libraryEntryPath, slugify } from '../routePaths';
-import type { Game, LibraryEntry, Review, ReviewRequest } from '../types';
+import type { CurrentUser, Game, LibraryEntry, Review, ReviewRequest } from '../types';
 import { AddToLibraryForm, type AddToLibraryFormValues } from './AddToLibraryForm';
 import { ChipGroup } from './ChipGroup';
 import { CoverImage } from './CoverImage';
@@ -12,7 +12,7 @@ import { MediaGallery } from './MediaGallery';
 import { ReviewCard } from './ReviewCard';
 import { ReviewForm } from './ReviewForm';
 
-export function GameDetailsPage() {
+export function GameDetailsPage({ currentUser }: { currentUser: CurrentUser | null }) {
   const { gameId, slug } = useParams();
   const navigate = useNavigate();
   const [game, setGame] = useState<Game | null>(null);
@@ -51,12 +51,14 @@ export function GameDetailsPage() {
           navigate(canonicalPath, { replace: true });
         }
 
-        try {
-          setLibraryEntry(await api.getLibraryEntryByGame(loadedGame.id));
-        } catch (caught) {
-          if (!isApiErrorStatus(caught, 404)) {
-            const message = caught instanceof Error ? caught.message : '';
-            setError(message || 'Could not check library status');
+        if (currentUser) {
+          try {
+            setLibraryEntry(await api.getLibraryEntryByGame(loadedGame.id));
+          } catch (caught) {
+            if (!isApiErrorStatus(caught, 404)) {
+              const message = caught instanceof Error ? caught.message : '';
+              setError(message || 'Could not check library status');
+            }
           }
         }
 
@@ -67,11 +69,13 @@ export function GameDetailsPage() {
           setReviews([]);
         }
 
-        try {
-          setMyReview(await api.getMyGameReview(loadedGame.id));
-        } catch (caught) {
-          if (!isApiErrorStatus(caught, 404)) {
-            setReviewError(caught instanceof Error ? caught.message : 'Could not load your review');
+        if (currentUser) {
+          try {
+            setMyReview(await api.getMyGameReview(loadedGame.id));
+          } catch (caught) {
+            if (!isApiErrorStatus(caught, 404)) {
+              setReviewError(caught instanceof Error ? caught.message : 'Could not load your review');
+            }
           }
         }
       } catch (caught) {
@@ -82,7 +86,7 @@ export function GameDetailsPage() {
     }
 
     load();
-  }, [gameId, navigate, slug]);
+  }, [gameId, navigate, slug, currentUser]);
 
   function clearAddFeedback() {
     setMessage(null);
@@ -176,11 +180,13 @@ export function GameDetailsPage() {
               <h2>{game.title}</h2>
               <p className="muted">{game.slug || 'Catalog game'}</p>
             </div>
-            <div className="inline-actions detail-actions">
-              <Link className="nav-link button-small" to="/library">
-                Back to library
-              </Link>
-            </div>
+            {currentUser && (
+              <div className="inline-actions detail-actions">
+                <Link className="nav-link button-small" to="/library">
+                  Back to library
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="detail-facts">
@@ -212,7 +218,7 @@ export function GameDetailsPage() {
             </p>
           )}
 
-          {libraryEntry ? (
+          {currentUser && (libraryEntry ? (
             <section className="detail-section callout-section">
               <h3>Library</h3>
               <p>
@@ -233,7 +239,7 @@ export function GameDetailsPage() {
                 onChange={clearAddFeedback}
               />
             </section>
-          )}
+          ))}
 
           {game.summary && (
             <section className="detail-section">
@@ -311,13 +317,15 @@ export function GameDetailsPage() {
             )}
           </section>
 
-          <section className="detail-section callout-section">
-            <h3>{myReview ? 'Edit your review' : 'Write a review'}</h3>
-            <p className="muted">Reviews are public opinion text. Private library notes stay on your checkpoint.</p>
-            {reviewMessage && <p className="success compact-message">{reviewMessage}</p>}
-            {reviewError && <p className="error compact-message">{reviewError}</p>}
-            <ReviewForm review={myReview} submitting={savingReview} onSubmit={saveReview} />
-          </section>
+          {currentUser && (
+            <section className="detail-section callout-section">
+              <h3>{myReview ? 'Edit your review' : 'Write a review'}</h3>
+              <p className="muted">Reviews are public opinion text. Private library notes stay on your checkpoint.</p>
+              {reviewMessage && <p className="success compact-message">{reviewMessage}</p>}
+              {reviewError && <p className="error compact-message">{reviewError}</p>}
+              <ReviewForm review={myReview} submitting={savingReview} onSubmit={saveReview} />
+            </section>
+          )}
         </section>
       </div>
     </article>
