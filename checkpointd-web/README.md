@@ -13,10 +13,11 @@ React + TypeScript + Vite frontend for checkpointd.
 ## Features
 
 - Login and registration, JWT stored in `localStorage`.
+- Email verification on registration — a dismissible banner (with a resend button) for unverified accounts; nothing is blocked while unverified.
 - Self-service account deletion (password-confirmed).
 - External game search (via the backend/IGDB) with direct add-to-library; also search public lists and members from the same page.
 - Personal library: stats, status filter, local search, sorting, metadata sync, edit, delete.
-- Library entry and public game detail pages with metadata, media gallery, and tracking facts.
+- Library entry and public game detail pages with metadata, media gallery, and tracking facts. Game detail pages are public — reachable logged out.
 - Reviews: write/edit a rating + text review per game (spoiler flag, public/private visibility); browse a game's or a user's reviews, sortable by newest/oldest/highest/lowest rated.
 - Lists: create/edit/delete public or private game lists, add/remove games, browse popular lists and a user's own lists.
 - Follows: follow/unfollow users, view followers/following lists.
@@ -40,13 +41,14 @@ Route groups are split by shell in `App.tsx`: `PublicShell` renders when logged 
 - `/u/:username/lists/:listId[/:slug]` — a public list's detail
 - `/u/:username/followers`, `/u/:username/following`
 - `/games/:gameId[/:slug]/reviews` — a game's public reviews
+- `/games/:gameId[/:slug]` — game detail page (Add-to-Library/Write-a-review sections, and their underlying "my data" fetches, are skipped entirely when logged out)
 - `/privacy`, `/about`
+- `/verify-email` — reads `?token=` and calls the verify endpoint on mount
 
 **Authenticated only** (redirects to `/login` otherwise):
 
 - `/search` — multi-category search (Games / Lists / Members)
 - `/library`, `/library/:entryId[/:slug]`
-- `/games/:gameId[/:slug]` — game detail page (distinct from the `/reviews` variant above)
 - `/lists`, `/lists/popular`
 - `/notifications`
 - `/admin/comments` — reported-comment moderation queue, gated inline on `user.role === 'ADMIN'`

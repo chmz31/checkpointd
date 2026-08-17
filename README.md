@@ -11,10 +11,11 @@ Live at [checkpointd.fun](https://checkpointd.fun).
 **Library and games**
 
 - Register and login with JWT authentication; self-service account deletion (password-confirmed, cascades all owned data).
+- Email verification on registration (via Resend) — banner-only, non-blocking: register/login stay instant, an unverified user just sees a dismissible reminder with a resend button.
 - Search external games through the backend via IGDB, filtered to real standalone games (base games, remakes, remasters, expanded editions, ports) rather than DLC/expansions/bundles/mods.
 - Import external games into a local catalog with metadata: summary, genres, platforms, screenshots, artworks, and a backdrop image.
 - Track a personal library with status, notes, and per-entry tracking dates; filter, sort, and search the library; re-sync metadata for individual entries.
-- Dedicated library entry and public game detail pages with metadata, media, and tracking facts.
+- Dedicated library entry and public game detail pages with metadata, media, and tracking facts. Game detail pages are public — reachable logged out, so shared links and search results don't dead-end at a login wall.
 
 **Social**
 
@@ -81,7 +82,7 @@ checkpointd/
 
 | Module | Owns |
 |---|---|
-| `auth` | Registration, login, JWT issuance, current-user identity, account deletion |
+| `auth` | Registration, login, JWT issuance, current-user identity, account deletion, email verification |
 | `user` | Core `User` entity and repository (no controller of its own — exposed via `auth`/`profile`) |
 | `game` | Canonical local `Game` entity — creation, lookup, listing, metadata staleness |
 | `externalgames` | IGDB search and import-to-local-`Game` |
@@ -201,14 +202,15 @@ Reachable while logged out (`PublicShell`) or logged in (`AppShell`):
 - `/u/:username/lists/:listId[/:slug]` — a public list's detail
 - `/u/:username/followers`, `/u/:username/following` — follow lists
 - `/games/:gameId[/:slug]/reviews` — a game's public reviews
+- `/games/:gameId[/:slug]` — a game detail page (metadata, media, reviews; Add-to-Library/Write-a-review hidden until logged in)
 - `/privacy`, `/about` — static pages
+- `/verify-email` — handles the emailed verification link
 
 Authenticated only (`AppShell`, redirects to `/login` otherwise):
 
 - `/search` — multi-category search (Games / Lists / Members)
 - `/library` — the current user's library, stats, filters, search, sorting
 - `/library/:entryId[/:slug]` — a library entry detail page
-- `/games/:gameId[/:slug]` — a game detail page
 - `/lists` — the current user's own lists
 - `/lists/popular` — popular public lists
 - `/notifications` — in-app notifications
@@ -246,14 +248,16 @@ Full paths, grouped by backend module. See the module table above for what each 
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
+- `POST /api/v1/auth/verify-email` — public, consumes an emailed verification token
 - `GET /api/v1/users/me`
 - `DELETE /api/v1/users/me` — password-confirmed self-service account deletion
+- `POST /api/v1/users/me/resend-verification` — authenticated, 60s cooldown
 
 **game** (`/api/v1/games`)
 
 - `POST /api/v1/games`
 - `GET /api/v1/games?q={query}`
-- `GET /api/v1/games/{gameId}`
+- `GET /api/v1/games/{gameId}` — public
 
 **externalgames** (`/api/v1/external-games`)
 
@@ -413,19 +417,19 @@ gunzip -c /var/backups/checkpointd/checkpointd-<timestamp>.sql.gz | \
 - Use `.env.example` only for placeholder values and variable names.
 - The frontend sends JWT Bearer tokens to checkpointd only; it does not receive Twitch or IGDB credentials.
 - Passwords are hashed with BCrypt before storage; account deletion requires re-entering the password and cascades all owned data (library entries, reviews, lists, follows, likes, comments, notifications) via `ON DELETE CASCADE`.
+- `RESEND_API_KEY` must stay server-side; email verification tokens are single-use and expire after 24 hours.
 
 ## Roadmap
 
-Shipped since the original MVP: public profiles, reviews, lists, follows, likes, comments with moderation, notifications, account deletion, and multi-category search — see `Features` above.
+Shipped since the original MVP: public profiles, reviews, lists, follows, likes, comments with moderation, notifications, account deletion, multi-category search, email verification, and public game detail pages — see `Features` above.
 
 Still open:
 
 - Re-sync or backfill metadata for existing cached games in bulk (today only individual entries can manually re-sync)
-- Richer public game detail metadata and media
 - Server-side/paginated library search improvements
 - Crossplay data
 - Recommendations
-- Email verification (registration currently accepts any email address, unverified)
+- Error tracking / observability (e.g. Sentry) — today the only way to learn about a bug is manual log-checking or a user mentioning it
 - CI/CD auto-deploy (deploys are manual by design for now)
 - Frontend automated test suite (Vitest/RTL) — verification today is typecheck + build + manual testing
 - Ongoing UI polish
@@ -436,6 +440,8 @@ Done:
 - [x] Public profiles and lists
 - [x] Social features (reviews, follows, likes, comments, notifications)
 - [x] Off-box database backups
+- [x] Email verification
+- [x] Public game detail pages
 
 ## Philosophy
 
