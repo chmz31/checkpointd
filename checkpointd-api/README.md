@@ -18,7 +18,7 @@ Package-per-domain-module under `com.chmz31.checkpointd`, each following `entity
 
 | Module | Owns |
 |---|---|
-| `auth` | Registration, login, JWT issuance, current-user identity, account deletion |
+| `auth` | Registration, login, JWT issuance, current-user identity, account deletion, email verification |
 | `user` | Core `User` entity and repository (no controller of its own) |
 | `game` | Canonical local `Game` entity — creation, lookup, listing, metadata staleness |
 | `externalgames` | External IGDB search through Twitch client credentials, import/cache into local `Game` |
@@ -63,6 +63,8 @@ External search remains lightweight and focuses on core metadata. Richer visual 
 Existing cached games are not backfilled automatically.
 
 **IGDB search filtering:** external search restricts results to IGDB's `game_type` field (values `0, 4, 8, 9, 10, 11` — main game, standalone expansion, remake, remaster, expanded game, port), with a null-safety fallback since `game_type` isn't populated for every record. IGDB's older `category` field looks like it should do this job but is almost entirely unpopulated in practice — `game_type` is the field that's actually reliably filled in. This was found the hard way: filtering on `category` alone silently returned zero results for every search once deployed, since even ordinary main games have no `category` value set. See `IgdbClient.searchBody` for the exact query and the comment explaining the enum values.
+
+**Email verification:** on registration, `AuthService` issues a single-use token (24h expiry, `email_verification_tokens` table) and sends it via `ResendClient` (same `RestClient`-based pattern as `IgdbClient`/`TwitchTokenClient`). A failed send only logs a warning — it never fails registration — so this degrades gracefully without `RESEND_API_KEY` configured, the same way external search does without IGDB credentials. Verification is banner-only, not enforced: login and every other endpoint work identically regardless of `email_verified`. Existing accounts created before this shipped were grandfathered as verified via the `V19` migration.
 
 ## Local Development
 
