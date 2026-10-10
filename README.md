@@ -10,6 +10,7 @@ Live at [checkpointd.fun](https://checkpointd.fun).
 
 **Library and games**
 
+- Public landing page at `/` for logged-out visitors — the pitch, a live preview of popular lists, and sign-up/login calls to action, rather than a login wall at the front door.
 - Register and login with JWT authentication; self-service account deletion (password-confirmed, cascades all owned data).
 - Email verification on registration (via Resend) — banner-only, non-blocking: register/login stay instant, an unverified user just sees a dismissible reminder with a resend button.
 - Search external games through the backend via IGDB, filtered to real standalone games (base games, remakes, remasters, expanded editions, ports) rather than DLC/expansions/bundles/mods.
@@ -20,7 +21,7 @@ Live at [checkpointd.fun](https://checkpointd.fun).
 **Social**
 
 - Write and edit reviews (rating + text, spoiler flag, public/private visibility) per game; browse a game's reviews or a user's reviews, sortable by newest/oldest/highest/lowest rated.
-- Create and curate public or private game lists; browse popular lists and a specific user's lists.
+- Create and curate public or private game lists; browse popular lists and a specific user's lists. Popular lists are readable logged out, and act as the entry point for guests browsing the site.
 - Follow other users; view followers/following lists.
 - Like reviews and lists.
 - Comment on reviews and lists, with one level of threaded replies and comment likes; report comments for moderation; admins can review and delete reported comments.
@@ -40,7 +41,7 @@ Backend:
 - Spring Security (JWT via OAuth2 resource server support)
 - Spring Data JPA
 - PostgreSQL 18
-- Flyway (schema currently at `V18`)
+- Flyway (schema currently at `V19`)
 - Maven Wrapper
 
 Frontend:
@@ -190,11 +191,13 @@ The Vite dev server runs locally on `http://localhost:5173` by default.
 
 ### Frontend routes
 
-Route groups are split by shell in `App.tsx`: `PublicShell` renders when logged out, `AppShell` when logged in — most routes render under whichever shell matches the current auth state rather than hard-requiring login.
+Route groups are split by shell in `App.tsx`: `PublicShell` renders when logged out, `AppShell` when logged in — most routes render under whichever shell matches the current auth state rather than hard-requiring login. `PublicShell`'s nav offers Popular / Login / Register, and its wordmark links back to `/`. Unknown routes redirect to `/library` when logged in and to the landing page at `/` when logged out.
 
 Reachable while logged out (`PublicShell`) or logged in (`AppShell`):
 
+- `/` — public landing page when logged out (pitch, popular-lists preview, sign-up/login CTAs); redirects to `/library` when logged in
 - `/login`, `/register` — authentication (redirect to `/library` if already logged in)
+- `/lists/popular` — popular public lists
 - `/u/:username` — public profile
 - `/u/:username/reviews` — a user's public reviews (sortable)
 - `/u/:username/games/:gameId[/:slug]` — a user's public review of one game
@@ -212,7 +215,6 @@ Authenticated only (`AppShell`, redirects to `/login` otherwise):
 - `/library` — the current user's library, stats, filters, search, sorting
 - `/library/:entryId[/:slug]` — a library entry detail page
 - `/lists` — the current user's own lists
-- `/lists/popular` — popular public lists
 - `/notifications` — in-app notifications
 - `/admin/comments` — reported-comment moderation queue (admin role only)
 
@@ -421,10 +423,11 @@ gunzip -c /var/backups/checkpointd/checkpointd-<timestamp>.sql.gz | \
 
 ## Roadmap
 
-Shipped since the original MVP: public profiles, reviews, lists, follows, likes, comments with moderation, notifications, account deletion, multi-category search, email verification, and public game detail pages — see `Features` above.
+Shipped since the original MVP: public profiles, reviews, lists, follows, likes, comments with moderation, notifications, account deletion, multi-category search, email verification, public game detail pages, and a public landing page — see `Features` above.
 
 Still open:
 
+- Search for logged-out visitors — `/search` is still authenticated-only. Lists and members search are already public on the API, but the Games tab runs an IGDB lookup and an import that writes game rows, so opening it to anonymous traffic needs rate limiting (or splitting read-only search from import) first. Guests browse via popular lists today.
 - Re-sync or backfill metadata for existing cached games in bulk (today only individual entries can manually re-sync)
 - Server-side/paginated library search improvements
 - Crossplay data
@@ -442,6 +445,7 @@ Done:
 - [x] Off-box database backups
 - [x] Email verification
 - [x] Public game detail pages
+- [x] Public landing page for logged-out visitors
 
 ## Philosophy
 

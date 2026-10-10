@@ -8,6 +8,7 @@ import { AppShell } from './components/AppShell';
 import { FollowListPage } from './components/FollowListPage';
 import { GameDetailsPage } from './components/GameDetailsPage';
 import { GameReviewsPage } from './components/GameReviewsPage';
+import { GuestHomePage } from './components/GuestHomePage';
 import { LibraryEntryDetailsPage } from './components/LibraryEntryDetailsPage';
 import { LibraryView } from './components/LibraryView';
 import { ListDetailPage } from './components/ListDetailPage';
@@ -59,10 +60,6 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route
-          path="/"
-          element={<Navigate to={token ? '/library' : '/login'} replace />}
-        />
-        <Route
           path="/login"
           element={
             token ? <Navigate to="/library" replace /> : <AuthPage mode="login" onToken={handleToken} />
@@ -77,6 +74,8 @@ export default function App() {
         <Route
           element={token ? <AppShell user={user} onLogout={logout} /> : <PublicShell />}
         >
+          <Route path="/" element={token ? <Navigate to="/library" replace /> : <GuestHomePage />} />
+          <Route path="/lists/popular" element={<PopularListsPage />} />
           <Route path="/games/:gameId/:slug/reviews" element={<GameReviewsPage currentUser={user} />} />
           <Route path="/games/:gameId/reviews" element={<GameReviewsPage currentUser={user} />} />
           <Route path="/games/:gameId/:slug" element={<GameDetailsPage currentUser={user} />} />
@@ -109,7 +108,6 @@ export default function App() {
           />
           <Route path="/library" element={<LibraryView refreshKey={libraryRefreshKey} />} />
           <Route path="/lists" element={<MyListsPage />} />
-          <Route path="/lists/popular" element={<PopularListsPage />} />
           <Route path="/notifications" element={<NotificationsPage currentUser={user} />} />
           <Route path="/library/:entryId/:slug" element={<LibraryEntryDetailsPage />} />
           <Route path="/library/:entryId" element={<LibraryEntryDetailsPage />} />

@@ -137,7 +137,7 @@ export function ListDetailPage({ currentUser }: { currentUser: CurrentUser | nul
           <h2>{list.name}</h2>
           <p className="muted">
             by <Link className="inline-link" to={userProfilePath(list.username)}>@{list.username}</Link>
-            {' '}· {list.itemCount} {list.itemCount === 1 ? 'game' : 'games'}
+            {' '}· {list.items.length} {list.items.length === 1 ? 'game' : 'games'}
             {list.visibility === 'PRIVATE' && ' · Private'}
           </p>
         </div>
