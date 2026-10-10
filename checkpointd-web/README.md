@@ -12,6 +12,7 @@ React + TypeScript + Vite frontend for checkpointd.
 
 ## Features
 
+- Public landing page at `/` for logged-out visitors — pitch, sign-up/login CTAs, and a live preview of popular lists (`GuestHomePage`). Logged-in users are redirected straight to `/library`.
 - Login and registration, JWT stored in `localStorage`.
 - Email verification on registration — a dismissible banner (with a resend button) for unverified accounts; nothing is blocked while unverified.
 - Self-service account deletion (password-confirmed).
@@ -19,7 +20,7 @@ React + TypeScript + Vite frontend for checkpointd.
 - Personal library: stats, status filter, local search, sorting, metadata sync, edit, delete.
 - Library entry and public game detail pages with metadata, media gallery, and tracking facts. Game detail pages are public — reachable logged out.
 - Reviews: write/edit a rating + text review per game (spoiler flag, public/private visibility); browse a game's or a user's reviews, sortable by newest/oldest/highest/lowest rated.
-- Lists: create/edit/delete public or private game lists, add/remove games, browse popular lists and a user's own lists.
+- Lists: create/edit/delete public or private game lists, add/remove games, browse popular lists and a user's own lists. Popular lists are readable logged out and are the main browse entry point for guests.
 - Follows: follow/unfollow users, view followers/following lists.
 - Likes on reviews and lists.
 - Comments on reviews and lists with one level of threaded replies, comment likes, and reporting.
@@ -29,11 +30,13 @@ React + TypeScript + Vite frontend for checkpointd.
 
 ## Routes
 
-Route groups are split by shell in `App.tsx`: `PublicShell` renders when logged out, `AppShell` when logged in — most routes render under whichever shell matches the current auth state, rather than hard-requiring login. `AppShell` persists across in-group navigation (e.g. the notification-count polling effect lives there).
+Route groups are split by shell in `App.tsx`: `PublicShell` renders when logged out, `AppShell` when logged in — most routes render under whichever shell matches the current auth state, rather than hard-requiring login. `AppShell` persists across in-group navigation (e.g. the notification-count polling effect lives there). `PublicShell`'s nav offers Popular / Login / Register, and its wordmark links back to `/`. The `*` catch-all redirects to `/library` when logged in and to `/` when logged out.
 
 **Reachable logged out or logged in:**
 
+- `/` — landing page when logged out, redirect to `/library` when logged in
 - `/login`, `/register` — redirect to `/library` if already logged in
+- `/lists/popular` — popular public lists
 - `/u/:username` — public profile
 - `/u/:username/reviews` — a user's public reviews
 - `/u/:username/games/:gameId[/:slug]` — a user's public review of one game
@@ -47,9 +50,9 @@ Route groups are split by shell in `App.tsx`: `PublicShell` renders when logged 
 
 **Authenticated only** (redirects to `/login` otherwise):
 
-- `/search` — multi-category search (Games / Lists / Members)
+- `/search` — multi-category search (Games / Lists / Members). Still login-gated: the Games tab runs an IGDB lookup plus an import that writes game rows, so it isn't opened to anonymous traffic yet.
 - `/library`, `/library/:entryId[/:slug]`
-- `/lists`, `/lists/popular`
+- `/lists` — the current user's own lists
 - `/notifications`
 - `/admin/comments` — reported-comment moderation queue, gated inline on `user.role === 'ADMIN'`
 

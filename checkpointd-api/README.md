@@ -9,7 +9,7 @@ Spring Boot backend API for checkpointd.
 - Spring Security (JWT via OAuth2 resource server support)
 - Spring Data JPA
 - PostgreSQL 18
-- Flyway (schema currently at `V18`)
+- Flyway (schema currently at `V19`)
 - Maven Wrapper
 
 ## Architecture

@@ -56,7 +56,7 @@ There's a deliberate **no-cycles discipline** between modules — before adding 
 
 **Auth**: JWT (HS256) via Spring Security's OAuth2 resource server support, not sessions. There is **no `hasRole()`/`JwtAuthenticationConverter`-based role gating** — `SecurityConfig` only distinguishes `authenticated()` vs `permitAll()` per route; anything admin-only reads the JWT's `role` claim manually inside the controller/service (`jwt.getClaimAsString("role")`). Personal/authenticated routes generally don't need route-specific config — they fall under the `/api/v1/**` → `authenticated()` catch-all unless something needs `permitAll()` (see the explicit `permitAll()` list in `SecurityConfig` for the public read endpoints — public profiles, popular lists, review/comment reads, etc.).
 
-**DB**: PostgreSQL + Flyway, sequential `V{n}__description.sql` migrations in `checkpointd-api/src/main/resources/db/migration/` (currently up to V17). Migrations run automatically on API startup in every environment (dev and prod) — no manual migration step, ever.
+**DB**: PostgreSQL + Flyway, sequential `V{n}__description.sql` migrations in `checkpointd-api/src/main/resources/db/migration/` (currently up to V19). Migrations run automatically on API startup in every environment (dev and prod) — no manual migration step, ever.
 
 **Config profiles**: `application.yml` is fully env-var-driven with no risky defaults (safe to run in prod as-is). `application-dev.yml` layers in localhost-friendly fallbacks (default DB connection string, permissive CORS) — this profile must never be active in production.
 
