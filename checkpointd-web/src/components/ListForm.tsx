@@ -6,7 +6,7 @@ export function ListForm({
   submitting,
   onSubmit,
 }: {
-  list?: GameList | null;
+  list?: Pick<GameList, 'name' | 'description' | 'visibility'> | null;
   submitting: boolean;
   onSubmit: (request: GameListRequest) => Promise<void>;
 }) {

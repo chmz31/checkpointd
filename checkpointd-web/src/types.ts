@@ -106,7 +106,8 @@ export type GameListItem = {
   addedAt: string;
 };
 
-export type GameListDetail = GameList & {
+// The detail endpoint doesn't send itemCount — the item array is the count.
+export type GameListDetail = Omit<GameList, 'itemCount'> & {
   items: GameListItem[];
 };
 
